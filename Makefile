@@ -69,9 +69,9 @@ help:
 	@echo "⚙️ Variables configurables:"
 	@echo "  RAW_DATASET         - Dataset brut à utiliser (défaut: openwebtext)"
 	@echo "  SFT_DATASET         - Dataset pour SFT (défaut: $(SFT_DATASET))"
-	@echo "  DPO_DATASET         - Dataset pour DPO (défaut: $(DPO_DATASET))
-  MODEL_PATH          - Chemin du modèle pour évaluation
-  CONFIG              - Configuration à valider"
+	@echo "  DPO_DATASET         - Dataset pour DPO (défaut: $(DPO_DATASET))"
+	@echo "  MODEL_PATH          - Chemin du modèle pour évaluation"
+	@echo "  CONFIG              - Configuration à valider"
 	@echo "  SESSION_TIME        - Temps de session en minutes (défaut: auto)"
 
 # Installation des dépendances
