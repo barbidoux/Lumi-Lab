@@ -8,9 +8,11 @@ import argparse
 import json
 import math
 import os
+import random
 from pathlib import Path
 from typing import Dict, Optional
 
+import numpy as np
 import torch
 import torch.nn as nn
 from accelerate import Accelerator
@@ -26,6 +28,29 @@ from transformers import (
 
 from utils.dataset_utils import TokenizedDataset
 from utils.model_utils import create_model, save_checkpoint, load_checkpoint
+
+
+def set_deterministic_training(seed: int = 42):
+    """Configure l'entraînement déterministe avec seed fixe."""
+    print(f"Configuration entraînement déterministe avec seed {seed}")
+    
+    # Seeds pour reproducibilité
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    
+    # Configuration CUDNN pour reproducibilité (plus lent mais déterministe)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    
+    # Générateur pour DataLoader
+    g = torch.Generator()
+    g.manual_seed(seed)
+    
+    print("✅ Entraînement déterministe configuré")
+    return g
 
 
 class PretrainConfig:
@@ -135,7 +160,7 @@ def train_epoch(
             if global_step % config.save_steps == 0:
                 if accelerator.is_main_process:
                     checkpoint_dir = f"./checkpoints/pretrain/{config.model_name}/step_{global_step}"
-                    save_checkpoint(model, optimizer, scheduler, global_step, checkpoint_dir, accelerator)
+                    save_checkpoint(model, optimizer, scheduler, global_step, checkpoint_dir, accelerator, scaler=None)
                     accelerator.print(f"Checkpoint sauvegardé à l'étape {global_step}")
         
         progress_bar.set_postfix({"loss": loss.item(), "lr": scheduler.get_last_lr()[0]})
@@ -173,6 +198,14 @@ def main():
                        help="Intervalle de sauvegarde")
     parser.add_argument("--logging_steps", type=int, default=100,
                        help="Intervalle de logging")
+    parser.add_argument("--use_flash_attn", action="store_true", default=True,
+                       help="Utiliser FlashAttention-2 (défaut: True)")
+    parser.add_argument("--no_flash_attn", action="store_true",
+                       help="Désactiver FlashAttention-2 (force fallback SDPA)")
+    parser.add_argument("--seed", type=int, default=42,
+                       help="Seed pour la reproducibilité")
+    parser.add_argument("--no_deterministic", action="store_true",
+                       help="Désactiver l'entraînement déterministe (plus rapide)")
     
     args = parser.parse_args()
     
@@ -193,9 +226,17 @@ def main():
     config.save_steps = args.save_steps
     config.logging_steps = args.logging_steps
     
+    # Configuration déterministe
+    dataloader_generator = None
+    if not args.no_deterministic:
+        dataloader_generator = set_deterministic_training(args.seed)
+    
+    # Gestion FlashAttention-2
+    use_flash_attention = args.use_flash_attn and not args.no_flash_attn
+    
     # Création du modèle
     accelerator.print("Création du modèle...")
-    model = create_model(config)
+    model = create_model(config, use_flash_attention=use_flash_attention)
     accelerator.print(f"Modèle créé: {sum(p.numel() for p in model.parameters()):,} paramètres")
     
     # Chargement des données
@@ -214,7 +255,8 @@ def main():
         batch_size=config.batch_size,
         shuffle=True,
         num_workers=4,
-        pin_memory=True
+        pin_memory=True,
+        generator=dataloader_generator
     )
     
     val_dataloader = DataLoader(
@@ -222,7 +264,8 @@ def main():
         batch_size=config.batch_size,
         shuffle=False,
         num_workers=4,
-        pin_memory=True
+        pin_memory=True,
+        generator=dataloader_generator
     )
     
     # Optimiseur et scheduler
@@ -257,7 +300,7 @@ def main():
     
     if args.resume_from_checkpoint:
         accelerator.print(f"Reprise depuis {args.resume_from_checkpoint}")
-        global_step = load_checkpoint(model, optimizer, scheduler, args.resume_from_checkpoint, accelerator)
+        global_step = load_checkpoint(model, optimizer, scheduler, args.resume_from_checkpoint, accelerator, scaler=None)
         start_epoch = global_step // len(train_dataloader)
     
     # Boucle d'entraînement
@@ -284,7 +327,7 @@ def main():
     # Sauvegarde finale
     if accelerator.is_main_process:
         final_dir = f"{args.output_dir}/{config.model_name}/final"
-        save_checkpoint(model, optimizer, scheduler, global_step, final_dir, accelerator)
+        save_checkpoint(model, optimizer, scheduler, global_step, final_dir, accelerator, scaler=None)
         accelerator.print(f"Modèle final sauvegardé dans {final_dir}")
     
     accelerator.print("Entraînement terminé!")

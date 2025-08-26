@@ -18,16 +18,28 @@ A complete codebase for training mini-LLMs (decoder-only) optimized for personal
 
 ## 🚀 Quick Start
 
+### Session-Based Learning (Recommended)
+
 ```bash
 # 1. Installation
 git clone https://github.com/barbidoux/Lumi.git
 cd Lumi
 make install
 
-# 2. Quick test with synthetic data
-make test-pipeline
+# 2. First session: 30min validation (perfect for first-time users)
+make session-quick
 
-# 3. Complete pipeline with real data
+# 3. Learning session: 2h complete tiny model (your first real model)
+make session-prototype
+
+# 4. Check what you've built
+make session-status
+```
+
+### Traditional Pipeline (Alternative)
+
+```bash
+# If you prefer step-by-step control
 make create-sample-datasets
 make prepare
 make pretrain-tiny
@@ -56,6 +68,32 @@ make install
 pip install -r requirements.txt
 ```
 
+### FlashAttention-2 Installation (Optional but Recommended)
+
+FlashAttention-2 provides significant memory savings (~50%) and speed improvements for training:
+
+```bash
+# Install FlashAttention-2 for CUDA 12.1
+pip install flash-attn --no-build-isolation
+
+# Or for CUDA 11.8
+pip install flash-attn==2.5.8 --no-build-isolation
+```
+
+**Requirements:**
+- CUDA 11.6+ or CUDA 12.x
+- PyTorch 2.0+ compiled with CUDA
+- Compatible GPU architecture (SM 8.0+, e.g., RTX 30/40 series)
+
+**Fallback behavior:**
+- If FlashAttention-2 fails to install/load, Lumi automatically falls back to PyTorch SDPA
+- Use `--no_flash_attn` flag to explicitly disable FlashAttention-2
+- No code changes needed - fallback is automatic and transparent
+
+**Installation help:**
+- [FlashAttention GitHub](https://github.com/Dao-AILab/flash-attention)
+- [Pre-compiled wheels](https://github.com/Dao-AILab/flash-attention/releases)
+
 ### Environment Verification
 
 ```bash
@@ -71,7 +109,7 @@ Accelerate: 0.30.1
 GPU: NVIDIA GeForce RTX 4090
 ```
 
-## 🏗️ Architecture
+## 🏗️ Project Structure
 
 ```
 Lumi/
@@ -79,7 +117,15 @@ Lumi/
 │   ├── tiny.json          # 6M parameters - ideal for testing
 │   ├── small.json         # 42M parameters - balanced  
 │   ├── base.json          # 124M parameters - performant
-│   └── sft.json           # LoRA/SFT configuration
+│   ├── sft.json           # LoRA/SFT configuration
+│   └── advanced_example.json # GQA and advanced features
+├── evaluation/             # Evaluation system
+│   ├── smoke_prompts.json  # Categorized test prompts
+│   ├── evaluation_config.json # Performance benchmarks
+│   ├── assess_performance.py  # Automated assessment
+│   └── quick_prompts.json  # Fast evaluation prompts
+├── sessions/               # Session logs and management
+│   └── (session logs created automatically)
 ├── data/                   # Training data
 │   └── (created automatically)
 ├── scripts/                # Training scripts
@@ -92,10 +138,34 @@ Lumi/
 ├── utils/                  # Shared utilities
 │   ├── dataset_utils.py   # Dataset management
 │   └── model_utils.py     # Model creation/loading
-├── Makefile               # Automated commands
+│   └── validate_architecture.py # Architecture validation
+├── ARCHITECTURE.md         # Detailed technical documentation
+├── SESSIONS.md             # Session management guide
+├── Makefile               # Automated commands with sessions
 ├── requirements.txt       # Python dependencies
 └── README.md             # This documentation
 ```
+
+## 🧠 LLaMA-like Architecture
+
+**Lumi implements a modern decoder-only transformer following LLaMA design principles:**
+
+### Core Architecture Components
+- **🔧 RMSNorm**: Root Mean Square normalization (faster than LayerNorm)
+- **⚡ SwiGLU**: Swish-Gated Linear Units activation (better than ReLU/GELU)  
+- **📐 RoPE**: Rotary Position Embeddings (superior length extrapolation)
+- **🚫 No Bias**: Cleaner scaling, fewer parameters
+- **🎯 Causal Attention**: Autoregressive text generation
+- **💾 GQA Ready**: Grouped Query Attention for memory efficiency
+
+### Why LLaMA Architecture?
+- ✅ **Proven**: State-of-the-art results across scales
+- ✅ **Efficient**: Optimized for modern GPU training
+- ✅ **Scalable**: Consistent performance from 6M to 124M+ parameters
+- ✅ **Compatible**: Full HuggingFace Transformers support
+- ✅ **Memory-Optimal**: RMSNorm + no bias + FlashAttention-2
+
+**📖 For complete architectural details, see [ARCHITECTURE.md](ARCHITECTURE.md)**
 
 ## 📊 Model Configurations
 
@@ -105,22 +175,44 @@ Lumi/
 | **small** | 12 | 512 | 8 | ~42M | ~4 GB | 8-12h | Development, validation |
 | **base** | 24 | 768 | 12 | ~124M | ~8 GB | 24-48h | Production, performance |
 
-### Configuration Customization
+### Architecture Scaling Strategy
 
-Edit JSON files in `config/`:
+**Consistent design principles across all sizes:**
+- `head_dim = 64` (d_model / n_head)
+- `ffn_ratio = 4.0` (d_ff / d_model)
+- `vocab_size = 32768` (SentencePiece optimized)
 
+### Configuration Examples
+
+#### Standard Configuration
 ```json
 {
   "model_name": "custom",
-  "n_layer": 12,           // Number of transformer layers
-  "d_model": 512,          // Embedding dimension
-  "n_head": 8,             // Multi-head attention heads
-  "d_ff": 2048,            // Feed-forward dimension
-  "vocab_size": 32768,     // Vocabulary size (fixed)
-  "sequence_length": 1024, // Maximum context length
-  "dropout": 0.1           // Dropout for regularization
+  "n_layer": 12,           // Transformer layers
+  "d_model": 512,          // Hidden dimension  
+  "n_head": 8,             // Attention heads
+  "d_ff": 2048,            // FFN dimension (4x rule)
+  "vocab_size": 32768,     // Fixed vocabulary
+  "sequence_length": 1024, // Context length
+  "dropout": 0.1           // Regularization
 }
 ```
+
+#### Advanced Configuration (GQA)
+```json
+{
+  "model_name": "gqa_example",
+  "n_layer": 16,
+  "d_model": 640,
+  "n_head": 10,
+  "num_key_value_heads": 5,  // GQA: 2:1 ratio
+  "d_ff": 2560,
+  "sequence_length": 1536,
+  "rope_theta": 10000.0      // RoPE base frequency
+}
+```
+
+**🔧 See `config/advanced_example.json` for all available options**
 
 ## 🔄 Training Pipeline
 
@@ -157,13 +249,50 @@ Edit JSON files in `config/`:
    - REST API server with FastAPI
    - Multiple prompt templates support
 
+## 📊 Supported Datasets
+
+### Pre-training Datasets
+
+| Dataset | HuggingFace ID | License | Size | Language | Filters Applied | Notes |
+|---------|----------------|---------|------|----------|-----------------|--------|
+| **OpenWebText** | `openwebtext` | Public Domain | ~40GB, 8M docs | EN | Min 50 chars, max 10K chars, English detection, MinHash dedup | Primary recommendation |
+| **WikiText-103** | `wikitext-103-raw-v1` | CC BY-SA 3.0 | ~500MB, 103M tokens | EN | Raw version, minimal processing | Good for smaller experiments |
+| **WikiText-2** | `wikitext-2-raw-v1` | CC BY-SA 3.0 | ~12MB, 2M tokens | EN | Raw version, minimal processing | Quick testing only |
+
+### Evaluation Datasets
+
+| Dataset | HuggingFace ID | License | Size | Purpose | Usage in Lumi |
+|---------|----------------|---------|------|---------|---------------|
+| **WikiText-2** | `wikitext-2-raw-v1` | CC BY-SA 3.0 | 2M tokens | Perplexity | Primary evaluation metric |
+| **BoolQ** | `boolq` | CC BY 4.0 | 15.9K questions | Yes/No reasoning | Zero-shot capability indicator |
+
+### Fine-tuning Datasets (Optional)
+
+| Dataset | HuggingFace ID | License | Notes |
+|---------|----------------|---------|--------|
+| **Alpaca** | `tatsu-lab/alpaca` | CC BY-NC 4.0 | Instruction following |
+| **OpenAssistant** | `OpenAssistant/oasst1` | Apache 2.0 | Conversational data |
+| **ShareGPT** | Various | Varies | Multiple derivatives available |
+
+⚠️ **BookCorpus Note**: Avoid due to unclear licensing status. Use OpenWebText instead.
+
+### Dataset Preprocessing Pipeline
+
+**Applied filters for all pre-training data:**
+- **Language**: English detection with 70% threshold
+- **Length**: 50-10,000 characters (configurable)
+- **Deduplication**: SHA256 exact + MinHash fuzzy (80% similarity)
+- **Cleaning**: URLs, code blocks, control characters removed
+- **Quality**: Basic heuristics for text quality
+
 ## 📖 Detailed Usage Guide
 
 ### 1. Data Preparation
 
-#### Option A: Hugging Face Dataset
+#### Option A: Hugging Face Dataset (Recommended)
 
 ```bash
+# OpenWebText (primary recommendation)
 python scripts/01_prepare_data.py \
     --input_path "openwebtext" \
     --output_dir ./data/processed \
@@ -171,6 +300,13 @@ python scripts/01_prepare_data.py \
     --vocab_size 32768 \
     --min_length 50 \
     --max_length 10000
+
+# WikiText-103 (smaller, faster)
+python scripts/01_prepare_data.py \
+    --input_path "wikitext-103-raw-v1" \
+    --output_dir ./data/processed \
+    --use_minhash \
+    --vocab_size 32768
 ```
 
 #### Option B: Local JSON Data
@@ -219,11 +355,35 @@ accelerate launch scripts/02_pretrain.py \
     --resume_from_checkpoint ./checkpoints/pretrain/tiny/step_10000
 ```
 
+#### Deterministic Training for Reproducibility
+
+```bash
+# Enable deterministic training (default)
+accelerate launch scripts/02_pretrain.py \
+    --config config/tiny.json \
+    --data_path ./data/processed/tokenized_data.json \
+    --seed 42
+
+# Disable deterministic training (faster but non-reproducible)
+accelerate launch scripts/02_pretrain.py \
+    --config config/tiny.json \
+    --data_path ./data/processed/tokenized_data.json \
+    --no_deterministic
+```
+
+**Deterministic training features:**
+- 🎯 **Complete Seed Management**: Python, NumPy, PyTorch, CUDA
+- 🔒 **CUDNN Deterministic**: Ensures exact reproducibility
+- 💾 **RNG State Checkpoints**: Save/restore all random number generators
+- ⚡ **Resumable**: Continue training with exact same randomness
+- 🧪 **Validation**: Restart from checkpoint shows identical loss/LR (±1e-6)
+
 **Training features:**
 - ✅ **Accelerate**: Native multi-GPU distribution
 - ✅ **FlashAttention-2**: 50% memory reduction
 - ✅ **Gradient Checkpointing**: Memory/time optimization
-- ✅ **Robust Checkpoints**: Complete state saving
+- ✅ **Deterministic Training**: Complete reproducibility with seeds
+- ✅ **Robust Checkpoints**: Complete state saving with model, optimizer, scheduler, scaler, global_step, and RNG states
 - ✅ **Cosine Scheduler**: Warmup + optimal decay
 
 ### 3. Supervised Fine-tuning (SFT)
@@ -299,20 +459,61 @@ python scripts/04_dpo.py \
 - ✅ **Early Stopping**: Intelligent metric-based stopping
 - ✅ **VRAM Optimized**: Memory management for RTX 4090
 
-### 5. Complete Evaluation
+### 5. Realistic Evaluation System
+
+#### Standard Evaluation
 
 ```bash
+# Complete evaluation with quality analysis
 python scripts/05_evaluate.py \
     --model_path ./checkpoints/dpo \
     --output_dir ./evaluation_results \
-    --max_boolq_samples 100
+    --max_boolq_samples 100 \
+    --detailed_output
 ```
 
-**Automatic metrics:**
-- 📊 **WikiText-2 Perplexity**: General language quality
-- 🎯 **BoolQ Accuracy**: Yes/no question comprehension  
-- 🧪 **Smoke Tests**: Generation on custom prompts
-- 📈 **Detailed Statistics**: Time, memory, tokens/sec
+#### Fast Development Mode
+
+```bash
+# Quick evaluation for development iterations
+python scripts/05_evaluate.py \
+    --model_path ./checkpoints/pretrain/tiny/final \
+    --fast_mode \
+    --output_dir ./quick_eval
+```
+
+#### Performance Assessment
+
+```bash
+# Automatic performance assessment with recommendations
+python evaluation/assess_performance.py ./evaluation_results/evaluation_results.json
+```
+
+**Enhanced evaluation system:**
+- 🎯 **WikiText-2 Focus**: Primary benchmark on clean Wikipedia text
+- 🧪 **Categorized Smoke-Tests**: 8 categories (knowledge, reasoning, creativity, etc.)
+- 📈 **Quality Analysis**: Automatic response quality scoring (0-1.0)
+- 📉 **Performance Assessment**: Compare against expected benchmarks per model size
+- ⚡ **Fast Mode**: Reduced evaluation for rapid development
+- 📝 **Detailed Reports**: Markdown output with all responses and scores
+
+**Evaluation categories:**
+- **Basic Knowledge**: Factual questions, simple completions
+- **Language Understanding**: Sentence completion, synonyms, definitions
+- **Reasoning**: Logical questions, cause-effect, problem-solving
+- **Creativity**: Story writing, poetry, imaginative scenarios
+- **Instruction Following**: Specific format requests, counting, formatting
+- **Wikipedia Style**: Encyclopedic completions, factual continuations
+- **Conversation**: Greetings, questions, social interaction
+- **Multilingual**: Basic responses in different languages
+
+**Expected performance ranges:**
+
+| Model | Perplexity | BoolQ Accuracy | Smoke Quality | Status |
+|-------|------------|----------------|---------------|--------|
+| **tiny (6M)** | 40-80 | 55-65% | 0.35-0.60 | 🟡 Experimental |
+| **small (42M)** | 25-50 | 60-72% | 0.50-0.75 | 🟢 Development |
+| **base (124M)** | 15-35 | 65-78% | 0.60-0.85 | 🔵 Production |
 
 ### 6. Model Inference & Serving
 
@@ -481,7 +682,67 @@ python scripts/05_evaluate.py \
     --max_boolq_samples 50
 ```
 
-## 🚀 Makefile Commands
+### Deterministic Training Validation
+
+Test that training is fully reproducible:
+
+```bash
+# 1. Start training with specific seed
+accelerate launch scripts/02_pretrain.py \
+    --config config/tiny.json \
+    --data_path ./data/processed/tokenized_data.json \
+    --seed 1337 \
+    --max_steps 100 \
+    --save_steps 50
+
+# 2. Note the loss/LR at step 100, then restart from step 50
+accelerate launch scripts/02_pretrain.py \
+    --config config/tiny.json \
+    --data_path ./data/processed/tokenized_data.json \
+    --resume_from_checkpoint ./checkpoints/pretrain/tiny/step_50 \
+    --max_steps 100
+
+# 3. Loss/LR should be identical at step 100 (±1e-6 precision)
+```
+
+**Expected behavior:**
+- ✅ Identical loss values when restarting from checkpoint
+- ✅ Identical learning rate progression
+- ✅ Identical model weights and optimizer states
+- ✅ Same validation perplexity when evaluated
+
+## 🚀 Session-Based Development
+
+### Focused Development Sessions
+
+**Lumi provides time-boxed development sessions for efficient learning and iteration:**
+
+| Session | Duration | Purpose | Command |
+|---------|----------|---------|----------|
+| **Quick** | 30 min | Pipeline testing & validation | `make session-quick` |
+| **Prototype** | 2 hours | Complete tiny model development | `make session-prototype` |
+| **Experiment** | 4 hours | Small model + fine-tuning | `make session-experiment` |
+| **Evaluation** | 1 hour | Deep analysis of trained models | `make session-evaluation` |
+| **Debug** | Interactive | Problem diagnosis & fixing | `make session-debug` |
+| **Architecture** | 30 min | Configuration validation | `make session-architecture` |
+
+#### Session Examples
+
+```bash
+# First-time user: validate setup and test pipeline
+make session-quick
+
+# Learning session: train your first model
+make session-prototype
+
+# Development session: serious model training
+make session-experiment
+
+# Check current status anytime
+make session-status
+```
+
+**📝 For complete session guide, see [SESSIONS.md](SESSIONS.md)**
 
 ### Main Commands
 
@@ -496,8 +757,23 @@ python scripts/05_evaluate.py \
 | `make pretrain-base` | Base model pre-training | 24-48h |
 | `make sft` | Supervised fine-tuning | 30min-2h |
 | `make dpo` | DPO alignment | 1-4h |
-| `make evaluate` | Complete evaluation | 30min |
+| `make evaluate` | Complete realistic evaluation | 30min |
+| `make evaluate-quick` | Fast evaluation for development | 5min |
+| `make assess-performance` | Performance assessment with recommendations | Instant |
 | `make serve` | Interactive model inference | Instant |
+
+### Session Management Commands
+
+| Command | Description | Session Type |
+|---------|-------------|---------------|
+| `make session-status` | Check current development state | Status |
+| `make session-cleanup` | Clean temporary session files | Maintenance |
+| `make session-quick` | 30min: rapid testing & validation | Development |
+| `make session-prototype` | 2h: complete tiny model training | Development |
+| `make session-experiment` | 4h: small model + fine-tuning | Development |
+| `make session-evaluation` | 1h: deep model analysis | Analysis |
+| `make session-debug` | Interactive problem solving | Debug |
+| `make session-architecture` | 30min: config validation | Validation |
 
 ### Maintenance Commands
 
@@ -507,6 +783,7 @@ python scripts/05_evaluate.py \
 | `make resume-pretrain-tiny` | Resume training from checkpoint |
 | `make create-sample-datasets` | Generate test datasets |
 | `make test-pipeline` | Quick functionality test |
+| `make evaluate-detailed` | Evaluation with detailed markdown report |
 | `make backup` | Backup configs + checkpoints |
 | `make clean` | Clean temporary files |
 | `make clean-checkpoints` | Remove all checkpoints |
@@ -663,13 +940,28 @@ python scripts/06_serve.py \
 ## 🤝 Contribution and Support
 
 ### Technical Architecture
-- **Base**: Llama-like decoder-only transformer
-- **Optimizations**: FlashAttention-2, LoRA, gradient checkpointing
-- **Framework**: PyTorch 2.3+, Transformers, Accelerate, TRL
-- **Target**: RTX 4090 16GB with VRAM optimizations
 
-### Development
-This project implements the latest LLM training techniques with a focus on memory efficiency and reproducibility on personal hardware.
+**🏗️ LLaMA-based Decoder-Only Transformer**
+- **Core**: RMSNorm + SwiGLU + RoPE + No Bias (exact LLaMA architecture)
+- **Scales**: 6M → 42M → 124M parameters with consistent head_dim=64
+- **Memory**: FlashAttention-2, Gradient Checkpointing, GQA support
+- **Training**: Deterministic seeding, complete checkpoint states
+- **Framework**: PyTorch 2.3+, Transformers 4.40+, Accelerate, TRL
+- **Hardware**: RTX 4090 16GB optimized (works on smaller GPUs)
+
+**📈 Performance Characteristics**
+- **Tiny (6M)**: ~2GB VRAM, ~2000 tok/s, perfect for prototyping
+- **Small (42M)**: ~4GB VRAM, ~800 tok/s, balanced development
+- **Base (124M)**: ~8GB VRAM, ~300 tok/s, production quality
+
+**📖 Complete Documentation**: [ARCHITECTURE.md](ARCHITECTURE.md) contains detailed technical specifications, architectural choices, performance benchmarks, and comparison with original LLaMA.
+
+### Educational Focus
+This project demonstrates modern LLM training techniques with complete transparency:
+- **Reproducible**: Deterministic training with exact seed management
+- **Well-documented**: Every architectural choice explained and justified
+- **Scalable**: Same code trains 6M to 124M+ parameter models
+- **Memory-efficient**: Multiple optimization techniques for personal hardware
 
 ---
 
@@ -679,4 +971,6 @@ Educational and research project. Free to use for learning, research, and person
 
 ---
 
-**🎯 Lumi Pipeline**: From zero to a functional LLM in hours on RTX 4090 with all modern optimizations integrated.
+**🎯 Lumi Pipeline**: Complete LLaMA-like architecture from zero to functional LLM in hours, with modern optimizations and educational transparency.
+
+**🏗️ Architecture**: Precise LLaMA implementation with RMSNorm, SwiGLU, RoPE, and FlashAttention-2 - see [ARCHITECTURE.md](ARCHITECTURE.md) for full technical details.

@@ -1,0 +1,196 @@
+{
+  "description": "Evaluation configuration and benchmarks for Lumi models",
+  
+  "datasets": {
+    "primary": {
+      "wikitext-2": {
+        "name": "wikitext-2-raw-v1", 
+        "purpose": "Primary perplexity benchmark",
+        "focus": "Language modeling quality on clean Wikipedia text",
+        "expected_tokens": 245569,
+        "license": "CC BY-SA 3.0"
+      }
+    },
+    "secondary": {
+      "boolq": {
+        "name": "boolq",
+        "purpose": "Yes/no reasoning capability", 
+        "focus": "Reading comprehension and logical reasoning",
+        "size": 3270,
+        "license": "CC BY 4.0"
+      }
+    }
+  },
+  
+  "model_benchmarks": {
+    "tiny": {
+      "parameters": "6M",
+      "expected_performance": {
+        "perplexity_range": [40, 80],
+        "perplexity_target": 60,
+        "boolq_accuracy_range": [0.50, 0.65],
+        "boolq_target": 0.58,
+        "smoke_test_quality_range": [0.3, 0.6],
+        "smoke_test_target": 0.45
+      },
+      "performance_indicators": {
+        "good": {
+          "perplexity": "<50",
+          "boolq_accuracy": ">0.60",
+          "smoke_quality": ">0.50"
+        },
+        "acceptable": {
+          "perplexity": "<70", 
+          "boolq_accuracy": ">0.55",
+          "smoke_quality": ">0.40"
+        },
+        "poor": {
+          "perplexity": ">80",
+          "boolq_accuracy": "<0.50",
+          "smoke_quality": "<0.35"
+        }
+      },
+      "typical_issues": [
+        "Repetitive responses",
+        "Incomplete sentences", 
+        "Basic factual errors",
+        "Limited vocabulary usage"
+      ]
+    },
+    
+    "small": {
+      "parameters": "42M",
+      "expected_performance": {
+        "perplexity_range": [25, 50],
+        "perplexity_target": 35,
+        "boolq_accuracy_range": [0.60, 0.72],
+        "boolq_target": 0.66,
+        "smoke_test_quality_range": [0.5, 0.75],
+        "smoke_test_target": 0.62
+      },
+      "performance_indicators": {
+        "good": {
+          "perplexity": "<30",
+          "boolq_accuracy": ">0.68",
+          "smoke_quality": ">0.65"
+        },
+        "acceptable": {
+          "perplexity": "<40",
+          "boolq_accuracy": ">0.62",
+          "smoke_quality": ">0.55"
+        },
+        "poor": {
+          "perplexity": ">50",
+          "boolq_accuracy": "<0.58",
+          "smoke_quality": "<0.45"
+        }
+      },
+      "typical_issues": [
+        "Occasional repetition",
+        "Some factual inconsistencies",
+        "Limited reasoning depth"
+      ]
+    },
+    
+    "base": {
+      "parameters": "124M", 
+      "expected_performance": {
+        "perplexity_range": [15, 35],
+        "perplexity_target": 25,
+        "boolq_accuracy_range": [0.65, 0.78],
+        "boolq_target": 0.71,
+        "smoke_test_quality_range": [0.6, 0.85],
+        "smoke_test_target": 0.72
+      },
+      "performance_indicators": {
+        "good": {
+          "perplexity": "<20",
+          "boolq_accuracy": ">0.73",
+          "smoke_quality": ">0.75"
+        },
+        "acceptable": {
+          "perplexity": "<30",
+          "boolq_accuracy": ">0.68",
+          "smoke_quality": ">0.65"
+        },
+        "poor": {
+          "perplexity": ">40",
+          "boolq_accuracy": "<0.62",
+          "smoke_quality": "<0.55"
+        }
+      },
+      "typical_issues": [
+        "Rare repetition",
+        "Occasional inconsistency",
+        "Complex reasoning limitations"
+      ]
+    }
+  },
+  
+  "evaluation_modes": {
+    "quick": {
+      "description": "Fast evaluation for development",
+      "perplexity_samples": 1000,
+      "boolq_samples": 20,
+      "smoke_prompts": 5,
+      "estimated_time": "2-5 minutes"
+    },
+    "standard": {
+      "description": "Standard comprehensive evaluation",
+      "perplexity_samples": "all",
+      "boolq_samples": 100,
+      "smoke_prompts": 15,
+      "estimated_time": "10-20 minutes"
+    },
+    "thorough": {
+      "description": "Complete evaluation for final assessment",
+      "perplexity_samples": "all",
+      "boolq_samples": 500,
+      "smoke_prompts": "all_categories",
+      "estimated_time": "30-60 minutes"
+    }
+  },
+  
+  "quality_thresholds": {
+    "smoke_test_quality": {
+      "excellent": 0.8,
+      "good": 0.6,
+      "acceptable": 0.4,
+      "poor": 0.2
+    },
+    "response_length": {
+      "too_short": 5,
+      "minimum": 10,
+      "optimal_range": [20, 100],
+      "too_long": 200
+    },
+    "coherence_indicators": [
+      "Complete sentences",
+      "Logical flow",
+      "Appropriate length",
+      "Minimal repetition",
+      "Factual consistency"
+    ]
+  },
+  
+  "reporting": {
+    "key_metrics": [
+      "WikiText-2 perplexity (primary)",
+      "BoolQ accuracy (reasoning)",
+      "Smoke test quality (generation)",
+      "Evaluation speed (efficiency)"
+    ],
+    "comparison_baselines": {
+      "random_baseline": {
+        "perplexity": "~10000",
+        "boolq_accuracy": 0.5,
+        "description": "Random token selection"
+      },
+      "simple_baseline": {
+        "perplexity": "~500",
+        "boolq_accuracy": 0.52,
+        "description": "Simple n-gram model"
+      }
+    }
+  }
+}

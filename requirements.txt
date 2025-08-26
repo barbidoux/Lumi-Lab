@@ -14,3 +14,4 @@ wandb>=0.16.0
 fastapi>=0.104.0
 uvicorn>=0.24.0
 pydantic>=2.5.0
+# flash-attn>=2.5.8  # Optional: Uncomment for FlashAttention-2 (requires CUDA)

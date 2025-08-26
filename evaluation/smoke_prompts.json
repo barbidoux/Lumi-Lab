@@ -1,0 +1,91 @@
+{
+  "description": "Comprehensive smoke-tests for evaluating mini-LLM capabilities",
+  "categories": {
+    "basic_knowledge": [
+      "What is the capital of France?",
+      "How many days are in a year?",
+      "What is 2+2?",
+      "Name three primary colors.",
+      "What is the largest planet in our solar system?"
+    ],
+    "language_understanding": [
+      "Complete this sentence: The quick brown fox",
+      "What is the opposite of 'hot'?",
+      "Rephrase: 'The cat sat on the mat'",
+      "What does 'artificial intelligence' mean?",
+      "Explain what 'machine learning' is in one sentence."
+    ],
+    "reasoning": [
+      "If it's raining, should you take an umbrella?",
+      "Why do we need to sleep?",
+      "What happens when water freezes?",
+      "List two advantages of renewable energy.",
+      "Why is exercise important for health?"
+    ],
+    "creativity": [
+      "Write a short poem about winter.",
+      "Describe a perfect day in 3 sentences.",
+      "Create a name for a new planet.",
+      "What would you do if you could fly?",
+      "Invent a simple recipe using apples."
+    ],
+    "instruction_following": [
+      "List exactly 3 animals that live in the ocean.",
+      "Write 'Hello World' in uppercase.",
+      "Count from 1 to 5.",
+      "Name one benefit and one drawback of technology.",
+      "Describe the color blue without using the word 'blue'."
+    ],
+    "wikipedia_style": [
+      "Paris is the capital of",
+      "The Earth orbits around",
+      "Photosynthesis is the process by which",
+      "William Shakespeare was born in",
+      "The Great Wall of China was built to"
+    ],
+    "conversation": [
+      "Hello, how are you today?",
+      "What's your favorite hobby?",
+      "Can you help me with a problem?",
+      "Tell me something interesting.",
+      "What do you think about artificial intelligence?"
+    ],
+    "multilingual": [
+      "Bonjour, comment allez-vous?",
+      "Hola, ¿cómo estás?",
+      "Guten Tag, wie geht es Ihnen?",
+      "こんにちは、元気ですか？",
+      "Привет, как дела?"
+    ]
+  },
+  "evaluation_criteria": {
+    "coherence": "Does the response make logical sense?",
+    "relevance": "Does the response address the prompt appropriately?",
+    "fluency": "Is the text grammatically correct and well-formed?",
+    "factual_accuracy": "Are any factual claims correct?",
+    "completion": "Does the response feel complete or cut off?",
+    "repetition": "Does the model repeat itself unnecessarily?",
+    "creativity": "For creative prompts, is the response original?",
+    "safety": "Is the response appropriate and safe?"
+  },
+  "expected_behaviors": {
+    "tiny_model": {
+      "perplexity_range": [40, 80],
+      "boolq_accuracy_range": [0.55, 0.65],
+      "common_issues": ["repetition", "incomplete sentences", "factual errors"],
+      "strengths": ["basic language patterns", "simple completions"]
+    },
+    "small_model": {
+      "perplexity_range": [25, 50],
+      "boolq_accuracy_range": [0.60, 0.70],
+      "common_issues": ["occasional repetition", "some factual errors"],
+      "strengths": ["better coherence", "follows instructions", "basic reasoning"]
+    },
+    "base_model": {
+      "perplexity_range": [15, 35],
+      "boolq_accuracy_range": [0.65, 0.75],
+      "common_issues": ["rare repetition", "occasional inconsistency"],
+      "strengths": ["good coherence", "factual knowledge", "creativity", "reasoning"]
+    }
+  }
+}

@@ -235,10 +235,11 @@ def main():
             print(f"Erreur lors du calcul de perplexité: {e}")
             evaluation_results["perplexity_error"] = str(e)
     
-    # 2. Benchmark BoolQ
+    # 2. Benchmark BoolQ (adapté selon le mode)
     if not args.skip_boolq:
+        boolq_samples = min(args.max_boolq_samples, 20 if args.fast_mode else args.max_boolq_samples)
         try:
-            boolq_results = evaluate_boolq(model, tokenizer, args.max_boolq_samples)
+            boolq_results = evaluate_boolq(model, tokenizer, boolq_samples)
             evaluation_results.update(boolq_results)
             print(f"BoolQ Accuracy: {boolq_results['boolq_accuracy']:.3f} ({boolq_results['boolq_correct']}/{boolq_results['boolq_total']})")
         except Exception as e:
@@ -285,6 +286,22 @@ def main():
     with open(results_file, 'w', encoding='utf-8') as f:
         json.dump(evaluation_results, f, indent=2, ensure_ascii=False)
     
+    # Sauvegarde détaillée si demandée
+    if args.detailed_output and "smoke_tests" in evaluation_results:
+        detailed_file = output_dir / "detailed_smoke_tests.md"
+        with open(detailed_file, 'w', encoding='utf-8') as f:
+            f.write("# Smoke Tests - Résultats Détaillés\n\n")
+            
+            for i, result in enumerate(evaluation_results["smoke_tests"]["individual_results"], 1):
+                f.write(f"## Test {i}\n\n")
+                f.write(f"**Prompt:** {result['prompt']}\n\n")
+                f.write(f"**Réponse:** {result['response']}\n\n")
+                f.write(f"**Qualité:** {result['quality_scores']['overall_quality']:.3f}/1.0\n")
+                f.write(f"**Longueur:** {result['word_count']} mots\n\n")
+                f.write("---\n\n")
+        
+        print(f"Résultats détaillés dans: {detailed_file}")
+    
     # Rapport de synthèse
     print(f"\n{'='*50}")
     print("RAPPORT D'ÉVALUATION")
@@ -292,14 +309,25 @@ def main():
     print(f"Modèle: {args.model_path}")
     print(f"Paramètres: {evaluation_results['model_parameters']:,}")
     
-    if "perplexity" in evaluation_results:
+    # Gestion de la compatibilité avec l'ancien format
+    if "perplexity_metrics" in evaluation_results:
+        ppl_metrics = evaluation_results["perplexity_metrics"]
+        print(f"Perplexité (WikiText-2): {ppl_metrics['perplexity']:.2f}")
+        print(f"  └─ {ppl_metrics['total_tokens']:,} tokens @ {ppl_metrics['tokens_per_second']:.0f} tok/sec")
+    elif "perplexity" in evaluation_results:
         print(f"Perplexité (Wikitext-2): {evaluation_results['perplexity']:.2f}")
     
     if "boolq_accuracy" in evaluation_results:
         print(f"BoolQ Accuracy: {evaluation_results['boolq_accuracy']:.3f}")
     
     if "smoke_tests" in evaluation_results:
-        print(f"Smoke-tests: {len(evaluation_results['smoke_tests'])} prompts testés")
+        if "summary_stats" in evaluation_results["smoke_tests"]:
+            smoke_summary = evaluation_results["smoke_tests"]["summary_stats"]
+            print(f"Smoke-tests: {smoke_summary['total_prompts']} prompts")
+            print(f"  └─ Qualité moyenne: {smoke_summary['avg_quality_score']:.3f}/1.0")
+        else:
+            # Compatibilité avec l'ancien format
+            print(f"Smoke-tests: {len(evaluation_results['smoke_tests'])} prompts testés")
     
     print(f"\nRésultats sauvegardés dans: {results_file}")
     print(f"{'='*50}")
