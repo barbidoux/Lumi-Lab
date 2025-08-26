@@ -130,13 +130,28 @@ def main():
     print("Chargement du modèle SFT...")
     
     # Chargement du modèle SFT (avec adapters LoRA si applicable)
-    if os.path.exists(os.path.join(args.model_path, "adapter_config.json")):
-        # Modèle avec adapters LoRA
-        base_model = load_pretrained_model(args.model_path.replace("/lora_adapters", ""))
+    # Le DPOTrainer gère directement les modèles PEFT sans fusion
+    if os.path.exists(os.path.join(args.model_path, "adapter_config.json")) or \
+       os.path.exists(os.path.join(args.model_path, "adapter_model.safetensors")):
+        # Modèle avec adapters LoRA - DPOTrainer les gère nativement
+        print("Détection d'adapters LoRA - chargement direct pour DPO")
+        
+        # Chargement du modèle de base
+        if os.path.exists(os.path.join(args.model_path, "base_model")):
+            base_model_path = os.path.join(args.model_path, "base_model")
+        else:
+            # Recherche du modèle de base dans les dossiers parents
+            parent_path = Path(args.model_path).parent
+            base_model_path = str(parent_path)
+        
+        base_model = load_pretrained_model(base_model_path)
         model = PeftModel.from_pretrained(base_model, args.model_path)
-        model = model.merge_and_unload()  # Fusion des adapters pour DPO
+        
+        print("Modèle LoRA chargé - DPOTrainer utilisera les adapters directement")
+        
     else:
-        # Modèle standard
+        # Modèle standard (déjà fusionné ou sans LoRA)
+        print("Chargement d'un modèle standard")
         model = load_pretrained_model(args.model_path)
     
     # Chargement du tokenizer
@@ -203,9 +218,10 @@ def main():
     early_stopping = EarlyStoppingCallback(patience=3, min_delta=0.001)
     
     # Initialisation du trainer DPO
+    # DPOTrainer gère automatiquement les modèles PEFT et crée le modèle de référence
     trainer = DPOTrainer(
         model=model,
-        ref_model=None,  # DPOTrainer créera automatiquement une copie de référence
+        ref_model=None,  # DPOTrainer crée automatiquement une copie de référence
         args=training_args,
         beta=args.beta,
         train_dataset=train_dataset,
@@ -216,7 +232,9 @@ def main():
     )
     
     print(f"Début de l'entraînement DPO avec beta={args.beta}...")
-    print(f"Modèle de référence créé automatiquement")
+    if hasattr(model, 'peft_config'):
+        print("Mode DPO avec adapters LoRA - optimisation VRAM activée")
+    print(f"Modèle de référence créé automatiquement par DPOTrainer")
     
     # Entraînement avec monitoring des métriques
     trainer.train()

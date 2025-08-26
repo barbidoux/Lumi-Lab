@@ -12,6 +12,7 @@ import re
 from pathlib import Path
 from typing import Dict, List, Set
 
+import numpy as np
 import sentencepiece as spm
 from datasets import Dataset, load_dataset
 from tqdm import tqdm
@@ -65,22 +66,105 @@ def filter_by_length(text: str, min_length: int = 50, max_length: int = 10000) -
 
 
 def compute_hash(text: str) -> str:
-    """Calcule le hash MD5 d'un texte pour la déduplication."""
-    return hashlib.md5(text.encode('utf-8')).hexdigest()
+    """Calcule le hash SHA256 d'un texte pour la déduplication."""
+    return hashlib.sha256(text.encode('utf-8')).hexdigest()
 
 
-def deduplicate_texts(texts: List[str]) -> List[str]:
-    """Supprime les doublons basés sur le hash MD5."""
-    seen_hashes: Set[str] = set()
-    deduplicated = []
+class MinHashDeduplicator:
+    """Déduplicateur utilisant MinHash pour la détection de doublons flous."""
     
-    for text in tqdm(texts, desc="Déduplication"):
+    def __init__(self, num_perm: int = 128, threshold: float = 0.8, shingle_size: int = 3):
+        self.num_perm = num_perm
+        self.threshold = threshold
+        self.shingle_size = shingle_size
+        self.seen_signatures = []
+        self.seen_hashes = set()
+    
+    def _get_shingles(self, text: str) -> Set[str]:
+        """Génère des shingles (n-grammes de caractères) du texte."""
+        text = text.lower().replace(' ', '')
+        return {text[i:i+self.shingle_size] for i in range(len(text) - self.shingle_size + 1)}
+    
+    def _compute_minhash(self, shingles: Set[str]) -> List[int]:
+        """Calcule la signature MinHash d'un ensemble de shingles."""
+        if not shingles:
+            return [0] * self.num_perm
+        
+        # Utilisation de hash functions simples basées sur des nombres premiers
+        primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47]
+        signature = []
+        
+        for i in range(self.num_perm):
+            prime_a = primes[i % len(primes)]
+            prime_b = primes[(i + 1) % len(primes)]
+            
+            min_hash = float('inf')
+            for shingle in shingles:
+                hash_val = hash((shingle, prime_a, prime_b)) % (2**32)
+                min_hash = min(min_hash, hash_val)
+            
+            signature.append(min_hash if min_hash != float('inf') else 0)
+        
+        return signature
+    
+    def _jaccard_similarity(self, sig1: List[int], sig2: List[int]) -> float:
+        """Calcule la similarité Jaccard estimée entre deux signatures."""
+        if len(sig1) != len(sig2):
+            return 0.0
+        return sum(1 for a, b in zip(sig1, sig2) if a == b) / len(sig1)
+    
+    def is_duplicate(self, text: str) -> bool:
+        """Vérifie si le texte est un doublon exact ou flou."""
+        # Déduplication exacte avec SHA256
         text_hash = compute_hash(text)
-        if text_hash not in seen_hashes:
-            seen_hashes.add(text_hash)
-            deduplicated.append(text)
+        if text_hash in self.seen_hashes:
+            return True
+        
+        # Déduplication floue avec MinHash
+        shingles = self._get_shingles(text)
+        if not shingles:
+            return True  # Texte vide ou trop court
+        
+        signature = self._compute_minhash(shingles)
+        
+        # Comparaison avec les signatures existantes
+        for existing_sig in self.seen_signatures:
+            similarity = self._jaccard_similarity(signature, existing_sig)
+            if similarity >= self.threshold:
+                return True
+        
+        # Ajout aux structures de données
+        self.seen_hashes.add(text_hash)
+        self.seen_signatures.append(signature)
+        
+        return False
+
+
+def deduplicate_texts(texts: List[str], use_minhash: bool = True) -> List[str]:
+    """Supprime les doublons basés sur SHA256 et optionnellement MinHash."""
+    if use_minhash:
+        print("Déduplication avec MinHash (détection de doublons flous)...")
+        deduplicator = MinHashDeduplicator(num_perm=128, threshold=0.8)
+        deduplicated = []
+        
+        for text in tqdm(texts, desc="Déduplication MinHash"):
+            if not deduplicator.is_duplicate(text):
+                deduplicated.append(text)
+        
+        return deduplicated
     
-    return deduplicated
+    else:
+        print("Déduplication exacte avec SHA256...")
+        seen_hashes: Set[str] = set()
+        deduplicated = []
+        
+        for text in tqdm(texts, desc="Déduplication SHA256"):
+            text_hash = compute_hash(text)
+            if text_hash not in seen_hashes:
+                seen_hashes.add(text_hash)
+                deduplicated.append(text)
+        
+        return deduplicated
 
 
 def train_tokenizer(texts: List[str], vocab_size: int, output_path: str) -> None:
@@ -136,6 +220,10 @@ def main():
                        help="Longueur minimale des textes")
     parser.add_argument("--max_length", type=int, default=10000,
                        help="Longueur maximale des textes")
+    parser.add_argument("--use_minhash", action="store_true",
+                       help="Utiliser MinHash pour la déduplication floue")
+    parser.add_argument("--minhash_threshold", type=float, default=0.8,
+                       help="Seuil de similarité pour MinHash (défaut: 0.8)")
     
     args = parser.parse_args()
     
@@ -172,8 +260,12 @@ def main():
     
     # Déduplication
     print("Déduplication...")
-    deduplicated_texts = deduplicate_texts(cleaned_texts)
+    deduplicated_texts = deduplicate_texts(cleaned_texts, use_minhash=args.use_minhash)
     print(f"Après déduplication: {len(deduplicated_texts)} textes")
+    
+    # Statistiques de déduplication
+    dedup_ratio = (len(cleaned_texts) - len(deduplicated_texts)) / len(cleaned_texts) * 100
+    print(f"Taux de déduplication: {dedup_ratio:.1f}%")
     
     # Entraînement du tokenizer
     tokenizer_path = str(output_dir / "tokenizer")

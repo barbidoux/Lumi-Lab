@@ -23,17 +23,37 @@ from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
 from utils.model_utils import load_pretrained_model
 
 
-def format_prompt_response(example: Dict, prompt_key: str = "prompt", response_key: str = "response") -> str:
-    """Formate un exemple en prompt-response pour l'entraînement SFT."""
+def format_prompt_response(example: Dict, prompt_key: str = "prompt", response_key: str = "response", 
+                          template: str = "instruct") -> str:
+    """Formate un exemple en prompt-response pour l'entraînement SFT.
+    
+    Args:
+        example: Dictionnaire avec les clés prompt et response
+        prompt_key: Clé pour le prompt
+        response_key: Clé pour la réponse
+        template: Template à utiliser ("instruct", "chat", "chatml")
+    """
     prompt = example[prompt_key]
     response = example[response_key]
     
-    # Format standard avec séparateurs clairs
-    formatted_text = f"### Instruction:\n{prompt}\n\n### Response:\n{response}<|endoftext|>"
+    if template == "chatml":
+        # Format ChatML recommandé: <|im_start|>user...\n<|im_end|>\n<|im_start|>assistant...\n<|im_end|>
+        formatted_text = f"<|im_start|>user\n{prompt}\n<|im_end|>\n<|im_start|>assistant\n{response}\n<|im_end|>"
+    elif template == "chat":
+        # Format conversationnel simple
+        formatted_text = f"Human: {prompt}\n\nAssistant: {response}<|endoftext|>"
+    elif template == "instruct":
+        # Format instruction (par défaut)
+        formatted_text = f"### Instruction:\n{prompt}\n\n### Response:\n{response}<|endoftext|>"
+    else:
+        # Template personnalisé ou format basique
+        formatted_text = f"{prompt}\n{response}<|endoftext|>"
+    
     return formatted_text
 
 
-def create_sft_dataset(dataset_path: str, tokenizer, max_seq_length: int = 2048) -> Dataset:
+def create_sft_dataset(dataset_path: str, tokenizer, max_seq_length: int = 2048, 
+                       prompt_template: str = "instruct") -> Dataset:
     """Crée un dataset formaté pour le SFT."""
     
     # Chargement du dataset
@@ -47,7 +67,7 @@ def create_sft_dataset(dataset_path: str, tokenizer, max_seq_length: int = 2048)
         formatted_texts = []
         for i in range(len(examples['prompt'])):
             example = {k: v[i] for k, v in examples.items()}
-            formatted_text = format_prompt_response(example)
+            formatted_text = format_prompt_response(example, template=prompt_template)
             formatted_texts.append(formatted_text)
         return {"text": formatted_texts}
     
@@ -92,6 +112,9 @@ def main():
                        help="Dossier de sortie")
     parser.add_argument("--tokenizer_path", type=str, default=None,
                        help="Chemin vers le tokenizer (optionnel)")
+    parser.add_argument("--prompt_template", type=str, default="instruct",
+                       choices=["instruct", "chat", "chatml", "custom"],
+                       help="Template de formatage des prompts (défaut: instruct)")
     
     args = parser.parse_args()
     
@@ -120,10 +143,12 @@ def main():
     model = setup_lora_model(model, config["lora_config"])
     
     # Chargement du dataset
-    print("Chargement et formatage du dataset...")
-    train_dataset = create_sft_dataset(args.dataset_path, tokenizer)
+    print(f"Chargement et formatage du dataset (template: {args.prompt_template})...")
+    train_dataset = create_sft_dataset(args.dataset_path, tokenizer, 
+                                     prompt_template=args.prompt_template)
     
     print(f"Dataset SFT: {len(train_dataset)} exemples")
+    print(f"Template utilisé: {args.prompt_template}")
     print("Exemple formaté:")
     print(train_dataset[0]["text"][:500] + "...")
     
@@ -152,8 +177,16 @@ def main():
         load_best_model_at_end=False,
     )
     
-    # Data collator pour masquer les prompts
-    response_template = "### Response:"
+    # Data collator pour masquer les prompts - template dépendant du format
+    if args.prompt_template == "chatml":
+        response_template = "<|im_start|>assistant\n"
+    elif args.prompt_template == "chat":
+        response_template = "Assistant: "
+    elif args.prompt_template == "instruct":
+        response_template = "### Response:\n"
+    else:
+        response_template = "### Response:\n"  # Fallback
+    
     collator = DataCollatorForCompletionOnlyLM(
         response_template=response_template,
         tokenizer=tokenizer,
@@ -190,7 +223,12 @@ def main():
     
     # Test rapide de génération
     print("\nTest de génération:")
-    test_prompt = "### Instruction:\nExpliquez ce qu'est l'intelligence artificielle.\n\n### Response:\n"
+    if args.prompt_template == "chatml":
+        test_prompt = "<|im_start|>user\nExpliquez ce qu'est l'intelligence artificielle.\n<|im_end|>\n<|im_start|>assistant\n"
+    elif args.prompt_template == "chat":
+        test_prompt = "Human: Expliquez ce qu'est l'intelligence artificielle.\n\nAssistant: "
+    else:
+        test_prompt = "### Instruction:\nExpliquez ce qu'est l'intelligence artificielle.\n\n### Response:\n"
     
     # Tokenisation
     inputs = tokenizer(test_prompt, return_tensors="pt", truncation=True, max_length=512)
