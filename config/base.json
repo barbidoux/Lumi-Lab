@@ -1,0 +1,11 @@
+{
+  "model_name": "base",
+  "n_layer": 24,
+  "d_model": 768,
+  "n_head": 12,
+  "d_ff": 3072,
+  "vocab_size": 32768,
+  "sequence_length": 2048,
+  "dropout": 0.1,
+  "layer_norm_epsilon": 1e-5
+}

@@ -1,0 +1,11 @@
+{
+  "model_name": "tiny",
+  "n_layer": 6,
+  "d_model": 256,
+  "n_head": 4,
+  "d_ff": 1024,
+  "vocab_size": 32768,
+  "sequence_length": 1024,
+  "dropout": 0.1,
+  "layer_norm_epsilon": 1e-5
+}
