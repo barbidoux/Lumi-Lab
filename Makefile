@@ -36,6 +36,8 @@ help:
 	@echo "  sft                  - Lance le fine-tuning supervisé"
 	@echo "  dpo                  - Lance l'alignement DPO"
 	@echo "  evaluate             - Évalue le modèle final"
+	@echo "  serve                - Lance l'interface interactive"
+	@echo "  serve-api            - Lance le serveur API"
 	@echo "  clean                - Nettoie les fichiers temporaires"
 	@echo "  clean-checkpoints    - Supprime tous les checkpoints"
 	@echo ""
@@ -158,6 +160,27 @@ evaluate:
 		--max_boolq_samples 100
 	@echo "Évaluation terminée! Résultats dans ./evaluation_results"
 
+# Inférence interactive
+.PHONY: serve
+serve:
+	@echo "Lancement du mode interactif..."
+	$(PYTHON) $(SCRIPTS_DIR)/06_serve.py \
+		--model_path $(CHECKPOINTS_DIR)/dpo \
+		--mode interactive \
+		--template chatml \
+		--temperature 0.7 \
+		--max_new_tokens 150
+
+# Serveur API
+.PHONY: serve-api
+serve-api:
+	@echo "Lancement du serveur API..."
+	$(PYTHON) $(SCRIPTS_DIR)/06_serve.py \
+		--model_path $(CHECKPOINTS_DIR)/dpo \
+		--mode api \
+		--host 127.0.0.1 \
+		--port 8000
+
 # Pipeline complet pour modèle tiny
 .PHONY: pipeline-tiny
 pipeline-tiny: prepare pretrain-tiny
@@ -165,8 +188,8 @@ pipeline-tiny: prepare pretrain-tiny
 
 # Pipeline complet avec fine-tuning (nécessite les datasets SFT et DPO)
 .PHONY: pipeline-full
-pipeline-full: prepare pretrain-tiny sft dpo evaluate
-	@echo "Pipeline complet terminé!"
+pipeline-full: prepare pretrain-tiny sft dpo evaluate serve
+	@echo "Pipeline complet terminé! Modèle prêt à l'usage."
 
 # Commandes de reprise depuis checkpoint
 .PHONY: resume-pretrain-tiny

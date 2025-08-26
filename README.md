@@ -87,7 +87,8 @@ Lumi/
 │   ├── 02_pretrain.py      # Pre-training from scratch
 │   ├── 03_sft.py          # Supervised fine-tuning with LoRA
 │   ├── 04_dpo.py          # DPO alignment
-│   └── 05_evaluate.py     # Evaluation and benchmarks
+│   ├── 05_evaluate.py     # Evaluation and benchmarks
+│   └── 06_serve.py        # Model inference server (CLI + API)
 ├── utils/                  # Shared utilities
 │   ├── dataset_utils.py   # Dataset management
 │   └── model_utils.py     # Model creation/loading
@@ -150,6 +151,11 @@ Edit JSON files in `config/`:
    - WikiText-2 perplexity
    - Zero-shot benchmarks (BoolQ)
    - Custom generation tests
+
+6. **Inference & Serving** 🚀
+   - Interactive CLI chat interface
+   - REST API server with FastAPI
+   - Multiple prompt templates support
 
 ## 📖 Detailed Usage Guide
 
@@ -308,6 +314,51 @@ python scripts/05_evaluate.py \
 - 🧪 **Smoke Tests**: Generation on custom prompts
 - 📈 **Detailed Statistics**: Time, memory, tokens/sec
 
+### 6. Model Inference & Serving
+
+#### Interactive CLI Mode
+
+```bash
+# Launch interactive chat with your trained model
+python scripts/06_serve.py \
+    --model_path ./checkpoints/dpo \
+    --mode interactive \
+    --template chatml \
+    --temperature 0.7 \
+    --max_new_tokens 150
+```
+
+#### API Server Mode
+
+```bash
+# Start FastAPI server
+python scripts/06_serve.py \
+    --model_path ./checkpoints/dpo \
+    --mode api \
+    --host 127.0.0.1 \
+    --port 8000
+```
+
+**API Usage:**
+```bash
+# Test the API with curl
+curl -X POST "http://127.0.0.1:8000/generate" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "prompt": "What is machine learning?",
+       "max_new_tokens": 100,
+       "temperature": 0.7,
+       "template": "chatml"
+     }'
+```
+
+**Serving features:**
+- ✅ **Interactive CLI**: Real-time chat interface
+- ✅ **REST API**: FastAPI-based HTTP endpoints
+- ✅ **Template Support**: ChatML, Instruct, Chat formats
+- ✅ **Configurable Generation**: All parameters adjustable
+- ✅ **Optimized Inference**: Model optimization for speed
+
 ## 🎯 RTX 4090 Optimizations
 
 ### Automatic GPU Configuration
@@ -446,6 +497,7 @@ python scripts/05_evaluate.py \
 | `make sft` | Supervised fine-tuning | 30min-2h |
 | `make dpo` | DPO alignment | 1-4h |
 | `make evaluate` | Complete evaluation | 30min |
+| `make serve` | Interactive model inference | Instant |
 
 ### Maintenance Commands
 
@@ -482,6 +534,7 @@ make install
 make create-sample-datasets
 make test-pipeline
 make evaluate
+make serve  # Interactive chat with your model
 ```
 
 ### Example 2: Complete Tiny Training
@@ -510,6 +563,9 @@ python scripts/03_sft.py \
 
 # 5. Final evaluation  
 make evaluate
+
+# 6. Chat with your model
+python scripts/06_serve.py --model_path ./checkpoints/pretrain/tiny/final --mode interactive
 ```
 
 ### Example 3: Production Base Model
@@ -547,6 +603,13 @@ python scripts/05_evaluate.py \
     --model_path ./checkpoints/dpo \
     --custom_prompts ./evaluation/comprehensive_prompts.json \
     --output_dir ./final_evaluation
+
+# 6. Deploy production API
+python scripts/06_serve.py \
+    --model_path ./checkpoints/dpo \
+    --mode api \
+    --host 0.0.0.0 \
+    --port 8000
 ```
 
 ## 🔒 Security and Best Practices
