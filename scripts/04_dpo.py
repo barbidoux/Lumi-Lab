@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Script d'alignement via Direct Preference Optimization (DPO).
-Utilise trl DPOTrainer pour aligner le modèle selon les préférences humaines.
+Alignment script via Direct Preference Optimization (DPO).
+Uses trl DPOTrainer to align the model according to human preferences.
 """
 
 import argparse
@@ -24,7 +24,7 @@ from utils.model_utils import load_pretrained_model
 
 
 def format_dpo_example(example: Dict) -> Dict:
-    """Formate un exemple DPO avec prompt, chosen et rejected."""
+    """Format a DPO example with prompt, chosen and rejected."""
     return {
         "prompt": example["prompt"],
         "chosen": example["chosen"],
@@ -33,21 +33,21 @@ def format_dpo_example(example: Dict) -> Dict:
 
 
 def create_dpo_dataset(dataset_path: str) -> Dataset:
-    """Crée un dataset formaté pour DPO."""
+    """Create a formatted dataset for DPO."""
     
-    # Chargement du dataset
+    # Load dataset
     if dataset_path.endswith(('.json', '.jsonl')):
         dataset = load_dataset('json', data_files=dataset_path)['train']
     else:
         dataset = load_dataset(dataset_path)['train']
     
-    # Vérification des colonnes requises
+    # Check required columns
     required_columns = ["prompt", "chosen", "rejected"]
     for col in required_columns:
         if col not in dataset.column_names:
-            raise ValueError(f"Colonne manquante: {col}. Dataset doit contenir: {required_columns}")
+            raise ValueError(f"Missing column: {col}. Dataset must contain: {required_columns}")
     
-    # Formatage des exemples
+    # Format examples
     def format_examples(examples):
         formatted_examples = {"prompt": [], "chosen": [], "rejected": []}
         
@@ -61,18 +61,18 @@ def create_dpo_dataset(dataset_path: str) -> Dataset:
         
         return formatted_examples
     
-    # Application du formatage
+    # Apply formatting
     formatted_dataset = dataset.map(
         format_examples,
         batched=True,
-        desc="Formatage des exemples DPO"
+        desc="Formatting DPO examples"
     )
     
     return formatted_dataset
 
 
 class EarlyStoppingCallback:
-    """Callback pour l'arrêt anticipé basé sur la loss de validation."""
+    """Callback for early stopping based on validation loss."""
     
     def __init__(self, patience: int = 3, min_delta: float = 0.001):
         self.patience = patience
@@ -93,88 +93,88 @@ class EarlyStoppingCallback:
             
             if self.patience_counter >= self.patience:
                 self.should_stop = True
-                print(f"Early stopping déclenché après {self.patience} évaluations sans amélioration")
+                print(f"Early stopping triggered after {self.patience} evaluations without improvement")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Direct Preference Optimization (DPO)")
     parser.add_argument("--model_path", type=str, required=True,
-                       help="Chemin vers le modèle SFT")
+                       help="Path to SFT model")
     parser.add_argument("--dataset_path", type=str, required=True,
-                       help="Chemin vers le dataset DPO (avec pairs chosen/rejected)")
+                       help="Path to DPO dataset (with chosen/rejected pairs)")
     parser.add_argument("--output_dir", type=str, default="./checkpoints/dpo",
-                       help="Dossier de sortie")
+                       help="Output directory")
     parser.add_argument("--tokenizer_path", type=str, default=None,
-                       help="Chemin vers le tokenizer")
+                       help="Path to tokenizer")
     parser.add_argument("--beta", type=float, default=0.1,
-                       help="Paramètre beta pour DPO")
+                       help="Beta parameter for DPO")
     parser.add_argument("--learning_rate", type=float, default=5e-7,
-                       help="Taux d'apprentissage pour DPO")
+                       help="Learning rate for DPO")
     parser.add_argument("--batch_size", type=int, default=2,
-                       help="Taille de batch")
+                       help="Batch size")
     parser.add_argument("--gradient_accumulation_steps", type=int, default=8,
-                       help="Étapes d'accumulation de gradient")
+                       help="Gradient accumulation steps")
     parser.add_argument("--num_train_epochs", type=int, default=1,
-                       help="Nombre d'époques")
+                       help="Number of epochs")
     parser.add_argument("--max_steps", type=int, default=-1,
-                       help="Nombre maximum d'étapes")
+                       help="Maximum number of steps")
     parser.add_argument("--warmup_ratio", type=float, default=0.1,
-                       help="Ratio de warmup")
+                       help="Warmup ratio")
     parser.add_argument("--max_length", type=int, default=1024,
-                       help="Longueur maximale des séquences")
+                       help="Maximum sequence length")
     parser.add_argument("--max_prompt_length", type=int, default=512,
-                       help="Longueur maximale des prompts")
+                       help="Maximum prompt length")
     
     args = parser.parse_args()
     
-    print("Chargement du modèle SFT...")
+    print("Loading SFT model...")
     
-    # Chargement du modèle SFT (avec adapters LoRA si applicable)
-    # Le DPOTrainer gère directement les modèles PEFT sans fusion
+    # Load SFT model (with LoRA adapters if applicable)
+    # DPOTrainer handles PEFT models directly without fusion
     if os.path.exists(os.path.join(args.model_path, "adapter_config.json")) or \
        os.path.exists(os.path.join(args.model_path, "adapter_model.safetensors")):
-        # Modèle avec adapters LoRA - DPOTrainer les gère nativement
-        print("Détection d'adapters LoRA - chargement direct pour DPO")
+        # Model with LoRA adapters - DPOTrainer handles them natively
+        print("LoRA adapters detected - direct loading for DPO")
         
-        # Chargement du modèle de base
+        # Load base model
         if os.path.exists(os.path.join(args.model_path, "base_model")):
             base_model_path = os.path.join(args.model_path, "base_model")
         else:
-            # Recherche du modèle de base dans les dossiers parents
+            # Search for base model in parent directories
             parent_path = Path(args.model_path).parent
             base_model_path = str(parent_path)
         
         base_model = load_pretrained_model(base_model_path)
         model = PeftModel.from_pretrained(base_model, args.model_path)
         
-        print("Modèle LoRA chargé - DPOTrainer utilisera les adapters directement")
+        print("LoRA model loaded - DPOTrainer will use adapters directly")
         
     else:
-        # Modèle standard (déjà fusionné ou sans LoRA)
-        print("Chargement d'un modèle standard")
+        # Standard model (already merged or without LoRA)
+        print("Loading standard model")
         model = load_pretrained_model(args.model_path)
     
-    # Chargement du tokenizer
+    # Load tokenizer
     if args.tokenizer_path:
         tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_path)
     else:
         tokenizer = AutoTokenizer.from_pretrained(args.model_path)
     
-    # Configuration du tokenizer
+    # Configure tokenizer
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     
-    # Chargement du dataset DPO
-    print("Chargement du dataset DPO...")
+    # Load DPO dataset
+    print("Loading DPO dataset...")
     train_dataset = create_dpo_dataset(args.dataset_path)
     
-    print(f"Dataset DPO: {len(train_dataset)} exemples")
-    print("Exemple DPO:")
+    print(f"DPO dataset: {len(train_dataset)} examples")
+    print("DPO example:")
     print(f"Prompt: {train_dataset[0]['prompt'][:100]}...")
     print(f"Chosen: {train_dataset[0]['chosen'][:100]}...")
     print(f"Rejected: {train_dataset[0]['rejected'][:100]}...")
     
-    # Division train/validation si dataset assez grand
+    # Split train/validation if dataset is large enough
     if len(train_dataset) > 100:
         train_size = int(0.9 * len(train_dataset))
         indices = list(range(len(train_dataset)))
@@ -186,7 +186,7 @@ def main():
     else:
         eval_dataset = None
     
-    # Configuration de l'entraînement
+    # Training configuration
     training_args = TrainingArguments(
         output_dir=args.output_dir,
         per_device_train_batch_size=args.batch_size,
@@ -214,14 +214,14 @@ def main():
         metric_for_best_model="eval_loss" if eval_dataset else None,
     )
     
-    # Callback pour early stopping
+    # Early stopping callback
     early_stopping = EarlyStoppingCallback(patience=3, min_delta=0.001)
     
-    # Initialisation du trainer DPO
-    # DPOTrainer gère automatiquement les modèles PEFT et crée le modèle de référence
+    # Initialize DPO trainer
+    # DPOTrainer automatically handles PEFT models and creates reference model
     trainer = DPOTrainer(
         model=model,
-        ref_model=None,  # DPOTrainer crée automatiquement une copie de référence
+        ref_model=None,  # DPOTrainer automatically creates reference copy
         args=training_args,
         beta=args.beta,
         train_dataset=train_dataset,
@@ -231,29 +231,29 @@ def main():
         max_prompt_length=args.max_prompt_length,
     )
     
-    print(f"Début de l'entraînement DPO avec beta={args.beta}...")
+    print(f"Starting DPO training with beta={args.beta}...")
     if hasattr(model, 'peft_config'):
-        print("Mode DPO avec adapters LoRA - optimisation VRAM activée")
-    print(f"Modèle de référence créé automatiquement par DPOTrainer")
+        print("DPO mode with LoRA adapters - VRAM optimization enabled")
+    print(f"Reference model created automatically by DPOTrainer")
     
-    # Entraînement avec monitoring des métriques
+    # Training with metrics monitoring
     trainer.train()
     
-    # Sauvegarde du modèle final
-    print("Sauvegarde du modèle DPO...")
+    # Save final model
+    print("Saving DPO model...")
     trainer.save_model()
     tokenizer.save_pretrained(training_args.output_dir)
     
-    print(f"Modèle DPO sauvegardé dans {training_args.output_dir}")
+    print(f"DPO model saved to {training_args.output_dir}")
     
-    # Test rapide de comparaison
-    print("\nTest de génération comparative:")
-    test_prompt = "Comment puis-je améliorer ma productivité au travail ?"
+    # Quick comparison test
+    print("\nComparative generation test:")
+    test_prompt = "How can I improve my productivity at work?"
     
-    # Tokenisation
+    # Tokenization
     inputs = tokenizer(test_prompt, return_tensors="pt", truncation=True, max_length=256)
     
-    # Génération
+    # Generation
     model.eval()
     with torch.no_grad():
         outputs = model.generate(
@@ -268,17 +268,17 @@ def main():
     
     response = tokenizer.decode(outputs[0], skip_special_tokens=True)
     print(f"Prompt: {test_prompt}")
-    print(f"Réponse DPO: {response[len(test_prompt):]}")
+    print(f"DPO response: {response[len(test_prompt):]}")
     
-    # Affichage des métriques finales
+    # Display final metrics
     if hasattr(trainer.state, 'log_history'):
         final_logs = trainer.state.log_history[-1]
-        print(f"\nMétriques finales:")
+        print(f"\nFinal metrics:")
         for key, value in final_logs.items():
             if key not in ['epoch', 'step']:
                 print(f"  {key}: {value:.4f}")
     
-    print("Entraînement DPO terminé!")
+    print("DPO training completed!")
 
 
 if __name__ == "__main__":

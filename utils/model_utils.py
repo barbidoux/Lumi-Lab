@@ -201,19 +201,19 @@ def create_model(config_dict, use_flash_attention: bool = True) -> PreTrainedMod
 
 
 def init_weights(module: nn.Module, config: AutoConfig):
-    """Initialisation des poids du modèle."""
+    """Model weight initialization."""
     if isinstance(module, nn.Linear):
-        # Initialisation Xavier/Glorot pour les couches linéaires
+        # Xavier/Glorot initialization for linear layers
         torch.nn.init.normal_(module.weight, mean=0.0, std=config.initializer_range)
         if module.bias is not None:
             torch.nn.init.zeros_(module.bias)
     elif isinstance(module, nn.Embedding):
-        # Initialisation normale pour les embeddings
+        # Normal initialization for embeddings
         torch.nn.init.normal_(module.weight, mean=0.0, std=config.initializer_range)
         if module.padding_idx is not None:
             module.weight.data[module.padding_idx].zero_()
     elif isinstance(module, nn.LayerNorm):
-        # Initialisation standard pour LayerNorm
+        # Standard initialization for LayerNorm
         torch.nn.init.zeros_(module.bias)
         torch.nn.init.ones_(module.weight)
 
@@ -221,16 +221,16 @@ def init_weights(module: nn.Module, config: AutoConfig):
 def save_checkpoint(model: PreTrainedModel, optimizer: torch.optim.Optimizer, 
                    scheduler: torch.optim.lr_scheduler._LRScheduler, 
                    global_step: int, output_dir: str, accelerator=None, scaler=None):
-    """Sauvegarde un checkpoint complet avec état déterministe."""
+    """Save a complete checkpoint with deterministic state."""
     
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
     
     if accelerator:
-        # Utilisation d'accelerate pour la sauvegarde
+        # Using accelerate for saving
         accelerator.wait_for_everyone()
         
-        # Sauvegarde du modèle
+        # Model saving
         unwrapped_model = accelerator.unwrap_model(model)
         unwrapped_model.save_pretrained(
             output_path,
@@ -238,70 +238,70 @@ def save_checkpoint(model: PreTrainedModel, optimizer: torch.optim.Optimizer,
             state_dict=accelerator.get_state_dict(model)
         )
         
-        # Sauvegarde de l'état d'entraînement
+        # Training state saving
         if accelerator.is_main_process:
             training_state = {
                 "global_step": global_step,
                 "optimizer_state_dict": optimizer.state_dict(),
                 "scheduler_state_dict": scheduler.state_dict(),
-                # État déterministe pour reproductibilité
+                # Deterministic state for reproducibility
                 "random_state": random.getstate(),
                 "numpy_random_state": np.random.get_state(),
                 "torch_random_state": torch.get_rng_state(),
                 "torch_cuda_random_state": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None,
             }
             
-            # Ajout du scaler si fourni
+            # Add scaler if provided
             if scaler is not None:
                 training_state["scaler_state_dict"] = scaler.state_dict()
             
             torch.save(training_state, output_path / "training_state.pt")
             
-            print(f"Checkpoint sauvegardé dans {output_path}")
+            print(f"Checkpoint saved to {output_path}")
     
     else:
-        # Sauvegarde standard
+        # Standard saving
         model.save_pretrained(output_path)
         
         training_state = {
             "global_step": global_step,
             "optimizer_state_dict": optimizer.state_dict(),
             "scheduler_state_dict": scheduler.state_dict(),
-            # État déterministe pour reproductibilité
+            # Deterministic state for reproducibility
             "random_state": random.getstate(),
             "numpy_random_state": np.random.get_state(),
             "torch_random_state": torch.get_rng_state(),
             "torch_cuda_random_state": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None,
         }
         
-        # Ajout du scaler si fourni
+        # Add scaler if provided
         if scaler is not None:
             training_state["scaler_state_dict"] = scaler.state_dict()
         
         torch.save(training_state, output_path / "training_state.pt")
-        print(f"Checkpoint sauvegardé dans {output_path}")
+        print(f"Checkpoint saved to {output_path}")
 
 
 def load_checkpoint(model: PreTrainedModel, optimizer: torch.optim.Optimizer,
                    scheduler: torch.optim.lr_scheduler._LRScheduler,
                    checkpoint_dir: str, accelerator=None, scaler=None) -> int:
-    """Charge un checkpoint complet avec restauration déterministe."""
+    """Load a complete checkpoint with deterministic restoration."""
     
     checkpoint_path = Path(checkpoint_dir)
     training_state_path = checkpoint_path / "training_state.pt"
     
     if not training_state_path.exists():
-        raise FileNotFoundError(f"État d'entraînement non trouvé: {training_state_path}")
+        raise FileNotFoundError(f"Training state not found: {training_state_path}")
     
-    # Chargement de l'état d'entraînement
+    # Loading training state
     training_state = torch.load(training_state_path, map_location="cpu")
     
-    # Restauration des états d'entraînement
+    # Restoring training states
     optimizer.load_state_dict(training_state["optimizer_state_dict"])
     scheduler.load_state_dict(training_state["scheduler_state_dict"])
     global_step = training_state["global_step"]
     
-    # Restauration des états aléatoires pour reproductibilité
+    # Restoring random states for reproducibility
     if "random_state" in training_state:
         random.setstate(training_state["random_state"])
     if "numpy_random_state" in training_state:
@@ -312,39 +312,39 @@ def load_checkpoint(model: PreTrainedModel, optimizer: torch.optim.Optimizer,
         if training_state["torch_cuda_random_state"] is not None:
             torch.cuda.set_rng_state_all(training_state["torch_cuda_random_state"])
     
-    # Restauration du scaler si fourni
+    # Restoring scaler if provided
     if scaler is not None and "scaler_state_dict" in training_state:
         scaler.load_state_dict(training_state["scaler_state_dict"])
-        print("État du scaler restauré")
+        print("Scaler state restored")
     
-    # Chargement du modèle
+    # Loading the model
     if checkpoint_path.exists() and (checkpoint_path / "pytorch_model.bin").exists():
         if accelerator:
-            # Utilisation d'accelerate
+            # Using accelerate
             accelerator.load_state(str(checkpoint_path))
         else:
-            # Chargement standard
+            # Standard loading
             state_dict = torch.load(checkpoint_path / "pytorch_model.bin", map_location="cpu")
             model.load_state_dict(state_dict)
     
-    print(f"Checkpoint chargé depuis {checkpoint_path}, step {global_step}")
-    print("✅ États aléatoires restaurés pour reproductibilité")
+    print(f"Checkpoint loaded from {checkpoint_path}, step {global_step}")
+    print("✅ Random states restored for reproducibility")
     return global_step
 
 
 def load_pretrained_model(model_path: str, device: str = "auto") -> PreTrainedModel:
-    """Charge un modèle pré-entraîné."""
+    """Load a pre-trained model."""
     
     model_path = Path(model_path)
     
-    # Détection du device
+    # Device detection
     if device == "auto":
         device = "cuda" if torch.cuda.is_available() else "cpu"
     
-    print(f"Chargement du modèle depuis {model_path} sur {device}...")
+    print(f"Loading model from {model_path} on {device}...")
     
     try:
-        # Tentative de chargement avec AutoModel
+        # Attempt loading with AutoModel
         model = AutoModelForCausalLM.from_pretrained(
             str(model_path),
             torch_dtype=torch.float16 if device == "cuda" else torch.float32,
@@ -357,9 +357,9 @@ def load_pretrained_model(model_path: str, device: str = "auto") -> PreTrainedMo
             model = model.to(device)
             
     except Exception as e:
-        print(f"Erreur lors du chargement avec AutoModel: {e}")
+        print(f"Error loading with AutoModel: {e}")
         
-        # Fallback: chargement manuel
+        # Fallback: manual loading
         config_path = model_path / "config.json"
         if config_path.exists():
             with open(config_path, 'r') as f:
@@ -367,7 +367,7 @@ def load_pretrained_model(model_path: str, device: str = "auto") -> PreTrainedMo
             
             model = create_model(config_dict)
             
-            # Chargement des poids si disponibles
+            # Loading weights if available
             weights_path = model_path / "pytorch_model.bin"
             if weights_path.exists():
                 state_dict = torch.load(weights_path, map_location=device)
@@ -375,30 +375,30 @@ def load_pretrained_model(model_path: str, device: str = "auto") -> PreTrainedMo
             
             model = model.to(device)
         else:
-            raise ValueError(f"Impossible de charger le modèle depuis {model_path}")
+            raise ValueError(f"Unable to load model from {model_path}")
     
-    # Activation du mode évaluation par défaut
+    # Activate evaluation mode by default
     model.eval()
     
-    print(f"Modèle chargé: {sum(p.numel() for p in model.parameters()):,} paramètres sur {device}")
+    print(f"Model loaded: {sum(p.numel() for p in model.parameters()):,} parameters on {device}")
     
     return model
 
 
 def estimate_parameters(config_dict) -> int:
     """
-    Estime le nombre de paramètres basé sur la configuration.
+    Estimate the number of parameters based on configuration.
     
-    Calcul basé sur l'architecture LLaMA:
+    Calculation based on LLaMA architecture:
     - Token embeddings: vocab_size × d_model
     - Transformer layers: n_layer × (attention + ffn + norms)
-    - Output head: d_model × vocab_size (si pas de tie_word_embeddings)
+    - Output head: d_model × vocab_size (if no tie_word_embeddings)
     
     Args:
-        config_dict: Configuration du modèle
+        config_dict: Model configuration
         
     Returns:
-        int: Nombre estimé de paramètres
+        int: Estimated number of parameters
     """
     d_model = _get_config_value(config_dict, 'd_model')
     n_layer = _get_config_value(config_dict, 'n_layer')
@@ -409,23 +409,23 @@ def estimate_parameters(config_dict) -> int:
     # Token embeddings
     token_embeddings = vocab_size * d_model
     
-    # Par couche transformer
+    # Per transformer layer
     # Attention: Q, K, V projections + output projection
     attention_params = d_model * d_model * 4  # qkv_proj + o_proj
     
-    # Feed-forward: SwiGLU a 3 projections (up, gate, down)
+    # Feed-forward: SwiGLU has 3 projections (up, gate, down)
     ffn_params = d_model * d_ff + d_ff * d_model + d_model * d_ff  # up + gate + down
     
-    # RMSNorm: seulement les paramètres d'échelle (γ)
+    # RMSNorm: only scale parameters (γ)
     norm_params = d_model * 2  # attention_norm + ffn_norm
     
-    # Total par couche
+    # Total per layer
     per_layer = attention_params + ffn_params + norm_params
     
-    # Toutes les couches
+    # All layers
     all_layers = n_layer * per_layer
     
-    # Norm finale
+    # Final norm
     final_norm = d_model
     
     # Output head (lm_head)
@@ -438,17 +438,17 @@ def estimate_parameters(config_dict) -> int:
 
 
 def get_model_size(model: PreTrainedModel) -> Dict[str, int]:
-    """Calcule la taille du modèle en paramètres et en mémoire."""
+    """Calculate model size in parameters and memory."""
     
     total_params = sum(p.numel() for p in model.parameters())
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     
-    # Estimation de la mémoire (en MB)
-    param_size = total_params * 4  # 4 bytes par paramètre float32
+    # Memory estimation (in MB)
+    param_size = total_params * 4  # 4 bytes per float32 parameter
     memory_mb = param_size / (1024 * 1024)
     
-    # Estimation de la mémoire GPU nécessaire (avec activations)
-    # Approximation: ~3-4x la taille des paramètres
+    # GPU memory estimation needed (with activations)
+    # Approximation: ~3-4x the parameter size
     gpu_memory_mb = memory_mb * 3.5
     
     return {
@@ -460,66 +460,66 @@ def get_model_size(model: PreTrainedModel) -> Dict[str, int]:
 
 
 def optimize_model_for_inference(model: PreTrainedModel, enable_torch_compile: bool = False) -> PreTrainedModel:
-    """Optimise le modèle pour l'inférence."""
+    """Optimize model for inference."""
     
-    # Mode évaluation
+    # Evaluation mode
     model.eval()
     
-    # Désactivation du calcul des gradients
+    # Disable gradient computation
     for param in model.parameters():
         param.requires_grad_(False)
     
-    # Compilation avec torch.compile si demandé (PyTorch 2.0+)
+    # Compile with torch.compile if requested (PyTorch 2.0+)
     if enable_torch_compile and hasattr(torch, 'compile'):
-        print("Compilation du modèle avec torch.compile...")
+        print("Compiling model with torch.compile...")
         model = torch.compile(model, mode="reduce-overhead")
     
-    # Fusion des opérations si possible
+    # Fuse operations if possible
     if hasattr(torch.jit, 'optimize_for_inference'):
         model = torch.jit.optimize_for_inference(model)
     
-    print("Modèle optimisé pour l'inférence")
+    print("Model optimized for inference")
     return model
 
 
 def setup_device_and_precision(model: PreTrainedModel, use_fp16: bool = True, 
                               device: str = "auto") -> PreTrainedModel:
-    """Configure le device et la précision du modèle."""
+    """Configure device and precision of the model."""
     
-    # Détection du device
+    # Device detection
     if device == "auto":
         if torch.cuda.is_available():
             device = "cuda"
-            print(f"GPU détecté: {torch.cuda.get_device_name()}")
-            print(f"Mémoire GPU disponible: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+            print(f"GPU detected: {torch.cuda.get_device_name()}")
+            print(f"Available GPU memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
         else:
             device = "cpu"
-            print("Utilisation du CPU")
+            print("Using CPU")
     
-    # Déplacement vers le device
+    # Move to device
     model = model.to(device)
     
-    # Configuration de la précision
+    # Configure precision
     if use_fp16 and device == "cuda":
         model = model.half()
-        print("Précision FP16 activée")
+        print("FP16 precision enabled")
     else:
-        print("Précision FP32 utilisée")
+        print("FP32 precision used")
     
     return model
 
 
 def estimate_training_memory(config_dict: Dict, batch_size: int = 8, 
                            sequence_length: int = 1024) -> Dict[str, float]:
-    """Estime la mémoire nécessaire pour l'entraînement."""
+    """Estimate memory required for training."""
     
-    # Calcul approximatif du nombre de paramètres
+    # Approximate calculation of parameter count
     d_model = config_dict["d_model"]
     n_layer = config_dict["n_layer"]
     vocab_size = config_dict["vocab_size"]
     d_ff = config_dict["d_ff"]
     
-    # Estimation des paramètres
+    # Parameter estimation
     embedding_params = vocab_size * d_model
     attention_params = n_layer * d_model * d_model * 4  # Q, K, V, O projections
     ffn_params = n_layer * (d_model * d_ff * 2 + d_ff + d_model)  # up, down, gate
@@ -527,19 +527,19 @@ def estimate_training_memory(config_dict: Dict, batch_size: int = 8,
     
     total_params = embedding_params + attention_params + ffn_params + norm_params
     
-    # Mémoire pour les paramètres (en GB)
-    param_memory = total_params * 4 / 1e9  # 4 bytes par float32
+    # Memory for parameters (in GB)
+    param_memory = total_params * 4 / 1e9  # 4 bytes per float32
     
-    # Mémoire pour les gradients (même taille que les paramètres)
+    # Memory for gradients (same size as parameters)
     gradient_memory = param_memory
     
-    # Mémoire pour l'optimiseur Adam (2x paramètres pour momentum et variance)
+    # Memory for Adam optimizer (2x parameters for momentum and variance)
     optimizer_memory = param_memory * 2
     
-    # Mémoire pour les activations
+    # Memory for activations
     activation_memory = batch_size * sequence_length * d_model * n_layer * 4 / 1e9
     
-    # Total avec buffer de sécurité
+    # Total with safety buffer
     total_memory = (param_memory + gradient_memory + optimizer_memory + activation_memory) * 1.2
     
     return {
@@ -553,26 +553,26 @@ def estimate_training_memory(config_dict: Dict, batch_size: int = 8,
 
 
 def print_model_summary(model: PreTrainedModel, config_dict: Optional[Dict] = None):
-    """Affiche un résumé du modèle."""
+    """Display a model summary."""
     
     size_info = get_model_size(model)
     
     print("\n" + "="*50)
-    print("RÉSUMÉ DU MODÈLE")
+    print("MODEL SUMMARY")
     print("="*50)
     
     if config_dict:
         print(f"Architecture: {config_dict.get('model_name', 'Unknown')}")
-        print(f"Couches: {config_dict.get('n_layer', 'N/A')}")
+        print(f"Layers: {config_dict.get('n_layer', 'N/A')}")
         print(f"Dimension: {config_dict.get('d_model', 'N/A')}")
-        print(f"Têtes d'attention: {config_dict.get('n_head', 'N/A')}")
-        print(f"Vocabulaire: {config_dict.get('vocab_size', 'N/A'):,}")
-        print(f"Longueur de séquence: {config_dict.get('sequence_length', 'N/A')}")
+        print(f"Attention heads: {config_dict.get('n_head', 'N/A')}")
+        print(f"Vocabulary: {config_dict.get('vocab_size', 'N/A'):,}")
+        print(f"Sequence length: {config_dict.get('sequence_length', 'N/A')}")
     
-    print(f"Paramètres totaux: {size_info['total_parameters']:,}")
-    print(f"Paramètres entraînables: {size_info['trainable_parameters']:,}")
-    print(f"Mémoire modèle: {size_info['memory_mb']} MB")
-    print(f"Mémoire GPU estimée: {size_info['estimated_gpu_memory_mb']} MB")
+    print(f"Total parameters: {size_info['total_parameters']:,}")
+    print(f"Trainable parameters: {size_info['trainable_parameters']:,}")
+    print(f"Model memory: {size_info['memory_mb']} MB")
+    print(f"Estimated GPU memory: {size_info['estimated_gpu_memory_mb']} MB")
     print(f"Device: {next(model.parameters()).device}")
     print(f"Dtype: {next(model.parameters()).dtype}")
     print("="*50 + "\n")

@@ -70,8 +70,8 @@ class ConversationalDataset(Dataset):
     def __init__(self, data_path: str, tokenizer, max_length: int = 2048, format_template: str = "chat"):
         """
         Args:
-            data_path: Chemin vers le dataset
-            tokenizer: Tokenizer à utiliser
+            data_path: Path to the dataset
+            tokenizer: Tokenizer to use
             max_length: Maximum sequence length
             format_template: Format template ("chat", "instruct", etc.)
         """

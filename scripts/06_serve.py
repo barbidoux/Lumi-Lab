@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Script d'inférence pour servir le modèle entraîné.
-Supporte à la fois le mode interactif CLI et le mode API serveur.
+Inference script to serve the trained model.
+Supports both interactive CLI mode and API server mode.
 """
 
 import argparse
@@ -20,7 +20,7 @@ from utils.model_utils import load_pretrained_model
 
 
 class GenerationRequest(BaseModel):
-    """Modèle de requête pour l'API de génération."""
+    """Request model for generation API."""
     prompt: str
     max_new_tokens: Optional[int] = 100
     temperature: Optional[float] = 0.7
@@ -31,28 +31,28 @@ class GenerationRequest(BaseModel):
 
 
 class GenerationResponse(BaseModel):
-    """Modèle de réponse pour l'API de génération."""
+    """Response model for generation API."""
     response: str
     prompt: str
     generation_config: Dict
 
 
 class ModelServer:
-    """Serveur de modèle avec génération de texte."""
+    """Model server with text generation."""
     
     def __init__(self, model_path: str, tokenizer_path: Optional[str] = None):
         """
-        Initialise le serveur avec le modèle et tokenizer.
+        Initialize server with model and tokenizer.
         
         Args:
-            model_path: Chemin vers le modèle entraîné
-            tokenizer_path: Chemin vers le tokenizer (optionnel)
+            model_path: Path to trained model
+            tokenizer_path: Path to tokenizer (optional)
         """
-        print(f"Chargement du modèle depuis {model_path}...")
+        print(f"Loading model from {model_path}...")
         self.model = load_pretrained_model(model_path)
         self.model.eval()
         
-        # Chargement du tokenizer
+        # Load tokenizer
         if tokenizer_path:
             self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
         else:
@@ -61,22 +61,22 @@ class ModelServer:
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
         
-        # Optimisations pour l'inférence
+        # Inference optimizations
         self.device = next(self.model.parameters()).device
         
-        print(f"Modèle chargé sur {self.device}")
-        print(f"Paramètres: {sum(p.numel() for p in self.model.parameters()):,}")
+        print(f"Model loaded on {self.device}")
+        print(f"Parameters: {sum(p.numel() for p in self.model.parameters()):,}")
     
     def format_prompt(self, prompt: str, template: str = "chatml") -> str:
         """
-        Formate le prompt selon le template spécifié.
+        Format prompt according to specified template.
         
         Args:
-            prompt: Prompt utilisateur
-            template: Template à utiliser
+            prompt: User prompt
+            template: Template to use
             
         Returns:
-            Prompt formaté
+            Formatted prompt
         """
         if template == "chatml":
             return f"<|im_start|>user\n{prompt}\n<|im_end|>\n<|im_start|>assistant\n"
@@ -99,19 +99,19 @@ class ModelServer:
         template: str = "chatml"
     ) -> tuple[str, str]:
         """
-        Génère une réponse à partir du prompt.
+        Generate response from prompt.
         
         Args:
             prompt: Prompt utilisateur
             max_new_tokens: Nombre maximum de nouveaux tokens
-            temperature: Température de génération
+            temperature: Generation temperature
             top_p: Top-p sampling
-            repetition_penalty: Pénalité de répétition
-            do_sample: Utiliser l'échantillonnage
+            repetition_penalty: Repetition penalty
+            do_sample: Use sampling
             template: Template de formatage
             
         Returns:
-            Tuple (prompt_formaté, réponse_générée)
+            Tuple (formatted_prompt, generated_response)
         """
         # Formatage du prompt
         formatted_prompt = self.format_prompt(prompt, template)
@@ -124,7 +124,7 @@ class ModelServer:
             max_length=2048
         ).to(self.device)
         
-        # Configuration de génération
+        # Generation configuration
         generation_config = {
             "max_new_tokens": max_new_tokens,
             "temperature": temperature,
@@ -137,7 +137,7 @@ class ModelServer:
             "no_repeat_ngram_size": 3
         }
         
-        # Génération
+        # Generation
         with torch.no_grad():
             outputs = self.model.generate(
                 inputs.input_ids,
@@ -145,53 +145,53 @@ class ModelServer:
                 **generation_config
             )
         
-        # Décodage
+        # Decoding
         full_response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         
-        # Extraction de la réponse générée (enlever le prompt)
+        # Extract generated response (remove prompt)
         generated_response = full_response[len(formatted_prompt):].strip()
         
         return formatted_prompt, generated_response
 
 
 def create_app(model_server: ModelServer) -> FastAPI:
-    """Crée l'application FastAPI."""
+    """Create FastAPI application."""
     
     app = FastAPI(
         title="Lumi Model Server",
-        description="API pour interagir avec le modèle Lumi entraîné",
+        description="API to interact with trained Lumi model",
         version="1.0.0"
     )
     
     @app.get("/")
     async def root():
-        """Endpoint racine avec informations sur le modèle."""
+        """Root endpoint with model information."""
         return {
             "message": "Lumi Model Server",
             "model_device": str(model_server.device),
             "model_parameters": sum(p.numel() for p in model_server.model.parameters()),
             "available_templates": ["chatml", "chat", "instruct", "raw"],
             "endpoints": {
-                "generate": "/generate - Génération de texte",
+                "generate": "/generate - Text generation",
                 "health": "/health - Status du serveur"
             }
         }
     
     @app.get("/health")
     async def health():
-        """Endpoint de santé du serveur."""
+        """Server health endpoint."""
         return {"status": "healthy", "device": str(model_server.device)}
     
     @app.post("/generate", response_model=GenerationResponse)
     async def generate(request: GenerationRequest):
         """
-        Endpoint de génération de texte.
+        Text generation endpoint.
         
         Args:
-            request: Requête de génération
+            request: Generation request
             
         Returns:
-            Réponse générée
+            Generated response
         """
         try:
             formatted_prompt, response = model_server.generate(
@@ -217,19 +217,19 @@ def create_app(model_server: ModelServer) -> FastAPI:
             )
         
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Erreur de génération: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Generation error: {str(e)}")
     
     return app
 
 
 def interactive_mode(model_server: ModelServer, args):
-    """Mode interactif CLI pour discuter avec le modèle."""
+    """Interactive CLI mode to chat with the model."""
     
     print("🤖 Mode interactif Lumi")
     print("=" * 50)
-    print(f"Modèle: {args.model_path}")
+    print(f"Model: {args.model_path}")
     print(f"Template: {args.template}")
-    print(f"Paramètres: temp={args.temperature}, top_p={args.top_p}")
+    print(f"Parameters: temp={args.temperature}, top_p={args.top_p}")
     print("Tapez 'exit', 'quit' ou Ctrl+C pour quitter")
     print("=" * 50)
     
@@ -242,7 +242,7 @@ def interactive_mode(model_server: ModelServer, args):
                 print("\n\nAu revoir! 👋")
                 break
             
-            # Commandes spéciales
+            # Special commands
             if user_input.lower() in ['exit', 'quit', 'q']:
                 print("Au revoir! 👋")
                 break
@@ -250,7 +250,7 @@ def interactive_mode(model_server: ModelServer, args):
             if not user_input:
                 continue
             
-            # Génération de la réponse
+            # Generate response
             print("🤖 Lumi: ", end="", flush=True)
             
             try:
@@ -267,40 +267,40 @@ def interactive_mode(model_server: ModelServer, args):
                 print(response)
                 
             except Exception as e:
-                print(f"❌ Erreur lors de la génération: {e}")
+                print(f"❌ Generation error: {e}")
     
     except KeyboardInterrupt:
         print("\n\nAu revoir! 👋")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Serveur d'inférence Lumi")
+    parser = argparse.ArgumentParser(description="Lumi inference server")
     
     # Arguments principaux
     parser.add_argument("--model_path", type=str, required=True,
-                       help="Chemin vers le modèle entraîné")
+                       help="Path to trained model")
     parser.add_argument("--tokenizer_path", type=str, default=None,
                        help="Chemin vers le tokenizer (optionnel)")
     parser.add_argument("--mode", type=str, default="interactive", 
                        choices=["interactive", "api"],
-                       help="Mode d'exécution: interactive ou api")
+                       help="Execution mode: interactive or api")
     
-    # Paramètres de génération
+    # Generation parameters
     parser.add_argument("--max_new_tokens", type=int, default=100,
                        help="Nombre maximum de nouveaux tokens")
     parser.add_argument("--temperature", type=float, default=0.7,
-                       help="Température de génération")
+                       help="Generation temperature")
     parser.add_argument("--top_p", type=float, default=0.9,
                        help="Top-p sampling")
     parser.add_argument("--repetition_penalty", type=float, default=1.1,
-                       help="Pénalité de répétition")
+                       help="Repetition penalty")
     parser.add_argument("--do_sample", action="store_true", default=True,
-                       help="Utiliser l'échantillonnage")
+                       help="Use sampling")
     parser.add_argument("--template", type=str, default="chatml",
                        choices=["chatml", "chat", "instruct", "raw"],
                        help="Template de formatage des prompts")
     
-    # Paramètres API
+    # API parameters
     parser.add_argument("--host", type=str, default="127.0.0.1",
                        help="Adresse IP pour le serveur API")
     parser.add_argument("--port", type=int, default=8000,
@@ -308,16 +308,16 @@ def main():
     
     args = parser.parse_args()
     
-    # Vérification du modèle
+    # Model verification
     if not Path(args.model_path).exists():
-        print(f"❌ Erreur: Modèle non trouvé à {args.model_path}")
+        print(f"❌ Error: Model not found at {args.model_path}")
         sys.exit(1)
     
-    # Initialisation du serveur de modèle
+    # Initialize model server
     try:
         model_server = ModelServer(args.model_path, args.tokenizer_path)
     except Exception as e:
-        print(f"❌ Erreur lors du chargement du modèle: {e}")
+        print(f"❌ Error loading model: {e}")
         sys.exit(1)
     
     # Lancement selon le mode
@@ -325,7 +325,7 @@ def main():
         interactive_mode(model_server, args)
     
     elif args.mode == "api":
-        print(f"🚀 Démarrage du serveur API sur {args.host}:{args.port}")
+        print(f"🚀 Starting API server on {args.host}:{args.port}")
         app = create_app(model_server)
         
         uvicorn.run(

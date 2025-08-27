@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Script d'évaluation du modèle final.
-Calcule la perplexité, effectue des benchmarks zero-shot et des smoke-tests.
+Final model evaluation script.
+Calculates perplexity, performs zero-shot benchmarks and smoke-tests.
 """
 
 import argparse
@@ -22,13 +22,13 @@ from utils.model_utils import load_pretrained_model
 
 
 def calculate_perplexity(model, tokenizer, dataset_name: str = "wikitext-2-raw-v1") -> float:
-    """Calcule la perplexité sur un dataset de référence comme Wikitext-2."""
-    print(f"Calcul de la perplexité sur {dataset_name}...")
+    """Calculate perplexity on a reference dataset like Wikitext-2."""
+    print(f"Calculating perplexity on {dataset_name}...")
     
-    # Chargement du dataset
+    # Load dataset
     dataset = load_dataset("wikitext", "wikitext-2-raw-v1")["test"]
     
-    # Préparation des données
+    # Data preparation
     def tokenize_function(examples):
         return tokenizer(
             examples["text"],
@@ -42,13 +42,13 @@ def calculate_perplexity(model, tokenizer, dataset_name: str = "wikitext-2-raw-v
         tokenize_function,
         batched=True,
         remove_columns=dataset.column_names,
-        desc="Tokenisation pour perplexité"
+        desc="Tokenization for perplexity"
     )
     
-    # Filtrage des séquences vides
+    # Filter empty sequences
     tokenized_dataset = tokenized_dataset.filter(lambda x: len(x["input_ids"]) > 10)
     
-    # Création du dataloader
+    # Create dataloader
     dataloader = DataLoader(
         tokenized_dataset,
         batch_size=1,
@@ -64,11 +64,11 @@ def calculate_perplexity(model, tokenizer, dataset_name: str = "wikitext-2-raw-v
     total_tokens = 0
     
     with torch.no_grad():
-        for batch in tqdm(dataloader, desc="Calcul perplexité"):
+        for batch in tqdm(dataloader, desc="Calculating perplexity"):
             input_ids = batch['input_ids'].to(model.device)
             attention_mask = batch['attention_mask'].to(model.device)
             
-            # Labels sont les mêmes que input_ids pour la perplexité
+            # Labels are the same as input_ids for perplexity
             labels = input_ids.clone()
             
             outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
@@ -86,8 +86,8 @@ def calculate_perplexity(model, tokenizer, dataset_name: str = "wikitext-2-raw-v
 
 
 def evaluate_boolq(model, tokenizer, max_samples: int = 100) -> Dict[str, float]:
-    """Évalue le modèle sur BoolQ (Yes/No questions)."""
-    print(f"Évaluation BoolQ (max {max_samples} échantillons)...")
+    """Evaluate model on BoolQ (Yes/No questions)."""
+    print(f"BoolQ evaluation (max {max_samples} samples)...")
     
     # Chargement du dataset BoolQ
     dataset = load_dataset("boolq")["validation"]
@@ -112,7 +112,7 @@ def evaluate_boolq(model, tokenizer, max_samples: int = 100) -> Dict[str, float]
             inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=800)
             inputs = {k: v.to(model.device) for k, v in inputs.items()}
             
-            # Génération des probabilités pour "Yes" et "No"
+            # Generate probabilities for "Yes" and "No"
             yes_token = tokenizer.encode("Yes", add_special_tokens=False)[0]
             no_token = tokenizer.encode("No", add_special_tokens=False)[0]
             
@@ -120,11 +120,11 @@ def evaluate_boolq(model, tokenizer, max_samples: int = 100) -> Dict[str, float]
             outputs = model(**inputs)
             logits = outputs.logits[0, -1]  # Logits pour le dernier token
             
-            # Probabilités pour Yes/No
+            # Probabilities for Yes/No
             yes_prob = torch.softmax(logits, dim=0)[yes_token].item()
             no_prob = torch.softmax(logits, dim=0)[no_token].item()
             
-            # Prédiction
+            # Prediction
             predicted_answer = yes_prob > no_prob
             
             if predicted_answer == answer:
@@ -137,7 +137,7 @@ def evaluate_boolq(model, tokenizer, max_samples: int = 100) -> Dict[str, float]
 
 def run_smoke_tests(model, tokenizer, test_prompts: List[str]) -> List[Dict[str, str]]:
     """Effectue des smoke-tests avec une liste de prompts."""
-    print("Exécution des smoke-tests...")
+    print("Running smoke-tests...")
     
     results = []
     model.eval()
@@ -161,10 +161,10 @@ def run_smoke_tests(model, tokenizer, test_prompts: List[str]) -> List[Dict[str,
             inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
             inputs = {k: v.to(model.device) for k, v in inputs.items()}
             
-            # Génération
+            # Generation
             outputs = model.generate(inputs.input_ids, **generation_config)
             
-            # Décodage
+            # Decoding
             response = tokenizer.decode(outputs[0], skip_special_tokens=True)
             generated_text = response[len(prompt):].strip()
             
@@ -175,35 +175,35 @@ def run_smoke_tests(model, tokenizer, test_prompts: List[str]) -> List[Dict[str,
             }
             results.append(result)
             
-            print(f"Réponse: {generated_text}")
+            print(f"Response: {generated_text}")
     
     return results
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Évaluation complète du modèle")
+    parser = argparse.ArgumentParser(description="Complete model evaluation")
     parser.add_argument("--model_path", type=str, required=True,
-                       help="Chemin vers le modèle à évaluer")
+                       help="Path to model to evaluate")
     parser.add_argument("--tokenizer_path", type=str, default=None,
                        help="Chemin vers le tokenizer")
     parser.add_argument("--output_dir", type=str, default="./evaluation_results",
-                       help="Dossier pour sauvegarder les résultats")
+                       help="Directory to save results")
     parser.add_argument("--skip_perplexity", action="store_true",
-                       help="Ignorer le calcul de perplexité")
+                       help="Skip perplexity calculation")
     parser.add_argument("--skip_boolq", action="store_true",
-                       help="Ignorer l'évaluation BoolQ")
+                       help="Skip BoolQ evaluation")
     parser.add_argument("--max_boolq_samples", type=int, default=100,
-                       help="Nombre max d'échantillons BoolQ")
+                       help="Maximum number of BoolQ samples")
     parser.add_argument("--custom_prompts", type=str, default=None,
-                       help="Fichier JSON avec des prompts personnalisés")
+                       help="JSON file with custom prompts")
     
     args = parser.parse_args()
     
-    # Création du dossier de sortie
+    # Create output directory
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    print("Chargement du modèle...")
+    print("Loading model...")
     model = load_pretrained_model(args.model_path)
     
     # Chargement du tokenizer
@@ -215,27 +215,27 @@ def main():
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     
-    print(f"Modèle: {sum(p.numel() for p in model.parameters()):,} paramètres")
+    print(f"Model: {sum(p.numel() for p in model.parameters()):,} parameters")
     print(f"Device: {model.device}")
     
-    # Structure pour stocker tous les résultats
+    # Structure to store all results
     evaluation_results = {
         "model_path": args.model_path,
         "model_parameters": sum(p.numel() for p in model.parameters()),
         "device": str(model.device)
     }
     
-    # 1. Calcul de la perplexité
+    # 1. Calculate perplexity
     if not args.skip_perplexity:
         try:
             perplexity = calculate_perplexity(model, tokenizer)
             evaluation_results["perplexity"] = perplexity
-            print(f"Perplexité (Wikitext-2): {perplexity:.2f}")
+            print(f"Perplexity (Wikitext-2): {perplexity:.2f}")
         except Exception as e:
-            print(f"Erreur lors du calcul de perplexité: {e}")
+            print(f"Error calculating perplexity: {e}")
             evaluation_results["perplexity_error"] = str(e)
     
-    # 2. Benchmark BoolQ (adapté selon le mode)
+    # 2. BoolQ benchmark (adapted according to mode)
     if not args.skip_boolq:
         boolq_samples = min(args.max_boolq_samples, 20 if args.fast_mode else args.max_boolq_samples)
         try:
@@ -243,17 +243,17 @@ def main():
             evaluation_results.update(boolq_results)
             print(f"BoolQ Accuracy: {boolq_results['boolq_accuracy']:.3f} ({boolq_results['boolq_correct']}/{boolq_results['boolq_total']})")
         except Exception as e:
-            print(f"Erreur lors de l'évaluation BoolQ: {e}")
+            print(f"Error during BoolQ evaluation: {e}")
             evaluation_results["boolq_error"] = str(e)
     
     # 3. Smoke-tests
-    # Prompts par défaut
+    # Default prompts
     default_prompts = [
         "Qu'est-ce que l'intelligence artificielle ?",
         "Expliquez le concept de machine learning en termes simples.",
-        "Comment fonctionne un réseau de neurones ?",
-        "Quels sont les avantages et inconvénients de l'IA ?",
-        "Décrivez l'impact de l'IA sur la société moderne.",
+        "How does a neural network work?",
+        "What are the advantages and disadvantages of AI?",
+        "Describe the impact of AI on modern society.",
         "What is the capital of France?",
         "Write a short story about a robot.",
         "Explain quantum computing to a 10-year-old.",
@@ -261,7 +261,7 @@ def main():
         "How do you make a good cup of coffee?"
     ]
     
-    # Chargement des prompts personnalisés si fournis
+    # Load custom prompts if provided
     if args.custom_prompts:
         with open(args.custom_prompts, 'r', encoding='utf-8') as f:
             custom_data = json.load(f)
@@ -272,50 +272,50 @@ def main():
     else:
         test_prompts = default_prompts
     
-    # Exécution des smoke-tests
+    # Run smoke-tests
     try:
         smoke_results = run_smoke_tests(model, tokenizer, test_prompts)
         evaluation_results["smoke_tests"] = smoke_results
-        print(f"\nSmoke-tests terminés: {len(smoke_results)} prompts testés")
+        print(f"\nSmoke-tests completed: {len(smoke_results)} prompts tested")
     except Exception as e:
         print(f"Erreur lors des smoke-tests: {e}")
         evaluation_results["smoke_tests_error"] = str(e)
     
-    # Sauvegarde des résultats
+    # Save results
     results_file = output_dir / "evaluation_results.json"
     with open(results_file, 'w', encoding='utf-8') as f:
         json.dump(evaluation_results, f, indent=2, ensure_ascii=False)
     
-    # Sauvegarde détaillée si demandée
+    # Detailed save if requested
     if args.detailed_output and "smoke_tests" in evaluation_results:
         detailed_file = output_dir / "detailed_smoke_tests.md"
         with open(detailed_file, 'w', encoding='utf-8') as f:
-            f.write("# Smoke Tests - Résultats Détaillés\n\n")
+            f.write("# Smoke Tests - Detailed Results\n\n")
             
             for i, result in enumerate(evaluation_results["smoke_tests"]["individual_results"], 1):
                 f.write(f"## Test {i}\n\n")
                 f.write(f"**Prompt:** {result['prompt']}\n\n")
-                f.write(f"**Réponse:** {result['response']}\n\n")
-                f.write(f"**Qualité:** {result['quality_scores']['overall_quality']:.3f}/1.0\n")
+                f.write(f"**Response:** {result['response']}\n\n")
+                f.write(f"**Quality:** {result['quality_scores']['overall_quality']:.3f}/1.0\n")
                 f.write(f"**Longueur:** {result['word_count']} mots\n\n")
                 f.write("---\n\n")
         
-        print(f"Résultats détaillés dans: {detailed_file}")
+        print(f"Detailed results in: {detailed_file}")
     
-    # Rapport de synthèse
+    # Summary report
     print(f"\n{'='*50}")
     print("RAPPORT D'ÉVALUATION")
     print(f"{'='*50}")
-    print(f"Modèle: {args.model_path}")
-    print(f"Paramètres: {evaluation_results['model_parameters']:,}")
+    print(f"Model: {args.model_path}")
+    print(f"Parameters: {evaluation_results['model_parameters']:,}")
     
-    # Gestion de la compatibilité avec l'ancien format
+    # Handle compatibility with old format
     if "perplexity_metrics" in evaluation_results:
         ppl_metrics = evaluation_results["perplexity_metrics"]
-        print(f"Perplexité (WikiText-2): {ppl_metrics['perplexity']:.2f}")
+        print(f"Perplexity (WikiText-2): {ppl_metrics['perplexity']:.2f}")
         print(f"  └─ {ppl_metrics['total_tokens']:,} tokens @ {ppl_metrics['tokens_per_second']:.0f} tok/sec")
     elif "perplexity" in evaluation_results:
-        print(f"Perplexité (Wikitext-2): {evaluation_results['perplexity']:.2f}")
+        print(f"Perplexity (Wikitext-2): {evaluation_results['perplexity']:.2f}")
     
     if "boolq_accuracy" in evaluation_results:
         print(f"BoolQ Accuracy: {evaluation_results['boolq_accuracy']:.3f}")
@@ -324,12 +324,12 @@ def main():
         if "summary_stats" in evaluation_results["smoke_tests"]:
             smoke_summary = evaluation_results["smoke_tests"]["summary_stats"]
             print(f"Smoke-tests: {smoke_summary['total_prompts']} prompts")
-            print(f"  └─ Qualité moyenne: {smoke_summary['avg_quality_score']:.3f}/1.0")
+            print(f"  └─ Average quality: {smoke_summary['avg_quality_score']:.3f}/1.0")
         else:
-            # Compatibilité avec l'ancien format
-            print(f"Smoke-tests: {len(evaluation_results['smoke_tests'])} prompts testés")
+            # Compatibility with old format
+            print(f"Smoke-tests: {len(evaluation_results['smoke_tests'])} prompts tested")
     
-    print(f"\nRésultats sauvegardés dans: {results_file}")
+    print(f"\nResults saved to: {results_file}")
     print(f"{'='*50}")
 
 
