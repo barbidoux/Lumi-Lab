@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Script d'entraînement from scratch d'un mini-LLM.
-Utilise accelerate pour la gestion de l'entraînement et des checkpoints.
+Training script from scratch for a mini-LLM.
+Uses accelerate for training management and checkpoints.
 """
 
 import argparse
@@ -35,36 +35,36 @@ from utils.model_utils import create_model, save_checkpoint, load_checkpoint
 
 
 def set_deterministic_training(seed: int = 42):
-    """Configure l'entraînement déterministe avec seed fixe."""
-    print(f"Configuration entraînement déterministe avec seed {seed}")
+    """Configure deterministic training with fixed seed."""
+    print(f"Configuring deterministic training with seed {seed}")
     
-    # Seeds pour reproducibilité
+    # Seeds for reproducibility
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     
-    # Configuration CUDNN pour reproducibilité (plus lent mais déterministe)
+    # CUDNN configuration for reproducibility (slower but deterministic)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     
-    # Générateur pour DataLoader
+    # Generator for DataLoader
     g = torch.Generator()
     g.manual_seed(seed)
     
-    print("✅ Entraînement déterministe configuré")
+    print("✅ Deterministic training configured")
     return g
 
 
 class PretrainConfig:
-    """Configuration pour l'entraînement de pré-entraînement."""
+    """Configuration for pre-training."""
     
     def __init__(self, config_path: str):
         with open(config_path, 'r') as f:
             model_config = json.load(f)
         
-        # Paramètres du modèle
+        # Model parameters
         self.model_name = model_config['model_name']
         self.n_layer = model_config['n_layer']
         self.d_model = model_config['d_model']
@@ -74,7 +74,7 @@ class PretrainConfig:
         self.sequence_length = model_config['sequence_length']
         self.dropout = model_config.get('dropout', 0.1)
         
-        # Hyperparamètres d'entraînement (par défaut)
+        # Training hyperparameters (defaults)
         self.learning_rate = 3e-4
         self.batch_size = 8
         self.gradient_accumulation_steps = 8
@@ -91,7 +91,7 @@ class PretrainConfig:
 
 
 def calculate_perplexity(model: nn.Module, dataloader: DataLoader, device: torch.device, accelerator = None) -> float:
-    """Calcule la perplexité sur un dataset de validation."""
+    """Calculate perplexity on a validation dataset."""
     model.eval()
     
     # For FlashAttention models, temporarily switch to eager attention and float32
@@ -133,7 +133,7 @@ def calculate_perplexity(model: nn.Module, dataloader: DataLoader, device: torch
     batch_count = 0
     
     with torch.no_grad():
-        for batch in tqdm(dataloader, desc="Calcul perplexité"):
+        for batch in tqdm(dataloader, desc="Computing perplexity"):
             batch_count += 1
             input_ids = batch['input_ids'].to(device)
             attention_mask = batch['attention_mask'].to(device)
@@ -142,19 +142,19 @@ def calculate_perplexity(model: nn.Module, dataloader: DataLoader, device: torch
             outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
             loss = outputs.loss
             
-            # Convertir la loss en float32 pour éviter les problèmes numériques
+            # Convert loss to float32 to avoid numerical issues
             loss_value = float(loss.item())
             
             if accelerator and batch_count == 1:  # Debug only first batch
                 accelerator.print(f"Debug: loss_value = {loss_value}")
             
-            # Vérifier si la loss est valide
+            # Check if loss is valid
             if math.isnan(loss_value) or math.isinf(loss_value):
                 if accelerator:
                     accelerator.print(f"Debug: Skipping batch due to invalid loss: {loss_value}")
                 continue
             
-            # Compter seulement les tokens non-masqués
+            # Count only non-masked tokens
             valid_tokens = (labels != -100).sum().item()
             total_loss += loss_value * valid_tokens
             total_tokens += valid_tokens
@@ -169,14 +169,14 @@ def calculate_perplexity(model: nn.Module, dataloader: DataLoader, device: torch
     
     avg_loss = total_loss / total_tokens
     
-    # Debug: afficher la loss moyenne
+    # Debug: display average loss
     if accelerator:
         accelerator.print(f"Debug: avg_loss = {avg_loss:.4f}, total_tokens = {total_tokens}")
     else:
         print(f"Debug: avg_loss = {avg_loss:.4f}, total_tokens = {total_tokens}")
     
-    # Clamp avg_loss pour éviter overflow dans exp() 
-    # exp(20) ≈ 485M, exp(30) ≈ 10^13, largement suffisant
+    # Clamp avg_loss to avoid overflow in exp() 
+    # exp(20) ≈ 485M, exp(30) ≈ 10^13, more than sufficient
     avg_loss = min(avg_loss, 20.0)
     
     perplexity = math.exp(avg_loss)
@@ -208,10 +208,10 @@ def train_epoch(
     use_flash_attention: bool = False,
     mixed_precision: str = "no"
 ) -> tuple[int, float]:
-    """Entraîne le modèle pour une époque."""
+    """Train the model for one epoch."""
     model.train()
     total_loss = 0.0
-    progress_bar = tqdm(dataloader, desc=f"Époque {epoch}")
+    progress_bar = tqdm(dataloader, desc=f"Epoch {epoch}")
     
     for step, batch in enumerate(progress_bar):
         with accelerator.accumulate(model):
@@ -244,16 +244,16 @@ def train_epoch(
                 accelerator.print(f"Step {global_step}: loss={avg_loss:.4f}, lr={current_lr:.2e}")
                 total_loss = 0.0
             
-            # Sauvegarde des checkpoints
+            # Save checkpoints
             if global_step % config.save_steps == 0:
                 if accelerator.is_main_process:
                     checkpoint_dir = f"./checkpoints/pretrain/{config.model_name}/step_{global_step}"
                     save_checkpoint(model, optimizer, scheduler, global_step, checkpoint_dir, accelerator, scaler=None)
-                    accelerator.print(f"Checkpoint sauvegardé à l'étape {global_step}")
+                    accelerator.print(f"Checkpoint saved at step {global_step}")
         
         progress_bar.set_postfix({"loss": loss.item(), "lr": scheduler.get_last_lr()[0]})
         
-        # Arrêt anticipé si max_steps atteint
+        # Early stopping if max_steps reached
         if config.max_steps > 0 and global_step >= config.max_steps:
             break
     
@@ -261,47 +261,47 @@ def train_epoch(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Pré-entraînement d'un mini-LLM")
+    parser = argparse.ArgumentParser(description="Pre-training of a mini-LLM")
     parser.add_argument("--config", type=str, required=True,
-                       help="Chemin vers le fichier de configuration du modèle")
+                       help="Path to the model configuration file")
     parser.add_argument("--data_path", type=str, required=True,
-                       help="Chemin vers les données tokenisées")
+                       help="Path to the tokenized data")
     parser.add_argument("--output_dir", type=str, default="./checkpoints/pretrain",
-                       help="Dossier de sortie pour les checkpoints")
+                       help="Output directory for checkpoints")
     parser.add_argument("--resume_from_checkpoint", type=str, default=None,
-                       help="Chemin vers le checkpoint à reprendre")
+                       help="Path to the checkpoint to resume from")
     parser.add_argument("--learning_rate", type=float, default=3e-4,
-                       help="Taux d'apprentissage")
+                       help="Learning rate")
     parser.add_argument("--batch_size", type=int, default=8,
-                       help="Taille de batch")
+                       help="Batch size")
     parser.add_argument("--gradient_accumulation_steps", type=int, default=8,
-                       help="Étapes d'accumulation de gradient")
+                       help="Gradient accumulation steps")
     parser.add_argument("--num_train_epochs", type=int, default=1,
-                       help="Nombre d'époques d'entraînement")
+                       help="Number of training epochs")
     parser.add_argument("--max_steps", type=int, default=-1,
-                       help="Nombre maximum d'étapes (-1 pour unlimited)")
+                       help="Maximum number of steps (-1 for unlimited)")
     parser.add_argument("--warmup_steps", type=int, default=2000,
-                       help="Nombre d'étapes de warmup")
+                       help="Number of warmup steps")
     parser.add_argument("--save_steps", type=int, default=5000,
-                       help="Intervalle de sauvegarde")
+                       help="Save interval")
     parser.add_argument("--logging_steps", type=int, default=100,
-                       help="Intervalle de logging")
+                       help="Logging interval")
     parser.add_argument("--use_flash_attn", action="store_true", default=True,
-                       help="Utiliser FlashAttention-2 (défaut: True)")
+                       help="Use FlashAttention-2 (default: True)")
     parser.add_argument("--no_flash_attn", action="store_true",
-                       help="Désactiver FlashAttention-2 (force fallback SDPA)")
+                       help="Disable FlashAttention-2 (force fallback SDPA)")
     parser.add_argument("--seed", type=int, default=42,
-                       help="Seed pour la reproducibilité")
+                       help="Seed for reproducibility")
     parser.add_argument("--no_deterministic", action="store_true",
-                       help="Désactiver l'entraînement déterministe (plus rapide)")
+                       help="Disable deterministic training (faster)")
     
     args = parser.parse_args()
     
-    # Gestion FlashAttention-2 - utiliser mixed_precision d'Accelerate
+    # FlashAttention-2 management - use Accelerate's mixed_precision
     use_flash_attention = args.use_flash_attn and not args.no_flash_attn
     mixed_precision = "fp16" if use_flash_attention else "no"
     
-    # Initialisation d'accelerate  
+    # Initialize accelerate  
     from accelerate import DistributedDataParallelKwargs
     ddp_kwargs = DistributedDataParallelKwargs(find_unused_parameters=False)
     
@@ -323,20 +323,20 @@ def main():
     config.save_steps = args.save_steps
     config.logging_steps = args.logging_steps
     
-    # Configuration déterministe
+    # Deterministic configuration
     dataloader_generator = None
     if not args.no_deterministic:
         dataloader_generator = set_deterministic_training(args.seed)
     
-    # FlashAttention-2 déjà configuré plus haut
+    # FlashAttention-2 already configured above
     
-    # Création du modèle
-    accelerator.print("Création du modèle...")
+    # Model creation
+    accelerator.print("Creating model...")
     model = create_model(config, use_flash_attention=use_flash_attention)
-    accelerator.print(f"Modèle créé: {sum(p.numel() for p in model.parameters()):,} paramètres")
+    accelerator.print(f"Model created: {sum(p.numel() for p in model.parameters()):,} parameters")
     
-    # Chargement des données
-    accelerator.print("Chargement des données...")
+    # Data loading
+    accelerator.print("Loading data...")
     train_dataset = TokenizedDataset(args.data_path, config.sequence_length)
     
     # Division train/validation (90/10)
@@ -364,7 +364,7 @@ def main():
         generator=dataloader_generator
     )
     
-    # Optimiseur et scheduler
+    # Optimizer and scheduler
     optimizer = AdamW(
         model.parameters(),
         lr=config.learning_rate,
@@ -372,7 +372,7 @@ def main():
         weight_decay=config.weight_decay
     )
     
-    # Calcul du nombre total d'étapes
+    # Calculate total number of steps
     if config.max_steps > 0:
         max_train_steps = config.max_steps
     else:
@@ -385,48 +385,48 @@ def main():
         num_training_steps=max_train_steps
     )
     
-    # Préparation avec accelerate
+    # Prepare with accelerate
     model, optimizer, train_dataloader, val_dataloader, scheduler = accelerator.prepare(
         model, optimizer, train_dataloader, val_dataloader, scheduler
     )
     
-    # Reprise depuis un checkpoint si spécifié
+    # Resume from checkpoint if specified
     global_step = 0
     start_epoch = 0
     
     if args.resume_from_checkpoint:
-        accelerator.print(f"Reprise depuis {args.resume_from_checkpoint}")
+        accelerator.print(f"Resuming from {args.resume_from_checkpoint}")
         global_step = load_checkpoint(model, optimizer, scheduler, args.resume_from_checkpoint, accelerator, scaler=None)
         start_epoch = global_step // len(train_dataloader)
     
-    # Boucle d'entraînement
-    accelerator.print("Début de l'entraînement...")
+    # Training loop
+    accelerator.print("Starting training...")
     
     for epoch in range(start_epoch, config.num_train_epochs):
-        accelerator.print(f"Époque {epoch + 1}/{config.num_train_epochs}")
+        accelerator.print(f"Epoch {epoch + 1}/{config.num_train_epochs}")
         
         global_step, _ = train_epoch(
             model, train_dataloader, optimizer, scheduler, 
             accelerator, config, epoch + 1, global_step, use_flash_attention, mixed_precision
         )
         
-        # Évaluation
-        if accelerator.is_main_process and (epoch + 1) % 1 == 0:  # Évaluation chaque époque
-            accelerator.print("Évaluation...")
+        # Evaluation
+        if accelerator.is_main_process and (epoch + 1) % 1 == 0:  # Evaluation every epoch
+            accelerator.print("Evaluation...")
             perplexity = calculate_perplexity(model, val_dataloader, accelerator.device, accelerator)
-            accelerator.print(f"Perplexité de validation: {perplexity:.2f}")
+            accelerator.print(f"Validation perplexity: {perplexity:.2f}")
         
-        # Arrêt si max_steps atteint
+        # Stop if max_steps reached
         if config.max_steps > 0 and global_step >= config.max_steps:
             break
     
-    # Sauvegarde finale
+    # Final save
     if accelerator.is_main_process:
         final_dir = f"{args.output_dir}/{config.model_name}/final"
         save_checkpoint(model, optimizer, scheduler, global_step, final_dir, accelerator, scaler=None)
-        accelerator.print(f"Modèle final sauvegardé dans {final_dir}")
+        accelerator.print(f"Final model saved in {final_dir}")
     
-    accelerator.print("Entraînement terminé!")
+    accelerator.print("Training completed!")
 
 
 if __name__ == "__main__":

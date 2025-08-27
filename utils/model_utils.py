@@ -1,5 +1,5 @@
 """
-Utilitaires pour la création, le chargement et la gestion des modèles.
+Utilities for model creation, loading and management.
 """
 
 import json
@@ -23,41 +23,41 @@ from transformers import (
 
 def create_model_config(config_dict, use_flash_attention: bool = True) -> AutoConfig:
     """
-    Crée une configuration LLaMA à partir d'un dictionnaire.
+    Create a LLaMA configuration from a dictionary.
     
-    Architecture suivie: LLaMA (decoder-only transformer)
-    - RMSNorm pour la normalisation
-    - SwiGLU pour l'activation FFN
-    - RoPE pour l'encodage positionnel
-    - Pas de termes de biais
-    - Support GQA (Grouped Query Attention)
+    Architecture followed: LLaMA (decoder-only transformer)
+    - RMSNorm for normalization
+    - SwiGLU for FFN activation
+    - RoPE for positional encoding
+    - No bias terms
+    - GQA support (Grouped Query Attention)
     
     Args:
-        config_dict: Configuration du modèle avec les paramètres architecturaux
+        config_dict: Model configuration with architectural parameters
         
     Returns:
-        AutoConfig: Configuration HuggingFace compatible LLaMA
+        AutoConfig: HuggingFace compatible LLaMA configuration
     """
     
-    # Configuration LLaMA avec tous les paramètres architecturaux
+    # LLaMA configuration with all architectural parameters
     llama_config = {
-        # === Architecture de base ===
+        # === Base architecture ===
         "architectures": ["LlamaForCausalLM"],
         "model_type": "llama",
         "transformers_version": "4.40.0",
         
-        # === Dimensions du modèle ===
+        # === Model dimensions ===
         "hidden_size": _get_config_value(config_dict, "d_model"),
         "intermediate_size": _get_config_value(config_dict, "d_ff"), 
         "num_hidden_layers": _get_config_value(config_dict, "n_layer"),
         "num_attention_heads": _get_config_value(config_dict, "n_head"),
         
         # === Grouped Query Attention (GQA) ===
-        # Par défaut: MHA (num_kv_heads = num_heads)
-        # Pour GQA: réduire num_key_value_heads (ex: 4 pour 8 têtes = 2:1 ratio)
+        # Default: MHA (num_kv_heads = num_heads)
+        # For GQA: reduce num_key_value_heads (ex: 4 for 8 heads = 2:1 ratio)
         "num_key_value_heads": _get_config_value(config_dict, "num_key_value_heads", _get_config_value(config_dict, "n_head")),
         
-        # === Vocabulaire et tokens ===
+        # === Vocabulary and tokens ===
         "vocab_size": _get_config_value(config_dict, "vocab_size"),
         "max_position_embeddings": _get_config_value(config_dict, "sequence_length"),
         "bos_token_id": _get_config_value(config_dict, "bos_token_id", 1),
@@ -65,27 +65,27 @@ def create_model_config(config_dict, use_flash_attention: bool = True) -> AutoCo
         "pad_token_id": _get_config_value(config_dict, "pad_token_id", 0),
         "tie_word_embeddings": _get_config_value(config_dict, "tie_word_embeddings", False),
         
-        # === Fonctions d'activation et normalisation ===
-        "hidden_act": "silu",  # SwiGLU utilise SiLU (Swish)
+        # === Activation and normalization functions ===
+        "hidden_act": "silu",  # SwiGLU uses SiLU (Swish)
         "rms_norm_eps": _get_config_value(config_dict, "layer_norm_epsilon", 1e-5),
         
-        # === Encodage positionnel RoPE ===
+        # === RoPE positional encoding ===
         "rope_theta": _get_config_value(config_dict, "rope_theta", 10000.0),
         "rope_scaling": _get_config_value(config_dict, "rope_scaling", None),
         
-        # === Régularisation et dropout ===
+        # === Regularization and dropout ===
         "attention_dropout": _get_config_value(config_dict, "attention_dropout", _get_config_value(config_dict, "dropout", 0.0)),
         "hidden_dropout": _get_config_value(config_dict, "hidden_dropout", _get_config_value(config_dict, "dropout", 0.0)),
         "dropout": _get_config_value(config_dict, "dropout", 0.0),
         
-        # === Initialisation ===
+        # === Initialization ===
         "initializer_range": _get_config_value(config_dict, "initializer_range", 0.02),
         
-        # === Optimisations ===
+        # === Optimizations ===
         "use_cache": _get_config_value(config_dict, "use_cache", True),
         "use_flash_attention_2": _get_config_value(config_dict, "use_flash_attention_2", True),
         
-        # === Configuration technique ===
+        # === Technical configuration ===
         "torch_dtype": "float16" if use_flash_attention and detect_flash_attention()[0] else _get_config_value(config_dict, "torch_dtype", "float32"),
         "pretraining_tp": _get_config_value(config_dict, "pretraining_tp", 1),
     }
@@ -96,12 +96,12 @@ def create_model_config(config_dict, use_flash_attention: bool = True) -> AutoCo
 
 
 def detect_flash_attention() -> tuple[bool, str]:
-    """Détecte la disponibilité de FlashAttention-2."""
+    """Detect FlashAttention-2 availability."""
     try:
         import flash_attn
-        return True, f"FlashAttention-2 {flash_attn.__version__} détecté"
+        return True, f"FlashAttention-2 {flash_attn.__version__} detected"
     except ImportError:
-        return False, "FlashAttention-2 non disponible (voir installation)"
+        return False, "FlashAttention-2 not available (see installation)"
 
 
 def _get_config_value(config, key, default=None):
@@ -115,17 +115,17 @@ def _get_config_value(config, key, default=None):
 
 def create_model(config_dict, use_flash_attention: bool = True) -> PreTrainedModel:
     """
-    Crée un modèle from scratch basé sur la configuration.
+    Create a model from scratch based on configuration.
     
     Args:
-        config_dict: Configuration du modèle (depuis le JSON) ou objet PretrainConfig
-        use_flash_attention: Utiliser FlashAttention-2 si disponible
+        config_dict: Model configuration (from JSON) or PretrainConfig object
+        use_flash_attention: Use FlashAttention-2 if available
     """
     # Handle both dict and PretrainConfig object
     model_name = _get_config_value(config_dict, 'model_name')
-    print(f"🏗️  Création du modèle {model_name}...")
+    print(f"🏗️  Creating model {model_name}...")
     
-    # Affichage des détails architecturaux
+    # Display architectural details
     n_params_est = estimate_parameters(config_dict)
     d_model = _get_config_value(config_dict, 'd_model')
     n_head = _get_config_value(config_dict, 'n_head')
@@ -136,20 +136,20 @@ def create_model(config_dict, use_flash_attention: bool = True) -> PreTrainedMod
     ffn_ratio = d_ff / d_model
     
     print(f"   📊 Architecture: {n_layer} layers, {d_model} hidden, {n_head} heads")
-    print(f"   🧮 Paramètres estimés: {n_params_est:,}")
+    print(f"   🧮 Estimated parameters: {n_params_est:,}")
     print(f"   🔢 head_dim={head_dim}, ffn_ratio={ffn_ratio:.1f}x")
     
-    # Vérification GQA
+    # GQA verification
     num_kv_heads = _get_config_value(config_dict, 'num_key_value_heads', n_head)
     if num_kv_heads < n_head:
         ratio = n_head / num_kv_heads
-        print(f"   🎯 GQA activé: {n_head}:{num_kv_heads} = {ratio:.1f}:1 ratio")
+        print(f"   🎯 GQA enabled: {n_head}:{num_kv_heads} = {ratio:.1f}:1 ratio")
     
-    # Création de la configuration
+    # Configuration creation
     model_config = create_model_config(config_dict, use_flash_attention)
     
-    # Gestion de l'attention avec fallback automatique
-    attention_type = "sdpa"  # Fallback par défaut (PyTorch SDPA)
+    # Attention management with automatic fallback
+    attention_type = "sdpa"  # Default fallback (PyTorch SDPA)
     
     if use_flash_attention:
         fa_available, fa_msg = detect_flash_attention()
@@ -159,43 +159,43 @@ def create_model(config_dict, use_flash_attention: bool = True) -> PreTrainedMod
             try:
                 model_config._attn_implementation = "flash_attention_2"
                 attention_type = "flash_attention_2"
-                print("✅ FlashAttention-2 activé")
+                print("✅ FlashAttention-2 enabled")
             except Exception as e:
-                print(f"⚠️  FlashAttention-2 échec, fallback vers SDPA: {e}")
+                print(f"⚠️  FlashAttention-2 failed, fallback to SDPA: {e}")
                 model_config._attn_implementation = "sdpa"
         else:
-            print("⚠️  FlashAttention-2 non disponible, fallback vers SDPA")
+            print("⚠️  FlashAttention-2 not available, fallback to SDPA")
             model_config._attn_implementation = "sdpa"
     else:
-        print("FlashAttention-2 désactivé manuellement, utilisation SDPA")
+        print("FlashAttention-2 manually disabled, using SDPA")
         model_config._attn_implementation = "sdpa"
     
-    # Création du modèle avec gestion d'erreur
+    # Model creation with error handling
     try:
         # Create model - let Accelerate handle dtype conversion
         model = LlamaForCausalLM(model_config)
         if attention_type == "flash_attention_2":
-            print("✅ Modèle créé pour FlashAttention-2 (dtype géré par Accelerate)")
+            print("✅ Model created for FlashAttention-2 (dtype managed by Accelerate)")
         else:
-            print(f"✅ Modèle créé avec attention: {attention_type}")
+            print(f"✅ Model created with attention: {attention_type}")
             
     except Exception as e:
-        # Fallback ultime vers attention standard
-        print(f"⚠️  Erreur avec {attention_type}, fallback vers attention standard: {e}")
+        # Ultimate fallback to standard attention
+        print(f"⚠️  Error with {attention_type}, fallback to standard attention: {e}")
         model_config._attn_implementation = "eager"
         model = LlamaForCausalLM(model_config)
-        print("Attention standard activée")
+        print("Standard attention enabled")
     
-    # Initialisation des poids
+    # Weight initialization
     model.apply(lambda module: init_weights(module, model_config))
     
     actual_params = sum(p.numel() for p in model.parameters())
-    print(f"✅ Modèle créé: {actual_params:,} paramètres")
+    print(f"✅ Model created: {actual_params:,} parameters")
     print(f"⚡ Attention: {model_config._attn_implementation}")
     
-    # Comparaison avec l'estimation
+    # Comparison with estimation
     if abs(actual_params - n_params_est) / n_params_est > 0.1:
-        print(f"⚠️  Différence estimation: {n_params_est:,} → {actual_params:,} ({((actual_params/n_params_est)-1)*100:+.1f}%)")
+        print(f"⚠️  Estimation difference: {n_params_est:,} → {actual_params:,} ({((actual_params/n_params_est)-1)*100:+.1f}%)")
     
     return model
 

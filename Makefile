@@ -1,7 +1,7 @@
-# Makefile pour l'entraînement d'un mini-LLM
-# Commandes prêtes à l'emploi pour chaque phase du pipeline
+# Makefile for mini-LLM training
+# Ready-to-use commands for each pipeline phase
 
-# Variables par défaut
+# Default variables
 PYTHON := python
 ACCELERATE := accelerate launch
 DATA_DIR := ./data
@@ -11,80 +11,80 @@ CHECKPOINTS_DIR := ./checkpoints
 EVALUATION_DIR := ./evaluation
 SESSION_DIR := ./sessions
 
-# Configuration des sessions
+# Session configuration
 SESSION_TIME ?= auto
 SESSION_NAME ?= $(shell date +%Y%m%d_%H%M%S)
 SESSION_LOG := $(SESSION_DIR)/$(SESSION_NAME).log
 
-# Datasets par défaut
+# Default datasets
 RAW_DATASET := openwebtext
 PROCESSED_DATA := $(DATA_DIR)/processed/tokenized_data.json
 SFT_DATASET := $(DATA_DIR)/sft_dataset.json
 DPO_DATASET := $(DATA_DIR)/dpo_dataset.json
 
-# Configurations de modèle
+# Model configurations
 TINY_CONFIG := $(CONFIG_DIR)/tiny.json
 SMALL_CONFIG := $(CONFIG_DIR)/small.json
 BASE_CONFIG := $(CONFIG_DIR)/base.json
 SFT_CONFIG := $(CONFIG_DIR)/sft.json
 
-# Aide
+# Help
 .PHONY: help
 help:
-	@echo "🤖 Makefile pour l'entraînement d'un mini-LLM"
+	@echo "🤖 Makefile for mini-LLM training"
 	@echo ""
-	@echo "📚 SESSIONS DE DÉVELOPPEMENT (courtes et focalisées):"
-	@echo "  session-quick        - Session 30min: test rapide du pipeline"
-	@echo "  session-prototype    - Session 2h: prototype avec tiny model"
-	@echo "  session-experiment   - Session 4h: expérimentation avec small model"
-	@echo "  session-evaluation   - Session 1h: évaluation et analyse"
-	@echo "  session-debug        - Session interactive de debug"
-	@echo "  session-architecture - Validation de l'architecture"
+	@echo "📚 DEVELOPMENT SESSIONS (short and focused):"
+	@echo "  session-quick        - 30min session: rapid pipeline testing"
+	@echo "  session-prototype    - 2h session: prototype with tiny model"
+	@echo "  session-experiment   - 4h session: experimentation with small model"
+	@echo "  session-evaluation   - 1h session: evaluation and analysis"
+	@echo "  session-debug        - Interactive debugging session"
+	@echo "  session-architecture - Architecture validation"
 	@echo ""
-	@echo "🚀 COMMANDES PRINCIPALES:"
-	@echo "  install              - Installe les dépendances"
-	@echo "  prepare              - Prépare les données d'entraînement"
-	@echo "  pretrain-tiny        - Lance le pré-entraînement du modèle tiny"
-	@echo "  pretrain-small       - Lance le pré-entraînement du modèle small"
-	@echo "  pretrain-base        - Lance le pré-entraînement du modèle base"
-	@echo "  sft                  - Lance le fine-tuning supervisé"
-	@echo "  dpo                  - Lance l'alignement DPO"
+	@echo "🚀 MAIN COMMANDS:"
+	@echo "  install              - Install dependencies"
+	@echo "  prepare              - Prepare training data"
+	@echo "  pretrain-tiny        - Launch tiny model pre-training"
+	@echo "  pretrain-small       - Launch small model pre-training"
+	@echo "  pretrain-base        - Launch base model pre-training"
+	@echo "  sft                  - Launch supervised fine-tuning"
+	@echo "  dpo                  - Launch DPO alignment"
 	@echo ""
-	@echo "📊 ÉVALUATION ET ANALYSE:"
-	@echo "  evaluate             - Évaluation complète"
-	@echo "  evaluate-quick       - Évaluation rapide pour développement"
-	@echo "  assess-performance   - Analyse automatique des performances"
-	@echo "  validate-architecture - Validation de la configuration"
+	@echo "📊 EVALUATION AND ANALYSIS:"
+	@echo "  evaluate             - Complete evaluation"
+	@echo "  evaluate-quick       - Quick evaluation for development"
+	@echo "  assess-performance   - Automatic performance analysis"
+	@echo "  validate-architecture - Configuration validation"
 	@echo ""
-	@echo "🎯 INFÉRENCE ET SERVICES:"
-	@echo "  serve                - Lance l'interface interactive"
-	@echo "  serve-api            - Lance le serveur API"
+	@echo "🎯 INFERENCE AND SERVICES:"
+	@echo "  serve                - Launch interactive interface"
+	@echo "  serve-api            - Launch API server"
 	@echo ""
 	@echo "🔧 MAINTENANCE:"
-	@echo "  clean                - Nettoie les fichiers temporaires"
-	@echo "  clean-checkpoints    - Supprime tous les checkpoints"
-	@echo "  backup               - Sauvegarde configs et modèles"
-	@echo "  monitor              - Surveillance des ressources"
+	@echo "  clean                - Clean temporary files"
+	@echo "  clean-checkpoints    - Remove all checkpoints"
+	@echo "  backup               - Backup configs and models"
+	@echo "  monitor              - Resource monitoring"
 	@echo ""
-	@echo "⚙️ Variables configurables:"
-	@echo "  RAW_DATASET         - Dataset brut à utiliser (défaut: openwebtext)"
-	@echo "  SFT_DATASET         - Dataset pour SFT (défaut: $(SFT_DATASET))"
-	@echo "  DPO_DATASET         - Dataset pour DPO (défaut: $(DPO_DATASET))"
-	@echo "  MODEL_PATH          - Chemin du modèle pour évaluation"
-	@echo "  CONFIG              - Configuration à valider"
-	@echo "  SESSION_TIME        - Temps de session en minutes (défaut: auto)"
+	@echo "⚙️ Configurable variables:"
+	@echo "  RAW_DATASET         - Raw dataset to use (default: openwebtext)"
+	@echo "  SFT_DATASET         - Dataset for SFT (default: $(SFT_DATASET))"
+	@echo "  DPO_DATASET         - Dataset for DPO (default: $(DPO_DATASET))"
+	@echo "  MODEL_PATH          - Model path for evaluation"
+	@echo "  CONFIG              - Configuration to validate"
+	@echo "  SESSION_TIME        - Session time in minutes (default: auto)"
 
-# Installation des dépendances
+# Dependencies installation
 .PHONY: install
 install:
-	@echo "Installation des dépendances..."
+	@echo "Installing dependencies..."
 	pip install -r requirements.txt
-	@echo "Dépendances installées avec succès!"
+	@echo "Dependencies installed successfully!"
 
-# Préparation des données
+# Data preparation
 .PHONY: prepare
 prepare:
-	@echo "Préparation des données d'entraînement..."
+	@echo "Preparing training data..."
 	@mkdir -p $(DATA_DIR)/processed
 	$(PYTHON) $(SCRIPTS_DIR)/01_prepare_data.py \
 		--input_path $(RAW_DATASET) \
@@ -92,12 +92,12 @@ prepare:
 		--vocab_size 32768 \
 		--min_length 50 \
 		--max_length 10000
-	@echo "Données préparées dans $(DATA_DIR)/processed"
+	@echo "Data prepared in $(DATA_DIR)/processed"
 
-# Pré-entraînement modèle tiny
+# Tiny model pre-training
 .PHONY: pretrain-tiny
 pretrain-tiny:
-	@echo "Lancement du pré-entraînement du modèle tiny..."
+	@echo "Launching tiny model pre-training..."
 	@mkdir -p $(CHECKPOINTS_DIR)/pretrain/tiny
 	$(ACCELERATE) $(SCRIPTS_DIR)/02_pretrain.py \
 		--config $(TINY_CONFIG) \
@@ -110,12 +110,12 @@ pretrain-tiny:
 		--warmup_steps 1000 \
 		--save_steps 2000 \
 		--logging_steps 50
-	@echo "Pré-entraînement tiny terminé!"
+	@echo "Tiny pre-training completed!"
 
-# Pré-entraînement modèle small
+# Small model pre-training
 .PHONY: pretrain-small
 pretrain-small:
-	@echo "Lancement du pré-entraînement du modèle small..."
+	@echo "Launching small model pre-training..."
 	@mkdir -p $(CHECKPOINTS_DIR)/pretrain/small
 	$(ACCELERATE) $(SCRIPTS_DIR)/02_pretrain.py \
 		--config $(SMALL_CONFIG) \
@@ -128,12 +128,12 @@ pretrain-small:
 		--warmup_steps 2000 \
 		--save_steps 5000 \
 		--logging_steps 100
-	@echo "Pré-entraînement small terminé!"
+	@echo "Small pre-training completed!"
 
-# Pré-entraînement modèle base
+# Base model pre-training
 .PHONY: pretrain-base
 pretrain-base:
-	@echo "Lancement du pré-entraînement du modèle base..."
+	@echo "Launching base model pre-training..."
 	@mkdir -p $(CHECKPOINTS_DIR)/pretrain/base
 	$(ACCELERATE) $(SCRIPTS_DIR)/02_pretrain.py \
 		--config $(BASE_CONFIG) \
@@ -146,24 +146,24 @@ pretrain-base:
 		--warmup_steps 4000 \
 		--save_steps 10000 \
 		--logging_steps 200
-	@echo "Pré-entraînement base terminé!"
+	@echo "Base pre-training completed!"
 
-# Fine-tuning supervisé
+# Supervised fine-tuning
 .PHONY: sft
 sft:
-	@echo "Lancement du fine-tuning supervisé..."
+	@echo "Launching supervised fine-tuning..."
 	@mkdir -p $(CHECKPOINTS_DIR)/sft
 	$(PYTHON) $(SCRIPTS_DIR)/03_sft.py \
 		--model_path $(CHECKPOINTS_DIR)/pretrain/tiny/final \
 		--dataset_path $(SFT_DATASET) \
 		--config_path $(SFT_CONFIG) \
 		--output_dir $(CHECKPOINTS_DIR)/sft
-	@echo "Fine-tuning supervisé terminé!"
+	@echo "Supervised fine-tuning completed!"
 
-# Alignement DPO
+# DPO alignment
 .PHONY: dpo
 dpo:
-	@echo "Lancement de l'alignement DPO..."
+	@echo "Launching DPO alignment..."
 	@mkdir -p $(CHECKPOINTS_DIR)/dpo
 	$(PYTHON) $(SCRIPTS_DIR)/04_dpo.py \
 		--model_path $(CHECKPOINTS_DIR)/sft \
@@ -175,23 +175,23 @@ dpo:
 		--gradient_accumulation_steps 8 \
 		--num_train_epochs 1 \
 		--max_length 1024
-	@echo "Alignement DPO terminé!"
+	@echo "DPO alignment completed!"
 
-# Évaluation
+# Evaluation
 .PHONY: evaluate
 evaluate:
-	@echo "Évaluation du modèle final..."
+	@echo "Evaluating final model..."
 	@mkdir -p ./evaluation_results
 	$(PYTHON) $(SCRIPTS_DIR)/05_evaluate.py \
 		--model_path $(CHECKPOINTS_DIR)/dpo \
 		--output_dir ./evaluation_results \
 		--max_boolq_samples 100
-	@echo "Évaluation terminée! Résultats dans ./evaluation_results"
+	@echo "Evaluation completed! Results in ./evaluation_results"
 
-# Inférence interactive
+# Interactive inference
 .PHONY: serve
 serve:
-	@echo "Lancement du mode interactif..."
+	@echo "Launching interactive mode..."
 	$(PYTHON) $(SCRIPTS_DIR)/06_serve.py \
 		--model_path $(CHECKPOINTS_DIR)/dpo \
 		--mode interactive \
@@ -199,30 +199,30 @@ serve:
 		--temperature 0.7 \
 		--max_new_tokens 150
 
-# Serveur API
+# API server
 .PHONY: serve-api
 serve-api:
-	@echo "Lancement du serveur API..."
+	@echo "Launching API server..."
 	$(PYTHON) $(SCRIPTS_DIR)/06_serve.py \
 		--model_path $(CHECKPOINTS_DIR)/dpo \
 		--mode api \
 		--host 127.0.0.1 \
 		--port 8000
 
-# Pipeline complet pour modèle tiny
+# Complete pipeline for tiny model
 .PHONY: pipeline-tiny
 pipeline-tiny: prepare pretrain-tiny
-	@echo "Pipeline complet tiny terminé!"
+	@echo "Complete tiny pipeline finished!"
 
-# Pipeline complet avec fine-tuning (nécessite les datasets SFT et DPO)
+# Complete pipeline with fine-tuning (requires SFT and DPO datasets)
 .PHONY: pipeline-full
 pipeline-full: prepare pretrain-tiny sft dpo evaluate serve
-	@echo "Pipeline complet terminé! Modèle prêt à l'usage."
+	@echo "Complete pipeline finished! Model ready for use."
 
-# Commandes de reprise depuis checkpoint
+# Resume commands from checkpoint
 .PHONY: resume-pretrain-tiny
 resume-pretrain-tiny:
-	@echo "Reprise du pré-entraînement tiny depuis le dernier checkpoint..."
+	@echo "Resuming tiny pre-training from last checkpoint..."
 	$(ACCELERATE) $(SCRIPTS_DIR)/02_pretrain.py \
 		--config $(TINY_CONFIG) \
 		--data_path $(PROCESSED_DATA) \
@@ -232,10 +232,10 @@ resume-pretrain-tiny:
 		--batch_size 16 \
 		--gradient_accumulation_steps 4
 
-# Test rapide avec données synthétiques (attention standard)
+# Quick test with synthetic data (standard attention)
 .PHONY: test-pipeline
 test-pipeline:
-	@echo "Test du pipeline avec données synthétiques (attention standard)..."
+	@echo "Testing pipeline with synthetic data (standard attention)..."
 	@mkdir -p $(DATA_DIR)/test
 	@[ ! -f $(DATA_DIR)/test/tokenized_data.json ] && python -c "import json; tokens1 = list(range(1, 1251)); tokens2 = list(range(1251, 2501)); tokens3 = list(range(2501, 3751)); json.dump([tokens1, tokens2, tokens3], open('$(DATA_DIR)/test/tokenized_data.json', 'w'))" || true
 	$(PYTHON) $(SCRIPTS_DIR)/02_pretrain.py \
@@ -245,12 +245,12 @@ test-pipeline:
 		--max_steps 10 \
 		--logging_steps 5 \
 		--no_flash_attn
-	@echo "Test terminé!"
+	@echo "Test completed!"
 
-# Test rapide avec FlashAttention-2
+# Quick test with FlashAttention-2
 .PHONY: test-pipeline-flash
 test-pipeline-flash:
-	@echo "Test du pipeline avec données synthétiques (FlashAttention-2)..."
+	@echo "Testing pipeline with synthetic data (FlashAttention-2)..."
 	@mkdir -p $(DATA_DIR)/test
 	@[ ! -f $(DATA_DIR)/test/tokenized_data.json ] && python -c "import json; tokens1 = list(range(1, 1251)); tokens2 = list(range(1251, 2501)); tokens3 = list(range(2501, 3751)); json.dump([tokens1, tokens2, tokens3], open('$(DATA_DIR)/test/tokenized_data.json', 'w'))" || true
 	$(PYTHON) $(SCRIPTS_DIR)/02_pretrain.py \
@@ -260,96 +260,96 @@ test-pipeline-flash:
 		--max_steps 10 \
 		--logging_steps 5 \
 		--use_flash_attn
-	@echo "Test FlashAttention terminé!"
+	@echo "FlashAttention test completed!"
 
-# Génération d'exemples de datasets
+# Generate sample datasets
 .PHONY: create-sample-datasets
 create-sample-datasets:
-	@echo "Création d'exemples de datasets..."
+	@echo "Creating sample datasets..."
 	@mkdir -p $(DATA_DIR)
 	@echo '[' > $(SFT_DATASET)
-	@echo '  {"prompt": "Qu'\''est-ce que l'\''IA ?", "response": "L'\''intelligence artificielle est..."},' >> $(SFT_DATASET)
-	@echo '  {"prompt": "Comment ça marche ?", "response": "Cela fonctionne grâce à..."}' >> $(SFT_DATASET)
+	@echo '  {"prompt": "What is AI?", "response": "Artificial intelligence is..."},' >> $(SFT_DATASET)
+	@echo '  {"prompt": "How does it work?", "response": "It works thanks to..."}' >> $(SFT_DATASET)
 	@echo ']' >> $(SFT_DATASET)
 	
 	@echo '[' > $(DPO_DATASET)
-	@echo '  {"prompt": "Explique l'\''IA", "chosen": "L'\''IA est une technologie fascinante...", "rejected": "Je sais pas."},' >> $(DPO_DATASET)
-	@echo '  {"prompt": "Comment apprendre ?", "chosen": "Il faut étudier régulièrement...", "rejected": "C'\''est facile."}' >> $(DPO_DATASET)
+	@echo '  {"prompt": "Explain AI", "chosen": "AI is a fascinating technology...", "rejected": "I don't know."},' >> $(DPO_DATASET)
+	@echo '  {"prompt": "How to learn?", "chosen": "You need to study regularly...", "rejected": "It's easy."}' >> $(DPO_DATASET)
 	@echo ']' >> $(DPO_DATASET)
-	@echo "Datasets d'exemple créés!"
+	@echo "Sample datasets created!"
 
-# Monitoring des ressources pendant l'entraînement
+# Resource monitoring during training
 .PHONY: monitor
 monitor:
-	@echo "Surveillance des ressources système..."
+	@echo "Monitoring system resources..."
 	watch -n 2 'nvidia-smi | head -15; echo ""; ps aux | grep python | head -5; echo ""; df -h | head -5'
 
-# Nettoyage
+# Cleanup
 .PHONY: clean
 clean:
-	@echo "Nettoyage des fichiers temporaires..."
+	@echo "Cleaning temporary files..."
 	find . -type f -name "*.pyc" -delete
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	find . -type f -name "*.log" -delete
 	find . -type f -name ".DS_Store" -delete
-	@echo "Nettoyage terminé!"
+	@echo "Cleanup completed!"
 
 .PHONY: clean-checkpoints
 clean-checkpoints:
-	@echo "Suppression des checkpoints..."
+	@echo "Removing checkpoints..."
 	rm -rf $(CHECKPOINTS_DIR)
-	@echo "Checkpoints supprimés!"
+	@echo "Checkpoints removed!"
 
-# Vérification de l'environnement
+# Environment check
 .PHONY: check-env
 check-env:
-	@echo "Vérification de l'environnement..."
+	@echo "Checking environment..."
 	@$(PYTHON) -c "import torch; print(f'PyTorch: {torch.__version__}')"
-	@$(PYTHON) -c "import torch; print(f'CUDA disponible: {torch.cuda.is_available()}')"
+	@$(PYTHON) -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}')"
 	@$(PYTHON) -c "import transformers; print(f'Transformers: {transformers.__version__}')"
 	@$(PYTHON) -c "import accelerate; print(f'Accelerate: {accelerate.__version__}')"
-	@echo "Vérification terminée!"
+	@echo "Environment check completed!"
 
-# Configuration pour différentes tailles de GPU
+# Configuration for different GPU sizes
 .PHONY: config-rtx4090
 config-rtx4090:
-	@echo "Configuration optimisée pour RTX 4090 (16 GB)..."
-	@echo "Utilisation des paramètres recommandés pour votre GPU"
+	@echo "Optimized configuration for RTX 4090 (16 GB)..."
+	@echo "Using recommended parameters for your GPU"
 
-# Sauvegarde des configs et modèles
+# Backup configs and models
 .PHONY: backup
 backup:
-	@echo "Sauvegarde des configurations et checkpoints importants..."
+	@echo "Backing up important configurations and checkpoints..."
 	@mkdir -p ./backups/$(shell date +%Y%m%d_%H%M%S)
 	cp -r $(CONFIG_DIR) ./backups/$(shell date +%Y%m%d_%H%M%S)/
 	@if [ -d "$(CHECKPOINTS_DIR)/pretrain/tiny/final" ]; then \
 		cp -r $(CHECKPOINTS_DIR)/pretrain/tiny/final ./backups/$(shell date +%Y%m%d_%H%M%S)/model_final; \
 	fi
-	@echo "Sauvegarde terminée dans ./backups/"
+	@echo "Backup completed in ./backups/"
 
 # ============================================================================
-# SESSIONS DE DÉVELOPPEMENT FOCALISÉES
+# FOCUSED DEVELOPMENT SESSIONS
 # ============================================================================
 
-# Session rapide (30 minutes) - Test et validation
+# Quick session (30 minutes) - Testing and validation
 .PHONY: session-quick
 session-quick:
-	@echo "🚀 SESSION RAPIDE (30 min) - Test pipeline"
-	@echo "Début: $(shell date)"
+	@echo "🚀 QUICK SESSION (30 min) - Pipeline testing"
+	@echo "Start: $(shell date)"
 	@mkdir -p $(SESSION_DIR)
 	@echo "=== SESSION QUICK $(shell date) ===" > $(SESSION_LOG)
 	$(MAKE) check-env 2>&1 | tee -a $(SESSION_LOG)
 	$(MAKE) create-sample-datasets 2>&1 | tee -a $(SESSION_LOG)
 	$(MAKE) test-pipeline 2>&1 | tee -a $(SESSION_LOG)
 	$(MAKE) evaluate-quick 2>&1 | tee -a $(SESSION_LOG)
-	@echo "🎉 Session rapide terminée! Log: $(SESSION_LOG)"
-	@echo "Durée estimée: 30 minutes"
+	@echo "🎉 Quick session completed! Log: $(SESSION_LOG)"
+	@echo "Estimated duration: 30 minutes"
 
-# Session prototype (2 heures) - Développement tiny model
+# Prototype session (2 hours) - Tiny model development
 .PHONY: session-prototype  
 session-prototype:
-	@echo "🛠️ SESSION PROTOTYPE (2h) - Tiny model complet"
-	@echo "Début: $(shell date)"
+	@echo "🛠️ PROTOTYPE SESSION (2h) - Complete tiny model"
+	@echo "Start: $(shell date)"
 	@mkdir -p $(SESSION_DIR)
 	@echo "=== SESSION PROTOTYPE $(shell date) ===" > $(SESSION_LOG)
 	$(MAKE) check-env 2>&1 | tee -a $(SESSION_LOG)
@@ -357,14 +357,14 @@ session-prototype:
 	$(MAKE) pretrain-tiny-quick 2>&1 | tee -a $(SESSION_LOG)
 	$(MAKE) evaluate-quick 2>&1 | tee -a $(SESSION_LOG)
 	$(MAKE) validate-architecture 2>&1 | tee -a $(SESSION_LOG)
-	@echo "🎉 Session prototype terminée! Log: $(SESSION_LOG)"
-	@echo "Modèle disponible: $(CHECKPOINTS_DIR)/pretrain/tiny/final"
+	@echo "🎉 Prototype session completed! Log: $(SESSION_LOG)"
+	@echo "Model available: $(CHECKPOINTS_DIR)/pretrain/tiny/final"
 
-# Session expérimentation (4 heures) - Small model avec fine-tuning
+# Experiment session (4 hours) - Small model with fine-tuning
 .PHONY: session-experiment
 session-experiment:
-	@echo "🧪 SESSION EXPÉRIMENTATION (4h) - Small model + SFT"
-	@echo "Début: $(shell date)"
+	@echo "🧪 EXPERIMENT SESSION (4h) - Small model + SFT"
+	@echo "Start: $(shell date)"
 	@mkdir -p $(SESSION_DIR)
 	@echo "=== SESSION EXPERIMENT $(shell date) ===" > $(SESSION_LOG)
 	$(MAKE) check-env 2>&1 | tee -a $(SESSION_LOG)
@@ -374,70 +374,70 @@ session-experiment:
 	$(MAKE) sft-small 2>&1 | tee -a $(SESSION_LOG)
 	$(MAKE) evaluate 2>&1 | tee -a $(SESSION_LOG)
 	$(MAKE) assess-performance 2>&1 | tee -a $(SESSION_LOG)
-	@echo "🎉 Session expérimentation terminée! Log: $(SESSION_LOG)"
-	@echo "Modèle disponible: $(CHECKPOINTS_DIR)/sft"
+	@echo "🎉 Experiment session completed! Log: $(SESSION_LOG)"
+	@echo "Model available: $(CHECKPOINTS_DIR)/sft"
 
-# Session évaluation (1 heure) - Analyse approfondie
+# Evaluation session (1 hour) - In-depth analysis
 .PHONY: session-evaluation
 session-evaluation:
-	@echo "📊 SESSION ÉVALUATION (1h) - Analyse complète"
-	@echo "Début: $(shell date)"
+	@echo "📊 EVALUATION SESSION (1h) - Complete analysis"
+	@echo "Start: $(shell date)"
 	@mkdir -p $(SESSION_DIR)
 	@echo "=== SESSION EVALUATION $(shell date) ===" > $(SESSION_LOG)
-	@echo "Recherche du dernier modèle entraîné..."
+	@echo "Looking for last trained model..."
 	@if [ -d "$(CHECKPOINTS_DIR)/dpo" ]; then \
-		echo "Évaluation du modèle DPO" | tee -a $(SESSION_LOG); \
+		echo "Evaluating DPO model" | tee -a $(SESSION_LOG); \
 		$(MAKE) MODEL_PATH=$(CHECKPOINTS_DIR)/dpo evaluate-detailed 2>&1 | tee -a $(SESSION_LOG); \
 	elif [ -d "$(CHECKPOINTS_DIR)/sft" ]; then \
-		echo "Évaluation du modèle SFT" | tee -a $(SESSION_LOG); \
+		echo "Evaluating SFT model" | tee -a $(SESSION_LOG); \
 		$(MAKE) MODEL_PATH=$(CHECKPOINTS_DIR)/sft evaluate-detailed 2>&1 | tee -a $(SESSION_LOG); \
 	elif [ -d "$(CHECKPOINTS_DIR)/pretrain/tiny/final" ]; then \
-		echo "Évaluation du modèle tiny" | tee -a $(SESSION_LOG); \
+		echo "Evaluating tiny model" | tee -a $(SESSION_LOG); \
 		$(MAKE) MODEL_PATH=$(CHECKPOINTS_DIR)/pretrain/tiny/final evaluate-detailed 2>&1 | tee -a $(SESSION_LOG); \
 	else \
-		echo "❌ Aucun modèle trouvé pour évaluation" | tee -a $(SESSION_LOG); \
+		echo "❌ No model found for evaluation" | tee -a $(SESSION_LOG); \
 	fi
 	$(MAKE) assess-performance 2>&1 | tee -a $(SESSION_LOG) || true
-	@echo "🎉 Session évaluation terminée! Log: $(SESSION_LOG)"
+	@echo "🎉 Evaluation session completed! Log: $(SESSION_LOG)"
 
-# Session debug interactive
+# Interactive debug session
 .PHONY: session-debug
 session-debug:
-	@echo "🔧 SESSION DEBUG - Mode interactif"
-	@echo "=== OPTIONS DISPONIBLES ==="
-	@echo "1. Vérifier l'environnement: make check-env"
-	@echo "2. Tester avec données synthétiques: make test-pipeline"
-	@echo "3. Valider une architecture: make validate-architecture"
-	@echo "4. Évaluation rapide: make evaluate-quick"
-	@echo "5. Surveillance ressources: make monitor"
-	@echo "6. Nettoyer et redémarrer: make clean"
-	@echo "7. Lister les checkpoints: ls -la $(CHECKPOINTS_DIR)/*/"
+	@echo "🔧 DEBUG SESSION - Interactive mode"
+	@echo "=== AVAILABLE OPTIONS ==="
+	@echo "1. Check environment: make check-env"
+	@echo "2. Test with synthetic data: make test-pipeline"
+	@echo "3. Validate an architecture: make validate-architecture"
+	@echo "4. Quick evaluation: make evaluate-quick"
+	@echo "5. Resource monitoring: make monitor"
+	@echo "6. Clean and restart: make clean"
+	@echo "7. List checkpoints: ls -la $(CHECKPOINTS_DIR)/*/"
 	@echo ""
-	@echo "📝 Pour des logs détaillés, ajoutez 2>&1 | tee debug.log"
-	@echo "Exemple: make check-env 2>&1 | tee debug.log"
+	@echo "📝 For detailed logs, add 2>&1 | tee debug.log"
+	@echo "Example: make check-env 2>&1 | tee debug.log"
 
-# Session validation architecture
+# Architecture validation session
 .PHONY: session-architecture
 session-architecture:
-	@echo "🏗️ SESSION ARCHITECTURE - Validation des configurations"
+	@echo "🏗️ ARCHITECTURE SESSION - Configuration validation"
 	@mkdir -p $(SESSION_DIR)
 	@echo "=== SESSION ARCHITECTURE $(shell date) ===" > $(SESSION_LOG)
-	@echo "Validation de toutes les configurations..."
+	@echo "Validating all configurations..."
 	@for config in $(CONFIG_DIR)/*.json; do \
-		echo "Validation: $$config" | tee -a $(SESSION_LOG); \
+		echo "Validating: $$config" | tee -a $(SESSION_LOG); \
 		$(PYTHON) utils/validate_architecture.py "$$config" 2>&1 | tee -a $(SESSION_LOG); \
 		echo "" | tee -a $(SESSION_LOG); \
 	done
-	@echo "🎉 Validation architecturale terminée! Log: $(SESSION_LOG)"
+	@echo "🎉 Architecture validation completed! Log: $(SESSION_LOG)"
 
 # ============================================================================
-# COMMANDES DE SUPPORT POUR LES SESSIONS
+# SUPPORT COMMANDS FOR SESSIONS
 # ============================================================================
 
-# Préparation rapide des données (dataset plus petit)
+# Quick data preparation (smaller dataset)
 .PHONY: prepare-quick
 prepare-quick:
-	@echo "Préparation rapide des données..."
+	@echo "Quick data preparation..."
 	@mkdir -p $(DATA_DIR)/processed
 	$(PYTHON) $(SCRIPTS_DIR)/01_prepare_data.py \
 		--input_path "wikitext-2-raw-v1" \
@@ -445,12 +445,12 @@ prepare-quick:
 		--vocab_size 32768 \
 		--min_length 50 \
 		--max_length 1000
-	@echo "Données rapides préparées!"
+	@echo "Quick data prepared!"
 
-# Pré-entraînement tiny rapide (moins d'epochs)
+# Quick tiny pre-training (fewer epochs)
 .PHONY: pretrain-tiny-quick
 pretrain-tiny-quick:
-	@echo "Pré-entraînement tiny rapide (version courte)..."
+	@echo "Quick tiny pre-training (short version)..."
 	@mkdir -p $(CHECKPOINTS_DIR)/pretrain/tiny
 	$(ACCELERATE) $(SCRIPTS_DIR)/02_pretrain.py \
 		--config $(TINY_CONFIG) \
@@ -463,96 +463,96 @@ pretrain-tiny-quick:
 		--warmup_steps 100 \
 		--save_steps 500 \
 		--logging_steps 50
-	@echo "Pré-entraînement tiny rapide terminé!"
+	@echo "Quick tiny pre-training completed!"
 
-# SFT pour small model
+# SFT for small model
 .PHONY: sft-small
 sft-small:
-	@echo "Fine-tuning supervisé pour modèle small..."
+	@echo "Supervised fine-tuning for small model..."
 	@mkdir -p $(CHECKPOINTS_DIR)/sft
 	$(PYTHON) $(SCRIPTS_DIR)/03_sft.py \
 		--model_path $(CHECKPOINTS_DIR)/pretrain/small/final \
 		--dataset_path $(SFT_DATASET) \
 		--config_path $(SFT_CONFIG) \
 		--output_dir $(CHECKPOINTS_DIR)/sft
-	@echo "Fine-tuning supervisé (small) terminé!"
+	@echo "Supervised fine-tuning (small) completed!"
 
-# Évaluation rapide pour développement
+# Quick evaluation for development
 .PHONY: evaluate-quick
 evaluate-quick:
-	@echo "Évaluation rapide..."
+	@echo "Quick evaluation..."
 	@mkdir -p ./evaluation_results
 	$(PYTHON) $(SCRIPTS_DIR)/05_evaluate.py \
 		--model_path $(or $(MODEL_PATH),$(CHECKPOINTS_DIR)/pretrain/tiny/final) \
 		--output_dir ./evaluation_results \
 		--fast_mode \
 		--max_boolq_samples 20
-	@echo "Évaluation rapide terminée!"
+	@echo "Quick evaluation completed!"
 
-# Évaluation détaillée avec rapport
+# Detailed evaluation with report
 .PHONY: evaluate-detailed
 evaluate-detailed:
-	@echo "Évaluation détaillée avec rapport..."
+	@echo "Detailed evaluation with report..."
 	@mkdir -p ./evaluation_results
 	$(PYTHON) $(SCRIPTS_DIR)/05_evaluate.py \
 		--model_path $(or $(MODEL_PATH),$(CHECKPOINTS_DIR)/dpo) \
 		--output_dir ./evaluation_results \
 		--detailed_output \
 		--max_boolq_samples 100
-	@echo "Évaluation détaillée terminée!"
+	@echo "Detailed evaluation completed!"
 
-# Analyse automatique des performances
+# Automatic performance analysis
 .PHONY: assess-performance
 assess-performance:
-	@echo "Analyse des performances..."
+	@echo "Analyzing performance..."
 	@if [ -f "./evaluation_results/evaluation_results.json" ]; then \
 		$(PYTHON) $(EVALUATION_DIR)/assess_performance.py ./evaluation_results/evaluation_results.json; \
 	else \
-		echo "❌ Fichier d'évaluation non trouvé. Lancez 'make evaluate' d'abord."; \
+		echo "❌ Evaluation file not found. Run 'make evaluate' first."; \
 	fi
 
-# Validation de l'architecture
+# Architecture validation
 .PHONY: validate-architecture
 validate-architecture:
-	@echo "Validation de l'architecture..."
+	@echo "Validating architecture..."
 	@if [ -n "$(CONFIG)" ]; then \
 		$(PYTHON) utils/validate_architecture.py $(CONFIG); \
 	else \
 		$(PYTHON) utils/validate_architecture.py $(TINY_CONFIG); \
 	fi
 
-# Statut de session - montre l'état actuel
+# Session status - shows current state
 .PHONY: session-status
 session-status:
-	@echo "📊 STATUT DE LA SESSION"
+	@echo "📊 SESSION STATUS"
 	@echo "========================================"
-	@echo "Heure actuelle: $(shell date)"
-	@echo "Dossier de travail: $(PWD)"
+	@echo "Current time: $(shell date)"
+	@echo "Working directory: $(PWD)"
 	@echo ""
-	@echo "📁 Données disponibles:"
-	@if [ -f "$(PROCESSED_DATA)" ]; then echo "  ✅ Données préparées"; else echo "  ❌ Données non préparées (make prepare)"; fi
+	@echo "📁 Available data:"
+	@if [ -f "$(PROCESSED_DATA)" ]; then echo "  ✅ Data prepared"; else echo "  ❌ Data not prepared (make prepare)"; fi
 	@echo ""
-	@echo "🤖 Modèles disponibles:"
-	@if [ -d "$(CHECKPOINTS_DIR)/pretrain/tiny/final" ]; then echo "  ✅ Tiny model"; else echo "  ❌ Tiny model non entraîné"; fi
-	@if [ -d "$(CHECKPOINTS_DIR)/pretrain/small/final" ]; then echo "  ✅ Small model"; else echo "  ❌ Small model non entraîné"; fi
-	@if [ -d "$(CHECKPOINTS_DIR)/pretrain/base/final" ]; then echo "  ✅ Base model"; else echo "  ❌ Base model non entraîné"; fi
-	@if [ -d "$(CHECKPOINTS_DIR)/sft" ]; then echo "  ✅ Modèle SFT"; else echo "  ❌ Modèle SFT non entraîné"; fi
-	@if [ -d "$(CHECKPOINTS_DIR)/dpo" ]; then echo "  ✅ Modèle DPO"; else echo "  ❌ Modèle DPO non entraîné"; fi
+	@echo "🤖 Available models:"
+	@if [ -d "$(CHECKPOINTS_DIR)/pretrain/tiny/final" ]; then echo "  ✅ Tiny model"; else echo "  ❌ Tiny model not trained"; fi
+	@if [ -d "$(CHECKPOINTS_DIR)/pretrain/small/final" ]; then echo "  ✅ Small model"; else echo "  ❌ Small model not trained"; fi
+	@if [ -d "$(CHECKPOINTS_DIR)/pretrain/base/final" ]; then echo "  ✅ Base model"; else echo "  ❌ Base model not trained"; fi
+	@if [ -d "$(CHECKPOINTS_DIR)/sft" ]; then echo "  ✅ SFT model"; else echo "  ❌ SFT model not trained"; fi
+	@if [ -d "$(CHECKPOINTS_DIR)/dpo" ]; then echo "  ✅ DPO model"; else echo "  ❌ DPO model not trained"; fi
 	@echo ""
-	@echo "📊 Évaluations:"
-	@if [ -f "./evaluation_results/evaluation_results.json" ]; then echo "  ✅ Résultats d'évaluation disponibles"; else echo "  ❌ Pas d'évaluation récente"; fi
+	@echo "📊 Evaluations:"
+	@if [ -f "./evaluation_results/evaluation_results.json" ]; then echo "  ✅ Evaluation results available"; else echo "  ❌ No recent evaluation"; fi
 	@echo ""
-	@echo "💾 Espace disque:"
-	@du -sh $(CHECKPOINTS_DIR) 2>/dev/null || echo "  Pas de checkpoints"
+	@echo "💾 Disk space:"
+	@du -sh $(CHECKPOINTS_DIR) 2>/dev/null || echo "  No checkpoints"
 	@echo ""
 	@echo "🔥 GPU Status:"
-	@nvidia-smi --query-gpu=memory.used,memory.total,utilization.gpu --format=csv,noheader,nounits 2>/dev/null | head -1 || echo "  GPU non disponible"
+	@nvidia-smi --query-gpu=memory.used,memory.total,utilization.gpu --format=csv,noheader,nounits 2>/dev/null | head -1 || echo "  GPU not available"
 
-# Nettoyage de session (garde les modèles importants)
+# Session cleanup (keeps important models)
 .PHONY: session-cleanup
 session-cleanup:
-	@echo "🧹 Nettoyage de session..."
+	@echo "🧹 Session cleanup..."
 	@$(MAKE) clean
 	@rm -rf $(DATA_DIR)/test
 	@find $(SESSION_DIR) -name "*.log" -mtime +7 -delete 2>/dev/null || true
-	@echo "Nettoyage terminé (modèles conservés)!"
+	@echo "Cleanup completed (models preserved)!"
