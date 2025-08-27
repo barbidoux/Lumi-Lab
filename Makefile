@@ -232,19 +232,35 @@ resume-pretrain-tiny:
 		--batch_size 16 \
 		--gradient_accumulation_steps 4
 
-# Test rapide avec données synthétiques
+# Test rapide avec données synthétiques (attention standard)
 .PHONY: test-pipeline
 test-pipeline:
-	@echo "Test du pipeline avec données synthétiques..."
+	@echo "Test du pipeline avec données synthétiques (attention standard)..."
 	@mkdir -p $(DATA_DIR)/test
-	@echo '[[1, 2, 3, 4, 5]]' > $(DATA_DIR)/test/tokenized_data.json
+	@[ ! -f $(DATA_DIR)/test/tokenized_data.json ] && python -c "import json; tokens1 = list(range(1, 1251)); tokens2 = list(range(1251, 2501)); tokens3 = list(range(2501, 3751)); json.dump([tokens1, tokens2, tokens3], open('$(DATA_DIR)/test/tokenized_data.json', 'w'))" || true
 	$(PYTHON) $(SCRIPTS_DIR)/02_pretrain.py \
 		--config $(TINY_CONFIG) \
 		--data_path $(DATA_DIR)/test/tokenized_data.json \
 		--output_dir $(CHECKPOINTS_DIR)/test \
 		--max_steps 10 \
-		--logging_steps 5
+		--logging_steps 5 \
+		--no_flash_attn
 	@echo "Test terminé!"
+
+# Test rapide avec FlashAttention-2
+.PHONY: test-pipeline-flash
+test-pipeline-flash:
+	@echo "Test du pipeline avec données synthétiques (FlashAttention-2)..."
+	@mkdir -p $(DATA_DIR)/test
+	@[ ! -f $(DATA_DIR)/test/tokenized_data.json ] && python -c "import json; tokens1 = list(range(1, 1251)); tokens2 = list(range(1251, 2501)); tokens3 = list(range(2501, 3751)); json.dump([tokens1, tokens2, tokens3], open('$(DATA_DIR)/test/tokenized_data.json', 'w'))" || true
+	$(PYTHON) $(SCRIPTS_DIR)/02_pretrain.py \
+		--config $(TINY_CONFIG) \
+		--data_path $(DATA_DIR)/test/tokenized_data.json \
+		--output_dir $(CHECKPOINTS_DIR)/test-flash \
+		--max_steps 10 \
+		--logging_steps 5 \
+		--use_flash_attn
+	@echo "Test FlashAttention terminé!"
 
 # Génération d'exemples de datasets
 .PHONY: create-sample-datasets

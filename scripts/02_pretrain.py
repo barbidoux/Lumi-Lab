@@ -26,6 +26,10 @@ from transformers import (
     get_cosine_schedule_with_warmup,
 )
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from utils.dataset_utils import TokenizedDataset
 from utils.model_utils import create_model, save_checkpoint, load_checkpoint
 
@@ -86,14 +90,51 @@ class PretrainConfig:
         self.eval_steps = 1000
 
 
-def calculate_perplexity(model: nn.Module, dataloader: DataLoader, device: torch.device) -> float:
+def calculate_perplexity(model: nn.Module, dataloader: DataLoader, device: torch.device, accelerator = None) -> float:
     """Calcule la perplexité sur un dataset de validation."""
     model.eval()
+    
+    # For FlashAttention models, temporarily switch to eager attention and float32
+    original_dtype = None
+    original_attn_implementation = None
+    
+    if hasattr(model, 'dtype') and model.dtype == torch.float16:
+        original_dtype = model.dtype
+        
+        # Switch to eager attention to avoid FlashAttention dtype issues
+        if hasattr(model, 'config') and hasattr(model.config, '_attn_implementation'):
+            original_attn_implementation = model.config._attn_implementation
+            model.config._attn_implementation = "eager"
+            if accelerator:
+                accelerator.print("Debug: Switching to eager attention for evaluation")
+        
+        model = model.to(torch.float32)
+        if accelerator:
+            accelerator.print("Debug: Converting model to float32 for stable evaluation")
+            
+            # Check for NaN/Inf in model weights
+            nan_params = 0
+            inf_params = 0
+            total_params = 0
+            for name, param in model.named_parameters():
+                total_params += param.numel()
+                if torch.isnan(param).any():
+                    nan_params += torch.isnan(param).sum().item()
+                if torch.isinf(param).any():
+                    inf_params += torch.isinf(param).sum().item()
+            
+            if nan_params > 0 or inf_params > 0:
+                accelerator.print(f"Debug: Found {nan_params} NaN and {inf_params} Inf values in model weights out of {total_params} total parameters!")
+            else:
+                accelerator.print("Debug: Model weights are clean (no NaN/Inf)")
+    
     total_loss = 0.0
     total_tokens = 0
+    batch_count = 0
     
     with torch.no_grad():
         for batch in tqdm(dataloader, desc="Calcul perplexité"):
+            batch_count += 1
             input_ids = batch['input_ids'].to(device)
             attention_mask = batch['attention_mask'].to(device)
             labels = batch['labels'].to(device)
@@ -101,13 +142,56 @@ def calculate_perplexity(model: nn.Module, dataloader: DataLoader, device: torch
             outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
             loss = outputs.loss
             
+            # Convertir la loss en float32 pour éviter les problèmes numériques
+            loss_value = float(loss.item())
+            
+            if accelerator and batch_count == 1:  # Debug only first batch
+                accelerator.print(f"Debug: loss_value = {loss_value}")
+            
+            # Vérifier si la loss est valide
+            if math.isnan(loss_value) or math.isinf(loss_value):
+                if accelerator:
+                    accelerator.print(f"Debug: Skipping batch due to invalid loss: {loss_value}")
+                continue
+            
             # Compter seulement les tokens non-masqués
             valid_tokens = (labels != -100).sum().item()
-            total_loss += loss.item() * valid_tokens
+            total_loss += loss_value * valid_tokens
             total_tokens += valid_tokens
     
+    if accelerator:
+        accelerator.print(f"Debug: total_tokens = {total_tokens}, batch_count = {batch_count}")
+    
+    if total_tokens == 0:
+        if accelerator:
+            accelerator.print("Debug: Returning inf due to total_tokens == 0")
+        return float('inf')
+    
     avg_loss = total_loss / total_tokens
+    
+    # Debug: afficher la loss moyenne
+    if accelerator:
+        accelerator.print(f"Debug: avg_loss = {avg_loss:.4f}, total_tokens = {total_tokens}")
+    else:
+        print(f"Debug: avg_loss = {avg_loss:.4f}, total_tokens = {total_tokens}")
+    
+    # Clamp avg_loss pour éviter overflow dans exp() 
+    # exp(20) ≈ 485M, exp(30) ≈ 10^13, largement suffisant
+    avg_loss = min(avg_loss, 20.0)
+    
     perplexity = math.exp(avg_loss)
+    
+    # Restore original configuration and dtype
+    if original_attn_implementation is not None:
+        model.config._attn_implementation = original_attn_implementation
+        if accelerator:
+            accelerator.print("Debug: Restoring FlashAttention implementation")
+    
+    if original_dtype is not None:
+        model = model.to(original_dtype)
+        if accelerator:
+            accelerator.print("Debug: Restoring model to float16")
+    
     model.train()
     return perplexity
 
@@ -120,7 +204,9 @@ def train_epoch(
     accelerator: Accelerator,
     config: PretrainConfig,
     epoch: int,
-    global_step: int
+    global_step: int,
+    use_flash_attention: bool = False,
+    mixed_precision: str = "no"
 ) -> tuple[int, float]:
     """Entraîne le modèle pour une époque."""
     model.train()
@@ -133,12 +219,14 @@ def train_epoch(
             attention_mask = batch['attention_mask']
             labels = batch['labels']
             
+            # Let Accelerate handle mixed precision automatically
             outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
             loss = outputs.loss
             
             accelerator.backward(loss)
             
             if accelerator.sync_gradients:
+                # Use accelerator's gradient clipping (handles mixed precision correctly)
                 accelerator.clip_grad_norm_(model.parameters(), config.max_grad_norm)
             
             optimizer.step()
@@ -209,10 +297,19 @@ def main():
     
     args = parser.parse_args()
     
-    # Initialisation d'accelerate
+    # Gestion FlashAttention-2 - utiliser mixed_precision d'Accelerate
+    use_flash_attention = args.use_flash_attn and not args.no_flash_attn
+    mixed_precision = "fp16" if use_flash_attention else "no"
+    
+    # Initialisation d'accelerate  
+    from accelerate import DistributedDataParallelKwargs
+    ddp_kwargs = DistributedDataParallelKwargs(find_unused_parameters=False)
+    
     accelerator = Accelerator(
         gradient_accumulation_steps=args.gradient_accumulation_steps,
-        log_with="wandb" if os.getenv("WANDB_API_KEY") else None
+        mixed_precision=mixed_precision,
+        log_with="wandb" if os.getenv("WANDB_API_KEY") else None,
+        kwargs_handlers=[ddp_kwargs]
     )
     
     # Configuration
@@ -231,8 +328,7 @@ def main():
     if not args.no_deterministic:
         dataloader_generator = set_deterministic_training(args.seed)
     
-    # Gestion FlashAttention-2
-    use_flash_attention = args.use_flash_attn and not args.no_flash_attn
+    # FlashAttention-2 déjà configuré plus haut
     
     # Création du modèle
     accelerator.print("Création du modèle...")
@@ -311,13 +407,13 @@ def main():
         
         global_step, _ = train_epoch(
             model, train_dataloader, optimizer, scheduler, 
-            accelerator, config, epoch + 1, global_step
+            accelerator, config, epoch + 1, global_step, use_flash_attention, mixed_precision
         )
         
         # Évaluation
         if accelerator.is_main_process and (epoch + 1) % 1 == 0:  # Évaluation chaque époque
             accelerator.print("Évaluation...")
-            perplexity = calculate_perplexity(model, val_dataloader, accelerator.device)
+            perplexity = calculate_perplexity(model, val_dataloader, accelerator.device, accelerator)
             accelerator.print(f"Perplexité de validation: {perplexity:.2f}")
         
         # Arrêt si max_steps atteint

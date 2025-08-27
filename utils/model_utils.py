@@ -21,7 +21,7 @@ from transformers import (
 )
 
 
-def create_model_config(config_dict: Dict) -> AutoConfig:
+def create_model_config(config_dict, use_flash_attention: bool = True) -> AutoConfig:
     """
     Crée une configuration LLaMA à partir d'un dictionnaire.
     
@@ -47,50 +47,50 @@ def create_model_config(config_dict: Dict) -> AutoConfig:
         "transformers_version": "4.40.0",
         
         # === Dimensions du modèle ===
-        "hidden_size": config_dict["d_model"],
-        "intermediate_size": config_dict["d_ff"], 
-        "num_hidden_layers": config_dict["n_layer"],
-        "num_attention_heads": config_dict["n_head"],
+        "hidden_size": _get_config_value(config_dict, "d_model"),
+        "intermediate_size": _get_config_value(config_dict, "d_ff"), 
+        "num_hidden_layers": _get_config_value(config_dict, "n_layer"),
+        "num_attention_heads": _get_config_value(config_dict, "n_head"),
         
         # === Grouped Query Attention (GQA) ===
         # Par défaut: MHA (num_kv_heads = num_heads)
         # Pour GQA: réduire num_key_value_heads (ex: 4 pour 8 têtes = 2:1 ratio)
-        "num_key_value_heads": config_dict.get("num_key_value_heads", config_dict["n_head"]),
+        "num_key_value_heads": _get_config_value(config_dict, "num_key_value_heads", _get_config_value(config_dict, "n_head")),
         
         # === Vocabulaire et tokens ===
-        "vocab_size": config_dict["vocab_size"],
-        "max_position_embeddings": config_dict["sequence_length"],
-        "bos_token_id": config_dict.get("bos_token_id", 1),
-        "eos_token_id": config_dict.get("eos_token_id", 2),
-        "pad_token_id": config_dict.get("pad_token_id", 0),
-        "tie_word_embeddings": config_dict.get("tie_word_embeddings", False),
+        "vocab_size": _get_config_value(config_dict, "vocab_size"),
+        "max_position_embeddings": _get_config_value(config_dict, "sequence_length"),
+        "bos_token_id": _get_config_value(config_dict, "bos_token_id", 1),
+        "eos_token_id": _get_config_value(config_dict, "eos_token_id", 2),
+        "pad_token_id": _get_config_value(config_dict, "pad_token_id", 0),
+        "tie_word_embeddings": _get_config_value(config_dict, "tie_word_embeddings", False),
         
         # === Fonctions d'activation et normalisation ===
         "hidden_act": "silu",  # SwiGLU utilise SiLU (Swish)
-        "rms_norm_eps": config_dict.get("layer_norm_epsilon", 1e-5),
+        "rms_norm_eps": _get_config_value(config_dict, "layer_norm_epsilon", 1e-5),
         
         # === Encodage positionnel RoPE ===
-        "rope_theta": config_dict.get("rope_theta", 10000.0),
-        "rope_scaling": config_dict.get("rope_scaling", None),
+        "rope_theta": _get_config_value(config_dict, "rope_theta", 10000.0),
+        "rope_scaling": _get_config_value(config_dict, "rope_scaling", None),
         
         # === Régularisation et dropout ===
-        "attention_dropout": config_dict.get("attention_dropout", config_dict.get("dropout", 0.0)),
-        "hidden_dropout": config_dict.get("hidden_dropout", config_dict.get("dropout", 0.0)),
-        "dropout": config_dict.get("dropout", 0.0),
+        "attention_dropout": _get_config_value(config_dict, "attention_dropout", _get_config_value(config_dict, "dropout", 0.0)),
+        "hidden_dropout": _get_config_value(config_dict, "hidden_dropout", _get_config_value(config_dict, "dropout", 0.0)),
+        "dropout": _get_config_value(config_dict, "dropout", 0.0),
         
         # === Initialisation ===
-        "initializer_range": config_dict.get("initializer_range", 0.02),
+        "initializer_range": _get_config_value(config_dict, "initializer_range", 0.02),
         
         # === Optimisations ===
-        "use_cache": config_dict.get("use_cache", True),
-        "use_flash_attention_2": config_dict.get("use_flash_attention_2", True),
+        "use_cache": _get_config_value(config_dict, "use_cache", True),
+        "use_flash_attention_2": _get_config_value(config_dict, "use_flash_attention_2", True),
         
         # === Configuration technique ===
-        "torch_dtype": config_dict.get("torch_dtype", "float32"),
-        "pretraining_tp": config_dict.get("pretraining_tp", 1),
+        "torch_dtype": "float16" if use_flash_attention and detect_flash_attention()[0] else _get_config_value(config_dict, "torch_dtype", "float32"),
+        "pretraining_tp": _get_config_value(config_dict, "pretraining_tp", 1),
     }
     
-    config = AutoConfig.from_dict(llama_config)
+    config = LlamaConfig(**llama_config)
     
     return config
 
@@ -104,33 +104,49 @@ def detect_flash_attention() -> tuple[bool, str]:
         return False, "FlashAttention-2 non disponible (voir installation)"
 
 
-def create_model(config_dict: Dict, use_flash_attention: bool = True) -> PreTrainedModel:
+def _get_config_value(config, key, default=None):
+    """Helper function to get configuration values from either dict or object."""
+    if hasattr(config, key):
+        return getattr(config, key)
+    elif isinstance(config, dict):
+        return config.get(key, default)
+    else:
+        return default
+
+def create_model(config_dict, use_flash_attention: bool = True) -> PreTrainedModel:
     """
     Crée un modèle from scratch basé sur la configuration.
     
     Args:
-        config_dict: Configuration du modèle (depuis le JSON)
+        config_dict: Configuration du modèle (depuis le JSON) ou objet PretrainConfig
         use_flash_attention: Utiliser FlashAttention-2 si disponible
     """
-    print(f"🏗️  Création du modèle {config_dict['model_name']}...")
+    # Handle both dict and PretrainConfig object
+    model_name = _get_config_value(config_dict, 'model_name')
+    print(f"🏗️  Création du modèle {model_name}...")
     
     # Affichage des détails architecturaux
     n_params_est = estimate_parameters(config_dict)
-    head_dim = config_dict['d_model'] // config_dict['n_head']
-    ffn_ratio = config_dict['d_ff'] / config_dict['d_model']
+    d_model = _get_config_value(config_dict, 'd_model')
+    n_head = _get_config_value(config_dict, 'n_head')
+    d_ff = _get_config_value(config_dict, 'd_ff')
+    n_layer = _get_config_value(config_dict, 'n_layer')
     
-    print(f"   📊 Architecture: {config_dict['n_layer']} layers, {config_dict['d_model']} hidden, {config_dict['n_head']} heads")
+    head_dim = d_model // n_head
+    ffn_ratio = d_ff / d_model
+    
+    print(f"   📊 Architecture: {n_layer} layers, {d_model} hidden, {n_head} heads")
     print(f"   🧮 Paramètres estimés: {n_params_est:,}")
     print(f"   🔢 head_dim={head_dim}, ffn_ratio={ffn_ratio:.1f}x")
     
     # Vérification GQA
-    num_kv_heads = config_dict.get('num_key_value_heads', config_dict['n_head'])
-    if num_kv_heads < config_dict['n_head']:
-        ratio = config_dict['n_head'] / num_kv_heads
-        print(f"   🎯 GQA activé: {config_dict['n_head']}:{num_kv_heads} = {ratio:.1f}:1 ratio")
+    num_kv_heads = _get_config_value(config_dict, 'num_key_value_heads', n_head)
+    if num_kv_heads < n_head:
+        ratio = n_head / num_kv_heads
+        print(f"   🎯 GQA activé: {n_head}:{num_kv_heads} = {ratio:.1f}:1 ratio")
     
     # Création de la configuration
-    model_config = create_model_config(config_dict)
+    model_config = create_model_config(config_dict, use_flash_attention)
     
     # Gestion de l'attention avec fallback automatique
     attention_type = "sdpa"  # Fallback par défaut (PyTorch SDPA)
@@ -156,7 +172,13 @@ def create_model(config_dict: Dict, use_flash_attention: bool = True) -> PreTrai
     
     # Création du modèle avec gestion d'erreur
     try:
+        # Create model - let Accelerate handle dtype conversion
         model = LlamaForCausalLM(model_config)
+        if attention_type == "flash_attention_2":
+            print("✅ Modèle créé pour FlashAttention-2 (dtype géré par Accelerate)")
+        else:
+            print(f"✅ Modèle créé avec attention: {attention_type}")
+            
     except Exception as e:
         # Fallback ultime vers attention standard
         print(f"⚠️  Erreur avec {attention_type}, fallback vers attention standard: {e}")
@@ -363,7 +385,7 @@ def load_pretrained_model(model_path: str, device: str = "auto") -> PreTrainedMo
     return model
 
 
-def estimate_parameters(config_dict: Dict) -> int:
+def estimate_parameters(config_dict) -> int:
     """
     Estime le nombre de paramètres basé sur la configuration.
     
@@ -378,11 +400,11 @@ def estimate_parameters(config_dict: Dict) -> int:
     Returns:
         int: Nombre estimé de paramètres
     """
-    d_model = config_dict['d_model']
-    n_layer = config_dict['n_layer']
-    d_ff = config_dict['d_ff']
-    vocab_size = config_dict['vocab_size']
-    n_head = config_dict['n_head']
+    d_model = _get_config_value(config_dict, 'd_model')
+    n_layer = _get_config_value(config_dict, 'n_layer')
+    d_ff = _get_config_value(config_dict, 'd_ff')
+    vocab_size = _get_config_value(config_dict, 'vocab_size')
+    n_head = _get_config_value(config_dict, 'n_head')
     
     # Token embeddings
     token_embeddings = vocab_size * d_model
@@ -407,7 +429,7 @@ def estimate_parameters(config_dict: Dict) -> int:
     final_norm = d_model
     
     # Output head (lm_head)
-    tied_embeddings = config_dict.get('tie_word_embeddings', False)
+    tied_embeddings = _get_config_value(config_dict, 'tie_word_embeddings', False)
     output_head = 0 if tied_embeddings else d_model * vocab_size
     
     total = token_embeddings + all_layers + final_norm + output_head
