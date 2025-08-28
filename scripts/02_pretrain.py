@@ -264,8 +264,12 @@ def main():
     parser = argparse.ArgumentParser(description="Pre-training of a mini-LLM")
     parser.add_argument("--config", type=str, required=True,
                        help="Path to the model configuration file")
-    parser.add_argument("--data_path", type=str, required=True,
-                       help="Path to the tokenized data")
+    parser.add_argument("--data_path", type=str, 
+                       help="Path to tokenized data file (legacy format)")
+    parser.add_argument("--data_dir", type=str,
+                       help="Path to directory with sharded data and manifest")
+    
+    # Compatibility: allow either data_path or data_dir
     parser.add_argument("--output_dir", type=str, default="./checkpoints/pretrain",
                        help="Output directory for checkpoints")
     parser.add_argument("--resume_from_checkpoint", type=str, default=None,
@@ -337,7 +341,15 @@ def main():
     
     # Data loading
     accelerator.print("Loading data...")
-    train_dataset = TokenizedDataset(args.data_path, config.sequence_length)
+    # Determine data source
+    if args.data_dir:
+        print(f"📁 Using sharded data directory: {args.data_dir}")
+        train_dataset = TokenizedDataset(args.data_dir, config.sequence_length)
+    elif args.data_path:
+        print(f"📄 Using legacy data file: {args.data_path}")
+        train_dataset = TokenizedDataset(args.data_path, config.sequence_length)
+    else:
+        raise ValueError("Either --data_dir or --data_path must be specified")
     
     # Division train/validation (90/10)
     train_size = int(0.9 * len(train_dataset))

@@ -43,7 +43,11 @@ help:
 	@echo ""
 	@echo "🚀 MAIN COMMANDS:"
 	@echo "  install              - Install dependencies"
-	@echo "  prepare              - Prepare training data"
+	@echo "  prepare              - Prepare dataset from CONFIG file"
+	@echo "  prepare-owt          - Prepare OpenWebText (recommended)"
+	@echo "  prepare-wiki         - Prepare Wikipedia EN"
+	@echo "  prepare-wt103        - Prepare WikiText-103 (fast)"
+	@echo "  prepare-demo         - Prepare demo tiny dataset (very fast)"
 	@echo "  pretrain-tiny        - Launch tiny model pre-training"
 	@echo "  pretrain-small       - Launch small model pre-training"
 	@echo "  pretrain-base        - Launch base model pre-training"
@@ -62,17 +66,26 @@ help:
 	@echo ""
 	@echo "🔧 MAINTENANCE:"
 	@echo "  clean                - Clean temporary files"
+	@echo "  clean-data           - Remove processed datasets"
 	@echo "  clean-checkpoints    - Remove all checkpoints"
+	@echo "  clean-all            - Complete cleanup (temp + data + checkpoints)"
+	@echo "  clean-repo           - Repository cleanup for commits (keeps configs)"
+	@echo "  clean-status         - Show what would be cleaned"
 	@echo "  backup               - Backup configs and models"
 	@echo "  monitor              - Resource monitoring"
 	@echo ""
 	@echo "⚙️ Configurable variables:"
-	@echo "  RAW_DATASET         - Raw dataset to use (default: openwebtext)"
+	@echo "  CONFIG              - Dataset config file (required for prepare)"
 	@echo "  SFT_DATASET         - Dataset for SFT (default: $(SFT_DATASET))"
 	@echo "  DPO_DATASET         - Dataset for DPO (default: $(DPO_DATASET))"
 	@echo "  MODEL_PATH          - Model path for evaluation"
-	@echo "  CONFIG              - Configuration to validate"
 	@echo "  SESSION_TIME        - Session time in minutes (default: auto)"
+	@echo ""
+	@echo "📁 Available dataset configs:"
+	@echo "  config/datasets/openwebtext.json   - OpenWebText (large, production)"
+	@echo "  config/datasets/wikipedia_en.json  - Wikipedia EN (medium)"
+	@echo "  config/datasets/wikitext103.json   - WikiText-103 (small, fast)"
+	@echo "  config/datasets/demo_tiny.json     - Demo dataset (tiny, very fast)"
 
 # Dependencies installation
 .PHONY: install
@@ -81,10 +94,40 @@ install:
 	pip install -r requirements.txt
 	@echo "Dependencies installed successfully!"
 
-# Data preparation
+# Data preparation from config files
 .PHONY: prepare
 prepare:
-	@echo "Preparing training data..."
+	@echo "Preparing dataset from config: $(CONFIG)"
+	$(PYTHON) $(SCRIPTS_DIR)/01_prepare_data.py --config_path $(CONFIG)
+
+# OpenWebText preparation (recommended for production)
+.PHONY: prepare-owt
+prepare-owt:
+	@echo "Preparing OpenWebText dataset..."
+	$(MAKE) prepare CONFIG=config/datasets/openwebtext.json
+
+# Wikipedia EN preparation
+.PHONY: prepare-wiki
+prepare-wiki:
+	@echo "Preparing Wikipedia EN dataset..."
+	$(MAKE) prepare CONFIG=config/datasets/wikipedia_en.json
+
+# WikiText-103 preparation (fast for testing)
+.PHONY: prepare-wt103
+prepare-wt103:
+	@echo "Preparing WikiText-103 dataset..."
+	$(MAKE) prepare CONFIG=config/datasets/wikitext103.json
+
+# Demo tiny preparation (very fast for development)
+.PHONY: prepare-demo
+prepare-demo:
+	@echo "Preparing demo tiny dataset..."
+	$(MAKE) prepare CONFIG=config/datasets/demo_tiny.json
+
+# Legacy preparation (backward compatibility)
+.PHONY: prepare-legacy
+prepare-legacy:
+	@echo "Preparing training data (legacy mode)..."
 	@mkdir -p $(DATA_DIR)/processed
 	$(PYTHON) $(SCRIPTS_DIR)/01_prepare_data.py \
 		--input_path $(RAW_DATASET) \
@@ -101,7 +144,7 @@ pretrain-tiny:
 	@mkdir -p $(CHECKPOINTS_DIR)/pretrain/tiny
 	$(ACCELERATE) $(SCRIPTS_DIR)/02_pretrain.py \
 		--config $(TINY_CONFIG) \
-		--data_path $(PROCESSED_DATA) \
+		--data_dir $(DATA_DIR)/processed \
 		--output_dir $(CHECKPOINTS_DIR)/pretrain/tiny \
 		--learning_rate 3e-4 \
 		--batch_size 16 \
@@ -119,7 +162,7 @@ pretrain-small:
 	@mkdir -p $(CHECKPOINTS_DIR)/pretrain/small
 	$(ACCELERATE) $(SCRIPTS_DIR)/02_pretrain.py \
 		--config $(SMALL_CONFIG) \
-		--data_path $(PROCESSED_DATA) \
+		--data_dir $(DATA_DIR)/processed \
 		--output_dir $(CHECKPOINTS_DIR)/pretrain/small \
 		--learning_rate 3e-4 \
 		--batch_size 8 \
@@ -137,7 +180,7 @@ pretrain-base:
 	@mkdir -p $(CHECKPOINTS_DIR)/pretrain/base
 	$(ACCELERATE) $(SCRIPTS_DIR)/02_pretrain.py \
 		--config $(BASE_CONFIG) \
-		--data_path $(PROCESSED_DATA) \
+		--data_dir $(DATA_DIR)/processed \
 		--output_dir $(CHECKPOINTS_DIR)/pretrain/base \
 		--learning_rate 2e-4 \
 		--batch_size 4 \
@@ -225,7 +268,7 @@ resume-pretrain-tiny:
 	@echo "Resuming tiny pre-training from last checkpoint..."
 	$(ACCELERATE) $(SCRIPTS_DIR)/02_pretrain.py \
 		--config $(TINY_CONFIG) \
-		--data_path $(PROCESSED_DATA) \
+		--data_dir $(DATA_DIR)/processed \
 		--output_dir $(CHECKPOINTS_DIR)/pretrain/tiny \
 		--resume_from_checkpoint $(CHECKPOINTS_DIR)/pretrain/tiny/step_* \
 		--learning_rate 3e-4 \
@@ -284,21 +327,140 @@ monitor:
 	@echo "Monitoring system resources..."
 	watch -n 2 'nvidia-smi | head -15; echo ""; ps aux | grep python | head -5; echo ""; df -h | head -5'
 
-# Cleanup
+# Cleanup Commands
 .PHONY: clean
 clean:
-	@echo "Cleaning temporary files..."
-	find . -type f -name "*.pyc" -delete
-	find . -type d -name "__pycache__" -exec rm -rf {} +
-	find . -type f -name "*.log" -delete
-	find . -type f -name ".DS_Store" -delete
-	@echo "Cleanup completed!"
+	@echo "🧹 Cleaning temporary files..."
+	@find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	@find . -type f -name "*.log" -delete 2>/dev/null || true
+	@find . -type f -name ".DS_Store" -delete 2>/dev/null || true
+	@rm -rf .pytest_cache 2>/dev/null || true
+	@rm -rf __pycache__ 2>/dev/null || true
+	@echo "✅ Temporary files cleaned!"
+
+.PHONY: clean-data
+clean-data:
+	@echo "🗂️ Removing processed datasets..."
+	@if [ -d "$(DATA_DIR)/processed" ]; then \
+		echo "  Removing $(DATA_DIR)/processed..."; \
+		rm -rf $(DATA_DIR)/processed; \
+	fi
+	@if [ -d "$(DATA_DIR)/test" ]; then \
+		echo "  Removing $(DATA_DIR)/test..."; \
+		rm -rf $(DATA_DIR)/test; \
+	fi
+	@if [ -d "$(DATA_DIR)/tokenizer" ]; then \
+		echo "  Removing $(DATA_DIR)/tokenizer..."; \
+		rm -rf $(DATA_DIR)/tokenizer; \
+	fi
+	@if [ -f "$(SFT_DATASET)" ]; then \
+		echo "  Removing sample SFT dataset..."; \
+		rm -f $(SFT_DATASET); \
+	fi
+	@if [ -f "$(DPO_DATASET)" ]; then \
+		echo "  Removing sample DPO dataset..."; \
+		rm -f $(DPO_DATASET); \
+	fi
+	@echo "✅ Datasets cleaned!"
 
 .PHONY: clean-checkpoints
 clean-checkpoints:
-	@echo "Removing checkpoints..."
-	rm -rf $(CHECKPOINTS_DIR)
-	@echo "Checkpoints removed!"
+	@echo "🏋️ Removing checkpoints..."
+	@if [ -d "$(CHECKPOINTS_DIR)" ]; then \
+		echo "  Removing $(CHECKPOINTS_DIR)..."; \
+		rm -rf $(CHECKPOINTS_DIR); \
+	fi
+	@if [ -d "./evaluation_results" ]; then \
+		echo "  Removing evaluation results..."; \
+		rm -rf ./evaluation_results; \
+	fi
+	@echo "✅ Checkpoints removed!"
+
+.PHONY: clean-all
+clean-all: clean clean-data clean-checkpoints
+	@echo "🎉 Complete cleanup finished!"
+
+.PHONY: clean-repo
+clean-repo:
+	@echo "🚀 Repository cleanup for commits..."
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@$(MAKE) clean
+	@$(MAKE) clean-data
+	@$(MAKE) clean-checkpoints
+	@if [ -d "./sessions" ]; then \
+		echo "🗂️ Removing session logs..."; \
+		rm -rf ./sessions; \
+	fi
+	@if [ -d "./backups" ]; then \
+		echo "💾 Removing backup files..."; \
+		rm -rf ./backups; \
+	fi
+	@if [ -d "./wandb" ]; then \
+		echo "📊 Removing wandb logs..."; \
+		rm -rf ./wandb; \
+	fi
+	@if [ -d "./.accelerate" ]; then \
+		echo "⚡ Removing accelerate cache..."; \
+		rm -rf ./.accelerate; \
+	fi
+	@echo "✅ Repository is now clean for commit!"
+	@echo "📦 Kept: config/, scripts/, utils/, requirements.txt, README.md"
+	@echo "🗑️  Removed: data/, checkpoints/, logs, caches, backups"
+
+.PHONY: clean-status
+clean-status:
+	@echo "📊 Cleanup Status - Current disk usage:"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "📁 DATASETS:"
+	@if [ -d "$(DATA_DIR)/processed" ]; then \
+		du -sh $(DATA_DIR)/processed 2>/dev/null | awk '{print "   Processed data: " $$1}' || echo "   Processed data: 0B"; \
+	else \
+		echo "   Processed data: None"; \
+	fi
+	@if [ -d "$(DATA_DIR)/tokenizer" ]; then \
+		du -sh $(DATA_DIR)/tokenizer 2>/dev/null | awk '{print "   Tokenizers: " $$1}' || echo "   Tokenizers: 0B"; \
+	else \
+		echo "   Tokenizers: None"; \
+	fi
+	@echo ""
+	@echo "🏋️ CHECKPOINTS:"
+	@if [ -d "$(CHECKPOINTS_DIR)" ]; then \
+		du -sh $(CHECKPOINTS_DIR) 2>/dev/null | awk '{print "   Models: " $$1}' || echo "   Models: 0B"; \
+	else \
+		echo "   Models: None"; \
+	fi
+	@if [ -d "./evaluation_results" ]; then \
+		du -sh ./evaluation_results 2>/dev/null | awk '{print "   Eval results: " $$1}' || echo "   Eval results: 0B"; \
+	else \
+		echo "   Eval results: None"; \
+	fi
+	@echo ""
+	@echo "🗂️ OTHER:"
+	@if [ -d "./sessions" ]; then \
+		du -sh ./sessions 2>/dev/null | awk '{print "   Session logs: " $$1}' || echo "   Session logs: 0B"; \
+	else \
+		echo "   Session logs: None"; \
+	fi
+	@if [ -d "./backups" ]; then \
+		du -sh ./backups 2>/dev/null | awk '{print "   Backups: " $$1}' || echo "   Backups: 0B"; \
+	else \
+		echo "   Backups: None"; \
+	fi
+	@if [ -d "./wandb" ]; then \
+		du -sh ./wandb 2>/dev/null | awk '{print "   W&B logs: " $$1}' || echo "   W&B logs: 0B"; \
+	else \
+		echo "   W&B logs: None"; \
+	fi
+	@echo ""
+	@echo "💾 TOTAL REPOSITORY SIZE:"
+	@du -sh . 2>/dev/null | awk '{print "   " $$1}' || echo "   Unknown"
+	@echo ""
+	@echo "🧹 CLEANUP COMMANDS:"
+	@echo "   make clean          - Remove temp files only"
+	@echo "   make clean-data     - Remove datasets only"  
+	@echo "   make clean-all      - Remove everything except configs"
+	@echo "   make clean-repo     - Full cleanup for git commits"
 
 # Environment check
 .PHONY: check-env
@@ -454,7 +616,7 @@ pretrain-tiny-quick:
 	@mkdir -p $(CHECKPOINTS_DIR)/pretrain/tiny
 	$(ACCELERATE) $(SCRIPTS_DIR)/02_pretrain.py \
 		--config $(TINY_CONFIG) \
-		--data_path $(PROCESSED_DATA) \
+		--data_dir $(DATA_DIR)/processed \
 		--output_dir $(CHECKPOINTS_DIR)/pretrain/tiny \
 		--learning_rate 5e-4 \
 		--batch_size 16 \
@@ -553,6 +715,6 @@ session-status:
 session-cleanup:
 	@echo "🧹 Session cleanup..."
 	@$(MAKE) clean
-	@rm -rf $(DATA_DIR)/test
+	@rm -rf $(DATA_DIR)/test 2>/dev/null || true
 	@find $(SESSION_DIR) -name "*.log" -mtime +7 -delete 2>/dev/null || true
-	@echo "Cleanup completed (models preserved)!"
+	@echo "✅ Session cleanup completed (models preserved)!"

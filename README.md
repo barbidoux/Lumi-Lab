@@ -40,8 +40,12 @@ make session-status
 
 ```bash
 # If you prefer step-by-step control
-make create-sample-datasets
-make prepare
+make prepare-demo          # Fast dataset for testing
+make pretrain-tiny
+make evaluate
+
+# Or for production
+make prepare-owt           # OpenWebText dataset
 make pretrain-tiny
 make evaluate
 ```
@@ -289,42 +293,92 @@ Lumi/
 
 ### 1. Data Preparation
 
-#### Option A: Hugging Face Dataset (Recommended)
+Our robust, config-based data preparation pipeline supports multiple datasets with reproducible configurations.
+
+#### Quick Start (Recommended)
 
 ```bash
-# OpenWebText (primary recommendation)
-python scripts/01_prepare_data.py \
-    --input_path "openwebtext" \
-    --output_dir ./data/processed \
-    --use_minhash \
-    --vocab_size 32768 \
-    --min_length 50 \
-    --max_length 10000
+# OpenWebText (production-ready, large dataset)
+make prepare-owt
 
-# WikiText-103 (smaller, faster)
-python scripts/01_prepare_data.py \
-    --input_path "wikitext-103-raw-v1" \
-    --output_dir ./data/processed \
-    --use_minhash \
-    --vocab_size 32768
+# Wikipedia EN (medium size, high quality)
+make prepare-wiki
+
+# WikiText-103 (small, fast for testing)
+make prepare-wt103
+
+# Demo tiny (very fast for development)
+make prepare-demo
 ```
 
-#### Option B: Local JSON Data
+#### Available Dataset Configurations
+
+| Config File | Dataset | Size | Use Case |
+|-------------|---------|------|----------|
+| `config/datasets/openwebtext.json` | OpenWebText | ~40GB | Production training |
+| `config/datasets/wikipedia_en.json` | Wikipedia EN | ~20GB | High-quality corpus |
+| `config/datasets/wikitext103.json` | WikiText-103 | ~500MB | Quick testing |
+| `config/datasets/demo_tiny.json` | WikiText-2 | ~12MB | Development |
+
+#### Custom Configuration
+
+Create your own dataset config (JSON/YAML):
+
+```json
+{
+  "input_path": "your-dataset-name",
+  "output_dir": "data/processed/custom_32k_1024",
+  "tokenizer_path": "data/tokenizer/spm32k.model",
+  "vocab_size": 32768,
+  "sequence_length": 1024,
+  "min_length": 50,
+  "max_length": 10000,
+  "use_minhash": true,
+  "minhash_threshold": 0.8,
+  "train_ratio": 0.98,
+  "shard_tokens": 5000000
+}
+```
+
+Then use it:
+```bash
+make prepare CONFIG=config/datasets/your_config.json
+```
+
+#### Advanced Usage
 
 ```bash
+# Override config values via CLI
 python scripts/01_prepare_data.py \
-    --input_path ./data/raw/my_dataset.json \
-    --output_dir ./data/processed \
-    --use_minhash \
-    --minhash_threshold 0.8
+    --config_path config/datasets/openwebtext.json \
+    --vocab_size 16384 \
+    --max_length 2048
+
+# Use local files
+python scripts/01_prepare_data.py \
+    --config_path config/datasets/custom.json \
+    --input_path ./data/raw/my_corpus.txt
 ```
 
-**Preparation features:**
-- ✅ **MinHash Deduplication**: Detects duplicates with 80% similarity
-- ✅ **Intelligent Cleaning**: Removes URLs, code, control characters  
-- ✅ **Language Filtering**: Automatic English language detection
-- ✅ **SentencePiece Tokenizer**: Optimized 32K token vocabulary
-- ✅ **Secure Hashing**: SHA256 for data integrity
+**Pipeline Features:**
+- ✅ **Config-Based**: Reproducible, versioned configurations
+- ✅ **Multi-Source**: HuggingFace, local files, custom datasets
+- ✅ **Advanced Deduplication**: SHA256 + MinHashLSH for fuzzy duplicates  
+- ✅ **Smart Filtering**: Language detection, length filtering, text cleaning
+- ✅ **Robust Processing**: ftfy encoding fix, URL/code removal
+- ✅ **Sharded Output**: JSONL format with manifest and data cards
+- ✅ **Quality Assurance**: Built-in validation and statistics
+
+**Output Structure:**
+```
+data/processed/dataset_name/
+├── train_00000.jsonl        # Training shards
+├── train_00001.jsonl
+├── val_00000.jsonl          # Validation shards  
+├── manifest.json            # Shard registry
+├── DATA_CARD.md            # Dataset documentation
+└── stats.json              # Processing statistics
+```
 
 ### 2. Pre-training from Scratch
 

@@ -8,24 +8,107 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
+import glob
+
+
+class ShardedTokenizedDataset(Dataset):
+    """Dataset for sharded tokenized data with manifest support."""
+    
+    def __init__(self, data_dir: str, split: str = "train"):
+        """
+        Args:
+            data_dir: Path to directory containing sharded data
+            split: Dataset split ('train' or 'val')
+        """
+        self.data_dir = Path(data_dir)
+        self.split = split
+        
+        # Check for manifest.json
+        manifest_path = self.data_dir / "manifest.json"
+        if manifest_path.exists():
+            print(f"📋 Loading dataset from manifest: {manifest_path}")
+            self.shard_files = self._load_from_manifest(manifest_path, split)
+        else:
+            print(f"🔍 No manifest found, using glob fallback in {self.data_dir}")
+            self.shard_files = self._load_from_glob(self.data_dir, split)
+        
+        if not self.shard_files:
+            raise FileNotFoundError(f"No {split} shards found in {data_dir}")
+        
+        print(f"Found {len(self.shard_files)} {split} shards")
+        
+        # Load all data into memory
+        self.samples = []
+        total_tokens = 0
+        
+        for shard_file in self.shard_files:
+            shard_path = self.data_dir / shard_file
+            with open(shard_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    sample = json.loads(line.strip())
+                    self.samples.append({
+                        'input_ids': torch.tensor(sample['input_ids'], dtype=torch.long),
+                        'labels': torch.tensor(sample['labels'], dtype=torch.long)
+                    })
+                    total_tokens += len(sample['input_ids'])
+        
+        print(f"📊 Dataset loaded: {len(self.samples):,} samples, {total_tokens:,} tokens")
+    
+    def _load_from_manifest(self, manifest_path: Path, split: str) -> List[str]:
+        """Load shard files from manifest."""
+        with open(manifest_path, 'r') as f:
+            manifest = json.load(f)
+        
+        shard_key = f"{split}_shards"
+        if shard_key not in manifest:
+            raise KeyError(f"Manifest does not contain '{shard_key}' key")
+        
+        return manifest[shard_key]
+    
+    def _load_from_glob(self, data_dir: Path, split: str) -> List[str]:
+        """Fallback: load shard files using glob."""
+        pattern = str(data_dir / f"{split}_*.jsonl")
+        shard_paths = glob.glob(pattern)
+        
+        # Convert to relative filenames
+        return [Path(p).name for p in sorted(shard_paths)]
+    
+    def __len__(self):
+        return len(self.samples)
+    
+    def __getitem__(self, idx):
+        return self.samples[idx]
 
 
 class TokenizedDataset(Dataset):
-    """Dataset for tokenized data saved in JSON format."""
+    """Legacy dataset for tokenized data saved in JSON format."""
     
     def __init__(self, data_path: str, sequence_length: int = 1024, stride: int = None):
         """
         Args:
-            data_path: Path to JSON file containing tokenized data
+            data_path: Path to JSON file containing tokenized data or directory with shards
             sequence_length: Sequence length for training
             stride: Stride between sequences (default = sequence_length)
         """
-        self.data_path = Path(data_path)
+        data_path = Path(data_path)
+        
+        # Check if path is a directory (new sharded format)
+        if data_path.is_dir():
+            print("📁 Detected directory path, delegating to ShardedTokenizedDataset")
+            sharded_dataset = ShardedTokenizedDataset(str(data_path), split="train")
+            # Copy attributes for compatibility
+            self.samples = sharded_dataset.samples
+            self.num_sequences = len(self.samples)
+            self.sequence_length = sequence_length
+            return
+        
+        # Legacy single file format
+        self.data_path = data_path
         self.sequence_length = sequence_length
         self.stride = stride or sequence_length
         
         # Data loading
-        print(f"Loading data from {data_path}...")
+        print(f"Loading legacy format data from {data_path}...")
         with open(data_path, 'r', encoding='utf-8') as f:
             self.tokenized_texts = json.load(f)
         
@@ -47,6 +130,11 @@ class TokenizedDataset(Dataset):
         return self.num_sequences
     
     def __getitem__(self, idx):
+        # New sharded format
+        if hasattr(self, 'samples'):
+            return self.samples[idx]
+        
+        # Legacy format
         start_idx = idx * self.stride
         end_idx = start_idx + self.sequence_length
         
