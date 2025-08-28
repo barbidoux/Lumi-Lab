@@ -521,6 +521,7 @@ python scripts/04_dpo.py \
 # Complete evaluation with quality analysis
 python scripts/05_evaluate.py \
     --model_path ./checkpoints/dpo \
+    --tokenizer_path data/tokenizer/spm32k.model \
     --output_dir ./evaluation_results \
     --max_boolq_samples 100 \
     --detailed_output
@@ -532,6 +533,7 @@ python scripts/05_evaluate.py \
 # Quick evaluation for development iterations
 python scripts/05_evaluate.py \
     --model_path ./checkpoints/pretrain/tiny/final \
+    --tokenizer_path data/tokenizer/spm32k.model \
     --fast_mode \
     --output_dir ./quick_eval
 ```
@@ -577,6 +579,7 @@ python evaluation/assess_performance.py ./evaluation_results/evaluation_results.
 # Launch interactive chat with your trained model
 python scripts/06_serve.py \
     --model_path ./checkpoints/dpo \
+    --tokenizer_path data/tokenizer/spm32k.model \
     --mode interactive \
     --template chatml \
     --temperature 0.7 \
@@ -589,6 +592,7 @@ python scripts/06_serve.py \
 # Start FastAPI server
 python scripts/06_serve.py \
     --model_path ./checkpoints/dpo \
+    --tokenizer_path data/tokenizer/spm32k.model \
     --mode api \
     --host 127.0.0.1 \
     --port 8000
@@ -669,6 +673,40 @@ make create-sample-datasets
 # Verify data structure
 python -c "import json; print(json.load(open('./data/sft_dataset.json'))[:2])"
 ```
+
+#### 🚨 Garbled Text Output (@@, ⁇ symbols)
+
+If you see output like `@@` or `⁇` symbols, the SentencePiece decoder isn't being used properly:
+
+```bash
+# ✅ CORRECT: Always specify tokenizer_path for clean text
+python scripts/05_evaluate.py \
+    --model_path checkpoints/wiki-tiny-fa2/tiny/final \
+    --tokenizer_path data/tokenizer/spm32k.model
+
+python scripts/06_serve.py \
+    --model_path checkpoints/wiki-tiny-fa2/tiny/final \
+    --tokenizer_path data/tokenizer/spm32k.model \
+    --mode interactive
+
+# ❌ WRONG: Without tokenizer_path, you get garbled output
+# python scripts/05_evaluate.py --model_path checkpoints/wiki-tiny-fa2/tiny/final
+```
+
+**Why this happens:**
+- The model uses SentencePiece tokenization with subword tokens
+- Without proper decoding, you see raw subword pieces (`@@`) and unknown tokens (`⁇`)
+- **The fix:** Use the proper SentencePiece decoder via `--tokenizer_path data/tokenizer/spm32k.model`
+- Both scripts now default to the SentencePiece tokenizer and use proper decoding
+
+**Default parameters for readable output:**
+- Temperature: 0.8 (balanced creativity/coherence)
+- Top-k: 50 (reasonable vocabulary restriction)  
+- Top-p: 0.9 (nucleus sampling)
+- Max tokens: 96 (concise but complete responses)
+
+**Smoke test prompts:**
+Run evaluation with 5 default English prompts: `--custom_prompts config/smoke_test_prompts.json`
 
 #### 🚨 Corrupted Checkpoint
 

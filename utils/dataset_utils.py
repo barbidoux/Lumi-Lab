@@ -46,9 +46,12 @@ class ShardedTokenizedDataset(Dataset):
             with open(shard_path, 'r', encoding='utf-8') as f:
                 for line in f:
                     sample = json.loads(line.strip())
+                    input_ids = torch.tensor(sample['input_ids'], dtype=torch.long)
+                    labels = torch.tensor(sample['labels'], dtype=torch.long)
                     self.samples.append({
-                        'input_ids': torch.tensor(sample['input_ids'], dtype=torch.long),
-                        'labels': torch.tensor(sample['labels'], dtype=torch.long)
+                        'input_ids': input_ids,
+                        'labels': labels,
+                        'attention_mask': torch.ones_like(input_ids)
                     })
                     total_tokens += len(sample['input_ids'])
         

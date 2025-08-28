@@ -23,7 +23,7 @@ I would rather dig happily with a fork than wait for someone to hand me a bulldo
 
 This project is meant as a learning kit.
 Everything is documented so others can reproduce, understand, and play.
-The goal is to show that training a language model from scratch — pretrain, align, and serve — is possible even without supercomputers.
+The goal is to show that training a language model from scratch — pretrain, align, and serve — is possible with a bit of patience and perseverence even without supercomputers.
 It is not production software. It is a living manual, a lab notebook, and an open sandbox.
 
 ## Limits & safeguards

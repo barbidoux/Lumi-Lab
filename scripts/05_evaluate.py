@@ -7,8 +7,13 @@ Calculates perplexity, performs zero-shot benchmarks and smoke-tests.
 import argparse
 import json
 import math
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional
+
+# Add project root to Python path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
 import torch
 from datasets import load_dataset
@@ -16,9 +21,84 @@ from evaluate import load
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
+import sentencepiece as spm
 
 from utils.dataset_utils import TokenizedDataset, create_dataloader
 from utils.model_utils import load_pretrained_model
+
+
+class SentencePieceTokenizerWrapper:
+    """Simple wrapper to make SentencePiece tokenizer compatible with HuggingFace interface."""
+    
+    def __init__(self, model_path: str):
+        self.sp = spm.SentencePieceProcessor()
+        self.sp.load(model_path)
+        self.eos_token = '</s>'
+        self.pad_token = '</s>'
+        self.eos_token_id = self.sp.piece_to_id('</s>')
+        self.pad_token_id = self.eos_token_id
+        self.vocab_size = self.sp.get_piece_size()
+    
+    def encode(self, text: str, add_special_tokens=True, **kwargs):
+        """Encode text to token IDs."""
+        return self.sp.encode_as_ids(text)
+    
+    def decode(self, ids, skip_special_tokens=False):
+        """Decode token IDs to text using proper SentencePiece API."""
+        if isinstance(ids, torch.Tensor):
+            ids = ids.tolist()
+        
+        # Filter out special tokens
+        if skip_special_tokens:
+            # Define special tokens to filter
+            special_tokens = {
+                0,  # PAD (usually)
+                1,  # UNK 
+                2,  # BOS (if exists)
+                self.pad_token_id,
+                self.eos_token_id
+            }
+            
+            # Remove special tokens and stop at EOS if present
+            filtered_ids = []
+            for token_id in ids:
+                if token_id in special_tokens:
+                    if token_id == self.eos_token_id:  # Stop at EOS
+                        break
+                    continue  # Skip other special tokens
+                filtered_ids.append(token_id)
+            ids = filtered_ids
+        else:
+            # Always filter UNK tokens (ID=1) as they produce garbage
+            ids = [token_id for token_id in ids if token_id != 1]
+        
+        # Use SentencePiece's decode method directly
+        try:
+            decoded = self.sp.decode(ids)
+            return decoded
+        except Exception:
+            # Fallback to decode_ids if decode fails
+            return self.sp.decode_ids(ids)
+    
+    def __call__(self, text, return_tensors=None, max_length=None, truncation=False, **kwargs):
+        """Tokenize text and return in requested format."""
+        # Simple encoding
+        input_ids = self.encode(text)
+        
+        # Truncate if needed
+        if truncation and max_length and len(input_ids) > max_length:
+            input_ids = input_ids[:max_length]
+        
+        # Return as tensors if requested
+        if return_tensors == "pt":
+            input_ids = torch.tensor([input_ids], dtype=torch.long)  # Add batch dimension
+            attention_mask = torch.ones_like(input_ids)
+            return {
+                'input_ids': input_ids,
+                'attention_mask': attention_mask
+            }
+        
+        return {'input_ids': input_ids}
 
 
 def calculate_perplexity(model, tokenizer, dataset_name: str = "wikitext-2-raw-v1") -> float:
@@ -110,6 +190,7 @@ def evaluate_boolq(model, tokenizer, max_samples: int = 100) -> Dict[str, float]
             
             # Tokenisation
             inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=800)
+            # Move to device
             inputs = {k: v.to(model.device) for k, v in inputs.items()}
             
             # Generate probabilities for "Yes" and "No"
@@ -118,7 +199,8 @@ def evaluate_boolq(model, tokenizer, max_samples: int = 100) -> Dict[str, float]
             
             # Forward pass
             outputs = model(**inputs)
-            logits = outputs.logits[0, -1]  # Logits pour le dernier token
+            # Get logits for the last token - shape should be [batch, seq_len, vocab_size]
+            logits = outputs.logits[0, -1]  # [vocab_size]
             
             # Probabilities for Yes/No
             yes_prob = torch.softmax(logits, dim=0)[yes_token].item()
@@ -136,46 +218,61 @@ def evaluate_boolq(model, tokenizer, max_samples: int = 100) -> Dict[str, float]
 
 
 def run_smoke_tests(model, tokenizer, test_prompts: List[str]) -> List[Dict[str, str]]:
-    """Effectue des smoke-tests avec une liste de prompts."""
+    """Simple, working smoke test function."""
     print("Running smoke-tests...")
     
     results = []
     model.eval()
-    
-    generation_config = {
-        "max_new_tokens": 100,
-        "temperature": 0.7,
-        "do_sample": True,
-        "top_p": 0.9,
-        "pad_token_id": tokenizer.eos_token_id,
-        "eos_token_id": tokenizer.eos_token_id,
-        "repetition_penalty": 1.1
-    }
     
     with torch.no_grad():
         for i, prompt in enumerate(test_prompts):
             print(f"\nTest {i+1}/{len(test_prompts)}")
             print(f"Prompt: {prompt}")
             
-            # Tokenisation
-            inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
-            inputs = {k: v.to(model.device) for k, v in inputs.items()}
-            
-            # Generation
-            outputs = model.generate(inputs.input_ids, **generation_config)
-            
-            # Decoding
-            response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-            generated_text = response[len(prompt):].strip()
-            
-            result = {
-                "prompt": prompt,
-                "response": generated_text,
-                "full_text": response
-            }
-            results.append(result)
-            
-            print(f"Response: {generated_text}")
+            try:
+                # Tokenization
+                inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
+                inputs = {k: v.to(model.device) for k, v in inputs.items()}
+                
+                # Generation with default parameters
+                outputs = model.generate(
+                    inputs['input_ids'],
+                    attention_mask=inputs['attention_mask'],
+                    max_new_tokens=96,
+                    temperature=0.8,
+                    do_sample=True,
+                    top_k=50,
+                    top_p=0.9,
+                    pad_token_id=tokenizer.pad_token_id,
+                    eos_token_id=tokenizer.eos_token_id,
+                    repetition_penalty=1.2,
+                    no_repeat_ngram_size=3
+                )
+                
+                # Decoding - outputs should be [batch_size, sequence_length]
+                generated_ids = outputs[0]  # Take first (and only) sample from batch
+                response = tokenizer.decode(generated_ids, skip_special_tokens=True)
+                
+                # Extract just the generated part
+                generated_text = response[len(prompt):].strip()
+                
+                result = {
+                    "prompt": prompt,
+                    "response": generated_text,
+                    "full_text": response
+                }
+                results.append(result)
+                
+                print(f"Response: {generated_text[:100]}{'...' if len(generated_text) > 100 else ''}")
+                
+            except Exception as e:
+                print(f"Error in test {i+1}: {e}")
+                result = {
+                    "prompt": prompt,
+                    "response": f"Error: {str(e)}",
+                    "full_text": f"Error: {str(e)}"
+                }
+                results.append(result)
     
     return results
 
@@ -184,8 +281,8 @@ def main():
     parser = argparse.ArgumentParser(description="Complete model evaluation")
     parser.add_argument("--model_path", type=str, required=True,
                        help="Path to model to evaluate")
-    parser.add_argument("--tokenizer_path", type=str, default=None,
-                       help="Chemin vers le tokenizer")
+    parser.add_argument("--tokenizer_path", type=str, default="data/tokenizer/spm32k.model",
+                       help="Chemin vers le tokenizer SentencePiece (par défaut: data/tokenizer/spm32k.model)")
     parser.add_argument("--output_dir", type=str, default="./evaluation_results",
                        help="Directory to save results")
     parser.add_argument("--skip_perplexity", action="store_true",
@@ -196,6 +293,10 @@ def main():
                        help="Maximum number of BoolQ samples")
     parser.add_argument("--custom_prompts", type=str, default=None,
                        help="JSON file with custom prompts")
+    parser.add_argument("--fast_mode", action="store_true",
+                       help="Run in fast mode with reduced samples")
+    parser.add_argument("--detailed_output", action="store_true",
+                       help="Generate detailed output files")
     
     args = parser.parse_args()
     
@@ -208,7 +309,12 @@ def main():
     
     # Chargement du tokenizer
     if args.tokenizer_path:
-        tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_path)
+        # Handle SentencePiece tokenizer files
+        if args.tokenizer_path.endswith('.model'):
+            # Load SentencePiece model directly
+            tokenizer = SentencePieceTokenizerWrapper(args.tokenizer_path)
+        else:
+            tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_path)
     else:
         tokenizer = AutoTokenizer.from_pretrained(args.model_path)
     
@@ -247,30 +353,34 @@ def main():
             evaluation_results["boolq_error"] = str(e)
     
     # 3. Smoke-tests
-    # Default prompts
+    # Load prompts from file or use defaults
     default_prompts = [
-        "Qu'est-ce que l'intelligence artificielle ?",
-        "Expliquez le concept de machine learning en termes simples.",
+        "What is artificial intelligence?",
+        "Explain machine learning in simple terms.",
         "How does a neural network work?",
-        "What are the advantages and disadvantages of AI?",
-        "Describe the impact of AI on modern society.",
+        "What are the benefits of renewable energy?",
+        "Describe the water cycle.",
         "What is the capital of France?",
-        "Write a short story about a robot.",
-        "Explain quantum computing to a 10-year-old.",
-        "List three benefits of renewable energy.",
-        "How do you make a good cup of coffee?"
+        "Write a short poem about nature.",
+        "How do you make chocolate chip cookies?",
+        "What causes seasons on Earth?",
+        "Explain photosynthesis to a child."
     ]
     
-    # Load custom prompts if provided
+    # Load custom prompts if provided, otherwise use defaults
     if args.custom_prompts:
-        with open(args.custom_prompts, 'r', encoding='utf-8') as f:
-            custom_data = json.load(f)
-            if isinstance(custom_data, list):
-                test_prompts = custom_data
-            else:
-                test_prompts = custom_data.get("prompts", default_prompts)
+        try:
+            with open(args.custom_prompts, 'r', encoding='utf-8') as f:
+                custom_data = json.load(f)
+                if isinstance(custom_data, list):
+                    test_prompts = custom_data
+                else:
+                    test_prompts = custom_data.get("prompts", default_prompts)
+        except Exception as e:
+            print(f"Error loading custom prompts: {e}. Using defaults.")
+            test_prompts = default_prompts
     else:
-        test_prompts = default_prompts
+        test_prompts = default_prompts[:5]  # Use first 5 default EN prompts
     
     # Run smoke-tests
     try:
