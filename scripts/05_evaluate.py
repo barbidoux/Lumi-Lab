@@ -27,6 +27,88 @@ from utils.dataset_utils import TokenizedDataset, create_dataloader
 from utils.model_utils import load_pretrained_model
 
 
+def validate_tokenizer_consistency_eval(data_dirs: List[str]) -> Dict:
+    """Validate that all datasets use the same tokenizer and return metadata (evaluation version)."""
+    if not data_dirs:
+        return {}
+    
+    print("🔍 Validating tokenizer consistency across datasets...")
+    
+    reference_metadata = None
+    reference_dir = None
+    
+    for data_dir in data_dirs:
+        manifest_path = Path(data_dir) / 'manifest.json'
+        
+        if not manifest_path.exists():
+            raise FileNotFoundError(
+                f"❌ Manifest file not found: {manifest_path}\n"
+                f"This dataset may not have been processed with the new tokenizer system.\n"
+                f"Please re-process using: make reencode-dataset DIR={data_dir}"
+            )
+        
+        try:
+            with open(manifest_path, 'r') as f:
+                manifest = json.load(f)
+        except Exception as e:
+            raise RuntimeError(f"❌ Failed to load manifest {manifest_path}: {e}")
+        
+        if 'tokenizer_metadata' not in manifest:
+            raise ValueError(
+                f"❌ No tokenizer metadata in manifest: {manifest_path}\n"
+                f"This dataset was processed with an older version.\n"
+                f"Please re-process using: make reencode-dataset DIR={data_dir}"
+            )
+        
+        tokenizer_metadata = manifest['tokenizer_metadata']
+        
+        # Validate required fields
+        required_fields = ['tokenizer_sha256', 'tokenizer_vocab_size', 'special_tokens', 'normalizer', 'byte_fallback']
+        for field in required_fields:
+            if field not in tokenizer_metadata:
+                raise ValueError(f"❌ Missing tokenizer metadata field '{field}' in {manifest_path}")
+        
+        if reference_metadata is None:
+            reference_metadata = tokenizer_metadata
+            reference_dir = data_dir
+            print(f"📊 Reference tokenizer (from {data_dir}):")
+            print(f"   SHA256: {reference_metadata['tokenizer_sha256'][:16]}...")
+            print(f"   Vocab size: {reference_metadata['tokenizer_vocab_size']:,}")
+            print(f"   Special tokens: {reference_metadata['special_tokens']}")
+        else:
+            # Compare with reference
+            mismatches = []
+            
+            if tokenizer_metadata['tokenizer_sha256'] != reference_metadata['tokenizer_sha256']:
+                mismatches.append(f"SHA256: {tokenizer_metadata['tokenizer_sha256'][:16]}... != {reference_metadata['tokenizer_sha256'][:16]}...")
+            
+            if tokenizer_metadata['tokenizer_vocab_size'] != reference_metadata['tokenizer_vocab_size']:
+                mismatches.append(f"Vocab size: {tokenizer_metadata['tokenizer_vocab_size']} != {reference_metadata['tokenizer_vocab_size']}")
+            
+            if tokenizer_metadata['special_tokens'] != reference_metadata['special_tokens']:
+                mismatches.append(f"Special tokens: {tokenizer_metadata['special_tokens']} != {reference_metadata['special_tokens']}")
+            
+            if tokenizer_metadata['normalizer'] != reference_metadata['normalizer']:
+                mismatches.append(f"Normalizer: {tokenizer_metadata['normalizer']} != {reference_metadata['normalizer']}")
+            
+            if tokenizer_metadata['byte_fallback'] != reference_metadata['byte_fallback']:
+                mismatches.append(f"Byte fallback: {tokenizer_metadata['byte_fallback']} != {reference_metadata['byte_fallback']}")
+            
+            if mismatches:
+                raise ValueError(
+                    f"❌ Tokenizer mismatch between {reference_dir} and {data_dir}:\\n" +
+                    "\\n".join(f"   {mismatch}" for mismatch in mismatches) +
+                    f"\\n\\nAll datasets must use the same tokenizer. Solutions:\\n"
+                    f"1. Re-process inconsistent dataset: make reencode-dataset DIR={data_dir}\\n"
+                    f"2. Use tokenizer-reset + data-rebuild-all to restart with consistent tokenizer"
+                )
+            
+            print(f"✅ {data_dir}: tokenizer matches reference")
+    
+    print(f"✅ All {len(data_dirs)} datasets use consistent tokenizer")
+    return reference_metadata
+
+
 class SentencePieceTokenizerWrapper:
     """Simple wrapper to make SentencePiece tokenizer compatible with HuggingFace interface."""
     
@@ -165,6 +247,82 @@ def calculate_perplexity(model, tokenizer, dataset_name: str = "wikitext-2-raw-v
     return perplexity
 
 
+def calculate_multi_dataset_perplexity(
+    model, 
+    tokenizer, 
+    data_dirs: List[str], 
+    weights: Optional[List[float]] = None
+) -> Dict[str, float]:
+    """Calculate per-dataset and weighted perplexity across multiple datasets."""
+    print(f"📊 Multi-dataset perplexity evaluation on {len(data_dirs)} datasets...")
+    
+    # Import here to avoid circular imports
+    from utils.dataset_utils import WeightedMultiDatasetSampler
+    
+    # Initialize sampler for validation data
+    multi_sampler = WeightedMultiDatasetSampler(
+        data_dirs=data_dirs,
+        weights=weights,
+        seed=42,
+        batch_size=1,  # For perplexity calculation
+        split="val"  # Use validation split
+    )
+    
+    results = {}
+    total_weighted_loss = 0.0
+    total_weighted_tokens = 0
+    
+    model.eval()
+    
+    # Calculate perplexity for each dataset
+    for i, (dataset, dataset_name, weight) in enumerate(zip(multi_sampler.datasets, multi_sampler.dataset_names, multi_sampler.weights)):
+        print(f"   Dataset {i+1}/{len(data_dirs)}: {dataset_name}")
+        
+        total_loss = 0.0
+        total_tokens = 0
+        
+        with torch.no_grad():
+            for sample_idx in tqdm(range(len(dataset)), desc=f"Perplexity {dataset_name}"):
+                sample = dataset[sample_idx]
+                
+                input_ids = sample['input_ids'].unsqueeze(0).to(model.device)
+                attention_mask = (input_ids != 0).long().to(model.device)
+                labels = sample['labels'].unsqueeze(0).to(model.device)
+                
+                outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+                loss = outputs.loss
+                
+                # Count valid tokens (non-padding)
+                valid_tokens = attention_mask.sum().item()
+                total_loss += loss.item() * valid_tokens
+                total_tokens += valid_tokens
+        
+        # Calculate perplexity for this dataset
+        if total_tokens > 0:
+            avg_loss = total_loss / total_tokens
+            perplexity = math.exp(avg_loss)
+            results[f"ppl_{dataset_name}"] = perplexity
+            print(f"   └─ Perplexity: {perplexity:.2f}")
+            
+            # Add to weighted average
+            total_weighted_loss += total_loss * weight
+            total_weighted_tokens += total_tokens * weight
+        else:
+            print(f"   └─ No valid tokens found")
+            results[f"ppl_{dataset_name}"] = float('inf')
+    
+    # Calculate weighted perplexity
+    if total_weighted_tokens > 0:
+        weighted_avg_loss = total_weighted_loss / total_weighted_tokens
+        weighted_perplexity = math.exp(weighted_avg_loss)
+        results["ppl_weighted"] = weighted_perplexity
+        print(f"📈 Weighted perplexity: {weighted_perplexity:.2f}")
+    else:
+        results["ppl_weighted"] = float('inf')
+    
+    return results
+
+
 def evaluate_boolq(model, tokenizer, max_samples: int = 100) -> Dict[str, float]:
     """Evaluate model on BoolQ (Yes/No questions)."""
     print(f"BoolQ evaluation (max {max_samples} samples)...")
@@ -285,6 +443,12 @@ def main():
                        help="Chemin vers le tokenizer SentencePiece (par défaut: data/tokenizer/spm32k.model)")
     parser.add_argument("--output_dir", type=str, default="./evaluation_results",
                        help="Directory to save results")
+    
+    # Multi-dataset evaluation
+    parser.add_argument("--data_dirs", nargs='+', type=str,
+                       help="Multiple data directories for multi-dataset perplexity evaluation")
+    parser.add_argument("--data_weights", nargs='+', type=float,
+                       help="Weights for multi-dataset evaluation (must match --data_dirs length)")
     parser.add_argument("--skip_perplexity", action="store_true",
                        help="Skip perplexity calculation")
     parser.add_argument("--skip_boolq", action="store_true",
@@ -331,15 +495,40 @@ def main():
         "device": str(model.device)
     }
     
-    # 1. Calculate perplexity
+    # 1. Calculate perplexity (multi-dataset or single dataset)
     if not args.skip_perplexity:
-        try:
-            perplexity = calculate_perplexity(model, tokenizer)
-            evaluation_results["perplexity"] = perplexity
-            print(f"Perplexity (Wikitext-2): {perplexity:.2f}")
-        except Exception as e:
-            print(f"Error calculating perplexity: {e}")
-            evaluation_results["perplexity_error"] = str(e)
+        if args.data_dirs:
+            # Multi-dataset perplexity evaluation
+            try:
+                # Validate arguments
+                if args.data_weights and len(args.data_weights) != len(args.data_dirs):
+                    raise ValueError(f"Number of weights ({len(args.data_weights)}) must match number of data_dirs ({len(args.data_dirs)})")
+                
+                # CRITICAL: Validate tokenizer consistency across all datasets
+                tokenizer_metadata = validate_tokenizer_consistency_eval(args.data_dirs)
+                evaluation_results["tokenizer_metadata"] = tokenizer_metadata
+                
+                multi_ppl_results = calculate_multi_dataset_perplexity(model, tokenizer, args.data_dirs, args.data_weights)
+                evaluation_results.update(multi_ppl_results)
+                
+                # Print summary
+                for key, value in multi_ppl_results.items():
+                    if key.startswith("ppl_"):
+                        dataset_name = key[4:]  # Remove 'ppl_' prefix
+                        print(f"Perplexity ({dataset_name}): {value:.2f}")
+                
+            except Exception as e:
+                print(f"Error calculating multi-dataset perplexity: {e}")
+                evaluation_results["multi_perplexity_error"] = str(e)
+        else:
+            # Traditional single dataset perplexity
+            try:
+                perplexity = calculate_perplexity(model, tokenizer)
+                evaluation_results["perplexity"] = perplexity
+                print(f"Perplexity (Wikitext-2): {perplexity:.2f}")
+            except Exception as e:
+                print(f"Error calculating perplexity: {e}")
+                evaluation_results["perplexity_error"] = str(e)
     
     # 2. BoolQ benchmark (adapted according to mode)
     if not args.skip_boolq:

@@ -10,5 +10,6 @@
   "use_minhash": true,
   "minhash_threshold": 0.85,
   "train_ratio": 0.98,
-  "shard_tokens": 2000000
+  "shard_tokens": 2000000,
+  "train_tokenizer": false
 }

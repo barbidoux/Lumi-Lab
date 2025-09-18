@@ -1,0 +1,31 @@
+{
+  "input_path": "mixture",
+  "output_dir": "data/processed/tokenizer_training_mix",
+  "tokenizer_path": "data/tokenizer/spm32k",
+  "vocab_size": 32768,
+  "sequence_length": 1024,
+  "min_length": 50,
+  "max_length": 10000,
+  "use_minhash": true,
+  "minhash_threshold": 0.8,
+  "train_ratio": 0.98,
+  "shard_tokens": 5000000,
+  "train_tokenizer": true,
+  "mix_datasets": [
+    {
+      "name": "wikitext",
+      "input_path": "wikitext",
+      "input_config": "wikitext-103-raw-v1",
+      "weight": 0.4,
+      "max_samples": 50000
+    },
+    {
+      "name": "c4_sample",
+      "input_path": "allenai/c4",
+      "input_config": "en",
+      "weight": 0.6,
+      "max_samples": 100000
+    }
+  ],
+  "_comment": "This config is used to train the global tokenizer on a mixture of datasets. Only this config should have train_tokenizer=true. All other dataset configs must set train_tokenizer=false and use the same tokenizer_path."
+}

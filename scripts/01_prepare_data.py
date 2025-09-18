@@ -15,6 +15,7 @@ import re
 from pathlib import Path
 from typing import Dict, List, Set, Optional, Any, Tuple, Union
 import yaml
+from datetime import datetime
 
 import ftfy
 import numpy as np
@@ -193,16 +194,139 @@ def split_train_val(texts: List[str], train_ratio: float = 0.98, seed: int = 42)
     return train_texts, val_texts
 
 
-def train_tokenizer(texts: List[str], vocab_size: int, output_path: str) -> None:
-    """Train a SentencePiece tokenizer on the corpus."""
+def compute_tokenizer_sha256(tokenizer_path: str) -> str:
+    """Compute SHA256 hash of the tokenizer model file."""
+    model_path = tokenizer_path if tokenizer_path.endswith('.model') else tokenizer_path + '.model'
+    if not Path(model_path).exists():
+        raise FileNotFoundError(f"Tokenizer model not found: {model_path}")
+    
+    with open(model_path, 'rb') as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+
+def get_tokenizer_metadata(tokenizer_path: str) -> Dict[str, Any]:
+    """Extract tokenizer metadata for validation."""
+    sp = spm.SentencePieceProcessor()
+    model_path = tokenizer_path if tokenizer_path.endswith('.model') else tokenizer_path + '.model'
+    sp.load(model_path)
+    
+    return {
+        'vocab_size': sp.get_piece_size(),
+        'pad_id': 0,
+        'unk_id': 1, 
+        'bos_id': 2,
+        'eos_id': 3,
+        'normalizer': 'nmt_nfkc_cf',
+        'byte_fallback': False,
+        'model_type': 'unigram'
+    }
+
+
+def create_tokenizer_card(tokenizer_path: str, datasets_used: List[str], config: Dict) -> None:
+    """Create TOKENIZER_CARD.md with detailed tokenizer information."""
+    tokenizer_dir = Path(tokenizer_path).parent
+    tokenizer_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Compute SHA256
+    sha256_hash = compute_tokenizer_sha256(tokenizer_path)
+    
+    # Get metadata
+    metadata = get_tokenizer_metadata(tokenizer_path)
+    
+    # Save SHA256 to separate file
+    sha256_file = tokenizer_dir / "spm32k.model.sha256"
+    with open(sha256_file, 'w') as f:
+        f.write(sha256_hash)
+    
+    # Create tokenizer card
+    card_content = f"""# Tokenizer Card - SPM32k
+
+## Overview
+This is a SentencePiece unigram tokenizer trained on a mixture of datasets for the Lumi-Lab project.
+
+## Model Information
+- **Model Type**: SentencePiece Unigram
+- **Vocabulary Size**: {metadata['vocab_size']:,}
+- **Character Coverage**: 99.5%
+- **Normalizer**: {metadata['normalizer']}
+- **Byte Fallback**: {metadata['byte_fallback']}
+- **Training Date**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+## Special Tokens
+- **PAD**: {metadata['pad_id']} (padding token)
+- **UNK**: {metadata['unk_id']} (unknown token)
+- **BOS**: {metadata['bos_id']} (beginning of sequence)
+- **EOS**: {metadata['eos_id']} (end of sequence)
+
+## Model Files
+- `spm32k.model` - SentencePiece model file
+- `spm32k.vocab` - Vocabulary file
+- `spm32k.model.sha256` - SHA256 hash for integrity verification
+
+## Integrity Verification
+- **SHA256 Hash**: `{sha256_hash}`
+
+## Training Data
+Trained on the following datasets:
+{chr(10).join(f'- {dataset}' for dataset in datasets_used)}
+
+## Configuration Used
+```json
+{json.dumps(config, indent=2)}
+```
+
+## Usage
+This tokenizer is designed to be used consistently across all datasets in the project.
+Never retrain this tokenizer - always reuse the existing model to ensure consistency.
+
+## Validation
+All datasets using this tokenizer must include the following metadata in their manifest:
+- `tokenizer_sha256`: {sha256_hash}
+- `tokenizer_vocab_size`: {metadata['vocab_size']}
+- `special_tokens`: {{'pad': {metadata['pad_id']}, 'unk': {metadata['unk_id']}, 'bos': {metadata['bos_id']}, 'eos': {metadata['eos_id']}}}
+- `normalizer`: {metadata['normalizer']}
+- `byte_fallback`: {metadata['byte_fallback']}
+
+## Important Notes
+
+⚠️ **NEVER RETRAIN THIS TOKENIZER**
+
+This tokenizer is frozen and must be reused across all datasets. Retraining would break
+compatibility with existing processed datasets.
+
+To use this tokenizer with new datasets:
+1. Set `train_tokenizer: false` in your dataset config
+2. Set `tokenizer_path: "data/tokenizer/spm32k"`
+3. Run preparation with `--reuse_tokenizer` flag
+
+## Troubleshooting
+- If you get tokenizer mismatch errors, verify the SHA256 hash
+- If files are missing, regenerate using `make tokenizer-train-mix`
+- Never manually edit tokenizer files
+"""
+    
+    card_path = tokenizer_dir / "TOKENIZER_CARD.md"
+    with open(card_path, 'w', encoding='utf-8') as f:
+        f.write(card_content)
+
+
+def train_tokenizer(texts: List[str], vocab_size: int, output_path: str, datasets_used: List[str] = None, config: Dict = None) -> None:
+    """Train a SentencePiece tokenizer on the corpus and create documentation."""
     # Create directory if needed
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    
+    # Check if we're trying to train when a tokenizer already exists
+    model_path = output_path if output_path.endswith('.model') else output_path + '.model'
+    if Path(model_path).exists():
+        print("⚠️  WARNING: Tokenizer already exists. This should only happen in tokenizer-train-mix mode.")
     
     # Temporary corpus writing
     temp_corpus = str(Path(output_path).parent / "temp_corpus.txt")
     with open(temp_corpus, 'w', encoding='utf-8') as f:
         for text in texts:
             f.write(text + "\n")
+    
+    print(f"🔨 Training SentencePiece tokenizer (vocab_size={vocab_size})...")
     
     # Tokenizer training
     spm.SentencePieceTrainer.train(
@@ -220,6 +344,14 @@ def train_tokenizer(texts: List[str], vocab_size: int, output_path: str) -> None
     
     # Remove temporary file
     os.remove(temp_corpus)
+    
+    # Create tokenizer card and metadata
+    if datasets_used and config:
+        create_tokenizer_card(output_path, datasets_used, config)
+    
+    print(f"✅ Tokenizer trained and saved to {output_path}")
+    print(f"📄 Documentation created: {Path(output_path).parent}/TOKENIZER_CARD.md")
+    print(f"🔒 SHA256 hash saved: {Path(output_path).parent}/spm32k.model.sha256")
 
 
 def tokenize_and_pack(texts: List[str], tokenizer_path: str, sequence_length: int) -> List[List[int]]:
@@ -297,12 +429,29 @@ def save_sharded_data(data: List[Dict], output_dir: str, shard_tokens: int, spli
     return shard_files
 
 
-def create_manifest(train_shards: List[str], val_shards: List[str], output_dir: str) -> None:
-    """Create manifest.json listing all shards."""
+def create_manifest(train_shards: List[str], val_shards: List[str], output_dir: str, tokenizer_path: str) -> None:
+    """Create manifest.json listing all shards and tokenizer metadata."""
+    # Get tokenizer metadata
+    tokenizer_metadata = get_tokenizer_metadata(tokenizer_path)
+    tokenizer_sha256 = compute_tokenizer_sha256(tokenizer_path)
+    
     manifest = {
         'train_shards': train_shards,
         'val_shards': val_shards,
-        'total_shards': len(train_shards) + len(val_shards)
+        'total_shards': len(train_shards) + len(val_shards),
+        'tokenizer_metadata': {
+            'tokenizer_sha256': tokenizer_sha256,
+            'tokenizer_vocab_size': tokenizer_metadata['vocab_size'],
+            'special_tokens': {
+                'pad': tokenizer_metadata['pad_id'],
+                'unk': tokenizer_metadata['unk_id'], 
+                'bos': tokenizer_metadata['bos_id'],
+                'eos': tokenizer_metadata['eos_id']
+            },
+            'normalizer': tokenizer_metadata['normalizer'],
+            'byte_fallback': tokenizer_metadata['byte_fallback'],
+            'model_type': tokenizer_metadata['model_type']
+        }
     }
     
     manifest_path = Path(output_dir) / 'manifest.json'
@@ -312,8 +461,6 @@ def create_manifest(train_shards: List[str], val_shards: List[str], output_dir: 
 
 def create_data_card(config: Dict, stats: Dict, output_dir: str, reused_tokenizer: bool = False) -> None:
     """Create DATA_CARD.md with dataset information."""
-    from datetime import datetime
-    
     processing_date = datetime.now().strftime("%Y-%m-%d")
     train_tokens = stats.get('train_tokens', 'N/A')
     val_tokens = stats.get('val_tokens', 'N/A')
@@ -324,8 +471,9 @@ def create_data_card(config: Dict, stats: Dict, output_dir: str, reused_tokenize
     else:
         dedup_method = "SHA256 exact deduplication"
     
-    # Tokenizer info
-    tokenizer_info = f"{'Reused existing' if reused_tokenizer else 'Newly trained'} SentencePiece unigram model"
+    # Tokenizer info with SHA256
+    tokenizer_sha256 = compute_tokenizer_sha256(config['tokenizer_path'])
+    tokenizer_info = f"{'Reused existing' if reused_tokenizer else 'Newly trained'} SentencePiece unigram model (SHA256: {tokenizer_sha256[:12]}...)"
     
     data_card = f"""# Dataset Card
 
@@ -352,6 +500,14 @@ def create_data_card(config: Dict, stats: Dict, output_dir: str, reused_tokenize
 5. **Train/Val Split**: Random shuffle at document level
 6. **Tokenization**: {tokenizer_info}
 7. **Sequence Packing**: Fixed length sequences with next-token prediction labels
+
+## Tokenizer Information
+- **Type**: SentencePiece unigram model
+- **Status**: {'Reused existing tokenizer' if reused_tokenizer else 'Newly trained for this dataset'}
+- **Path**: {config['tokenizer_path']}
+- **SHA256**: {tokenizer_sha256}
+- **Vocab Size**: {config['vocab_size']:,}
+- **Special Tokens**: PAD(0), UNK(1), BOS(2), EOS(3)
 
 ## Statistics
 - **Original Documents**: {stats.get('original_docs', 'N/A'):,}
@@ -416,10 +572,41 @@ def create_data_card(config: Dict, stats: Dict, output_dir: str, reused_tokenize
         f.write(data_card)
 
 
-def load_dataset_by_path(input_path: str, input_config: Optional[Dict] = None) -> Dataset:
-    """Load dataset based on input path and configuration."""
-    print(f"Loading dataset: {input_path}")
+def load_mixture_datasets(mix_config: List[Dict]) -> List[str]:
+    """Load and mix multiple datasets for tokenizer training."""
+    print(f"📊 Loading dataset mixture with {len(mix_config)} components...")
     
+    all_texts = []
+    
+    for i, dataset_config in enumerate(mix_config):
+        name = dataset_config['name']
+        input_path = dataset_config['input_path']
+        input_config = dataset_config.get('input_config')
+        weight = dataset_config.get('weight', 1.0)
+        max_samples = dataset_config.get('max_samples')
+        
+        print(f"  Loading component {i+1}/{len(mix_config)}: {name} (weight={weight})")
+        
+        # Load the individual dataset
+        dataset = load_dataset_by_path_single(input_path, input_config)
+        texts = extract_text_from_dataset(dataset)
+        
+        # Apply max_samples limit if specified
+        if max_samples and len(texts) > max_samples:
+            print(f"    Sampling {max_samples:,} from {len(texts):,} available texts")
+            import random
+            random.seed(42)  # Deterministic sampling
+            texts = random.sample(texts, max_samples)
+        
+        print(f"    ✅ Loaded {len(texts):,} texts from {name}")
+        all_texts.extend(texts)
+    
+    print(f"📊 Total mixture: {len(all_texts):,} texts from {len(mix_config)} datasets")
+    return all_texts
+
+
+def load_dataset_by_path_single(input_path: str, input_config: Optional[Dict] = None) -> Dataset:
+    """Load a single dataset (internal helper)."""
     if input_path == "openwebtext":
         # OpenWebText via HuggingFace with streaming
         dataset = load_dataset("openwebtext", split="train", streaming=True)
@@ -463,11 +650,62 @@ def load_dataset_by_path(input_path: str, input_config: Optional[Dict] = None) -
     else:
         # Try loading as HuggingFace dataset
         try:
-            dataset = load_dataset(input_path, split="train")
+            if input_config:
+                print(f"Loading dataset: {input_path} with config: {input_config}")
+                # For large datasets, use streaming to avoid downloading everything
+                if input_path in ["allenai/c4", "Skylion007/openwebtext", "togethercomputer/RedPajama-Data-1T"]:
+                    print("📊 Using streaming for large dataset - will sample first 1M examples")
+                    dataset_stream = load_dataset(input_path, input_config, split="train", streaming=True)
+                    # Take first 1M examples for good quality (~4GB)
+                    samples = []
+                    for i, example in enumerate(dataset_stream):
+                        if i >= 1000000:  # Limit to 1M examples (~4GB)
+                            break
+                        samples.append(example)
+                        if i % 25000 == 0:
+                            print(f"  Streamed {i:,} examples...")
+                    dataset = Dataset.from_list(samples)
+                    print(f"✅ Loaded {len(samples):,} examples from streaming dataset")
+                else:
+                    dataset = load_dataset(input_path, input_config, split="train")
+            else:
+                # Same logic for datasets without config
+                if input_path in ["allenai/c4", "Skylion007/openwebtext", "togethercomputer/RedPajama-Data-1T"]:
+                    print("📊 Using streaming for large dataset - will sample first 500K examples")
+                    dataset_stream = load_dataset(input_path, split="train", streaming=True)
+                    samples = []
+                    for i, example in enumerate(dataset_stream):
+                        if i >= 500000:
+                            break
+                        samples.append(example)
+                        if i % 25000 == 0:
+                            print(f"  Streamed {i:,} examples...")
+                    dataset = Dataset.from_list(samples)
+                    print(f"✅ Loaded {len(samples):,} examples from streaming dataset")
+                else:
+                    dataset = load_dataset(input_path, split="train")
         except Exception as e:
             raise ValueError(f"Cannot load dataset from {input_path}: {e}")
     
     return dataset
+
+
+def load_dataset_by_path(input_path: str, input_config: Optional[Dict] = None) -> Dataset:
+    """Load dataset based on input path and configuration."""
+    print(f"Loading dataset: {input_path}")
+    
+    if input_path == "mixture":
+        # Special case: mixture of datasets for tokenizer training
+        if not input_config or 'mix_datasets' not in input_config:
+            raise ValueError("Mixture datasets require 'mix_datasets' configuration")
+        
+        texts = load_mixture_datasets(input_config['mix_datasets'])
+        # Convert list of texts to Dataset
+        return Dataset.from_dict({"text": texts})
+    
+    else:
+        # Regular single dataset loading
+        return load_dataset_by_path_single(input_path, input_config)
 
 
 def extract_text_from_dataset(dataset: Dataset) -> List[str]:
@@ -510,6 +748,8 @@ def main():
     parser.add_argument("--shard_tokens", type=int, help="Override tokens per shard")
     parser.add_argument("--reuse_tokenizer", action="store_true", 
                        help="Reuse existing tokenizer instead of training a new one")
+    parser.add_argument("--force_tokenizer_training", action="store_true",
+                       help="Force tokenizer training even if one exists (for tokenizer-train-mix only)")
     
     args = parser.parse_args()
     
@@ -534,7 +774,8 @@ def main():
     config.setdefault('minhash_threshold', 0.8)
     config.setdefault('train_ratio', 0.98)
     config.setdefault('shard_tokens', 5000000)
-    config.setdefault('tokenizer_path', 'data/tokenizer/tokenizer')
+    config.setdefault('tokenizer_path', 'data/tokenizer/spm32k')
+    config.setdefault('train_tokenizer', False)  # Default to reusing existing tokenizer
     
     # Create output directory
     output_dir = Path(config['output_dir'])
@@ -543,8 +784,11 @@ def main():
     print(f"Starting data preparation with config: {args.config_path}")
     print(f"Output directory: {output_dir}")
     
-    # Load dataset
-    dataset = load_dataset_by_path(config['input_path'], config.get('input_config'))
+    # Load dataset (pass full config for mixture support)
+    if config['input_path'] == "mixture":
+        dataset = load_dataset_by_path(config['input_path'], config)
+    else:
+        dataset = load_dataset_by_path(config['input_path'], config.get('input_config'))
     texts = extract_text_from_dataset(dataset)
     
     print(f"Original dataset: {len(texts)} texts")
@@ -584,16 +828,73 @@ def main():
     train_texts, val_texts = split_train_val(deduplicated_texts, config['train_ratio'])
     print(f"Train: {len(train_texts)} texts, Validation: {len(val_texts)} texts")
     
-    # Train or reuse tokenizer
+    # Train or reuse tokenizer based on config and arguments
     tokenizer_path = config['tokenizer_path']
-    if args.reuse_tokenizer:
-        model_path = tokenizer_path if tokenizer_path.endswith('.model') else tokenizer_path + '.model'
+    model_path = tokenizer_path if tokenizer_path.endswith('.model') else tokenizer_path + '.model'
+    
+    # Determine if we should train a new tokenizer
+    should_train_tokenizer = False
+    
+    if args.force_tokenizer_training:
+        # Force training mode (for tokenizer-train-mix)
+        should_train_tokenizer = True
+        print("🔨 Force training mode: Creating/replacing tokenizer")
+    elif config.get('train_tokenizer', False):
+        # Config says to train tokenizer
+        if Path(model_path).exists() and not args.force_tokenizer_training:
+            raise RuntimeError(
+                f"❌ Config requests tokenizer training but tokenizer already exists: {model_path}\n"
+                f"This suggests multiple configs have 'train_tokenizer: true'.\n"
+                f"Only one dataset config should train the tokenizer (usually tokenizer_mix.json).\n"
+                f"To replace existing tokenizer, use --force_tokenizer_training or run 'make tokenizer-reset' first."
+            )
+        should_train_tokenizer = True
+    elif args.reuse_tokenizer or not config.get('train_tokenizer', True):
+        # Explicitly reusing or config says not to train
         if not Path(model_path).exists():
-            raise FileNotFoundError(f"Tokenizer not found: {model_path}. Cannot reuse non-existent tokenizer.")
+            raise FileNotFoundError(
+                f"❌ Tokenizer not found: {model_path}\n"
+                f"Cannot reuse non-existent tokenizer. Options:\n"
+                f"1. Run 'make tokenizer-train-mix' first to create the tokenizer\n"
+                f"2. Set 'train_tokenizer: true' in your config (only for tokenizer mix)\n"
+                f"3. Use --force_tokenizer_training to create a new tokenizer"
+            )
         print(f"♻️  Reusing existing tokenizer: {model_path}")
+        
+        # Validate existing tokenizer
+        try:
+            existing_metadata = get_tokenizer_metadata(tokenizer_path)
+            if existing_metadata['vocab_size'] != config['vocab_size']:
+                raise ValueError(
+                    f"❌ Tokenizer vocab size mismatch: expected {config['vocab_size']}, "
+                    f"got {existing_metadata['vocab_size']}\n"
+                    f"Existing tokenizer is incompatible. Run 'make tokenizer-reset' and retrain."
+                )
+            print(f"✅ Tokenizer validation passed (vocab_size={existing_metadata['vocab_size']})")
+        except Exception as e:
+            raise RuntimeError(f"❌ Tokenizer validation failed: {e}")
     else:
+        # Default behavior: train if doesn't exist, reuse if exists
+        if Path(model_path).exists():
+            print(f"♻️  Found existing tokenizer, reusing: {model_path}")
+        else:
+            should_train_tokenizer = True
+    
+    # Train tokenizer if needed
+    if should_train_tokenizer:
         print(f"🔨 Training new tokenizer (vocab_size={config['vocab_size']})...")
-        train_tokenizer(deduplicated_texts, config['vocab_size'], tokenizer_path)
+        datasets_used = [config.get('input_path', 'unknown')]
+        train_tokenizer(deduplicated_texts, config['vocab_size'], tokenizer_path, datasets_used, config)
+    
+    # Final validation that tokenizer exists and is correct
+    if not Path(model_path).exists():
+        raise FileNotFoundError(f"❌ Tokenizer was not created successfully: {model_path}")
+    
+    final_metadata = get_tokenizer_metadata(tokenizer_path)
+    if final_metadata['vocab_size'] != config['vocab_size']:
+        raise ValueError(
+            f"❌ Final tokenizer validation failed: vocab size {final_metadata['vocab_size']} != {config['vocab_size']}"
+        )
     
     # Tokenize and pack
     print("Tokenizing and packing sequences...")
@@ -614,8 +915,8 @@ def main():
     train_shards = save_sharded_data(train_data, output_dir, config['shard_tokens'], 'train')
     val_shards = save_sharded_data(val_data, output_dir, config['shard_tokens'], 'val')
     
-    # Create manifest
-    create_manifest(train_shards, val_shards, output_dir)
+    # Create manifest with tokenizer metadata
+    create_manifest(train_shards, val_shards, output_dir, tokenizer_path)
     
     # Calculate final statistics
     total_tokens = sum(len(item['input_ids']) for item in train_data + val_data)
@@ -638,7 +939,25 @@ def main():
     }
     
     # Create data card
-    create_data_card(config, stats, output_dir, reused_tokenizer=args.reuse_tokenizer)
+    reused_tokenizer = not should_train_tokenizer
+    create_data_card(config, stats, output_dir, reused_tokenizer=reused_tokenizer)
+    
+    # Final tokenizer consistency check
+    print("\n🔍 Final tokenizer consistency check...")
+    try:
+        manifest_path = output_dir / 'manifest.json'
+        with open(manifest_path, 'r') as f:
+            manifest = json.load(f)
+        
+        expected_sha256 = compute_tokenizer_sha256(tokenizer_path)
+        manifest_sha256 = manifest['tokenizer_metadata']['tokenizer_sha256']
+        
+        if expected_sha256 != manifest_sha256:
+            raise ValueError(f"Tokenizer SHA256 mismatch: {expected_sha256} != {manifest_sha256}")
+        
+        print(f"✅ Tokenizer consistency verified (SHA256: {expected_sha256[:12]}...)")
+    except Exception as e:
+        raise RuntimeError(f"❌ Final tokenizer validation failed: {e}")
     
     # Save processing stats
     stats_path = output_dir / 'stats.json'
@@ -646,7 +965,6 @@ def main():
         json.dump(stats, f, indent=2)
     
     # Final validation
-    manifest_path = output_dir / 'manifest.json'
     data_card_path = output_dir / 'DATA_CARD.md'
     assert manifest_path.exists(), "manifest.json was not created"
     assert data_card_path.exists(), "DATA_CARD.md was not created"
@@ -655,6 +973,7 @@ def main():
     
     print(f"\n🎉 Data preparation completed successfully!")
     print(f"📁 Output directory: {output_dir}")
+    print(f"🔒 Tokenizer: {'♻️  Reused' if reused_tokenizer else '🔨 Newly trained'} (SHA256: {compute_tokenizer_sha256(tokenizer_path)[:12]}...)")
     print(f"📊 Statistics:")
     print(f"  - Original documents: {original_docs:,}")
     print(f"  - After processing: {deduplicated_docs:,}")
@@ -663,6 +982,14 @@ def main():
     print(f"  - Train shards: {len(train_shards)}")
     print(f"  - Validation shards: {len(val_shards)}")
     print(f"📄 Files created: manifest.json, DATA_CARD.md, {len(train_shards + val_shards)} shard files")
+    
+    # Print tokenizer warning if this was a training run
+    if should_train_tokenizer:
+        print(f"\n⚠️  IMPORTANT: Tokenizer has been created/updated")
+        print(f"🔒 All future datasets MUST use this same tokenizer:")
+        print(f"   - Set 'train_tokenizer: false' in dataset configs")
+        print(f"   - Set 'tokenizer_path: \"{tokenizer_path}\"'")
+        print(f"   - Use --reuse_tokenizer flag or make targets with '-with-tokenizer' suffix")
 
 
 if __name__ == "__main__":

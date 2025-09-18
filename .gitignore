@@ -1,1 +1,8 @@
 venv
+data/
+checkpoints/
+.claude/
+__pycache__
+debug_*
+fix_*
+test_*

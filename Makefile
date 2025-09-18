@@ -48,6 +48,18 @@ help:
 	@echo "  prepare-wiki         - Prepare Wikipedia EN"
 	@echo "  prepare-wt103        - Prepare WikiText-103 (fast)"
 	@echo "  prepare-demo         - Prepare demo tiny dataset (very fast)"
+	@echo ""
+	@echo "📄 TOKENIZER MANAGEMENT (One tokenizer to rule them all):"
+	@echo "  tokenizer-train-mix  - Train global tokenizer on dataset mixture"
+	@echo "  prepare-wiki-with-tokenizer - Prepare Wikipedia with frozen tokenizer"
+	@echo "  prepare-owt-with-tokenizer  - Prepare OpenWebText with frozen tokenizer"
+	@echo "  data-rebuild-all     - Full pipeline: tokenizer + all datasets"
+	@echo "  tokenizer-reset      - Reset tokenizer (requires confirmation)"
+	@echo "  reencode-dataset     - Re-encode dataset with current tokenizer"
+	@echo ""
+	@echo "📊 MULTI-DATASET (Legacy - use tokenizer targets above):"
+	@echo "  prepare-multi-wiki-owt - Prepare Wikipedia + OpenWebText (multi-dataset)"
+	@echo "  prepare-multi-all    - Prepare Wiki + OWT + WT103 (multi-dataset)"
 	@echo "  pretrain-tiny        - Launch tiny model pre-training"
 	@echo "  pretrain-small       - Launch small model pre-training"
 	@echo "  pretrain-base        - Launch base model pre-training"
@@ -98,7 +110,13 @@ install:
 .PHONY: prepare
 prepare:
 	@echo "Preparing dataset from config: $(CONFIG)"
-	$(PYTHON) $(SCRIPTS_DIR)/01_prepare_data.py --config_path $(CONFIG)
+	@if [ -f "data/tokenizer/spm32k.model" ]; then \
+		echo "🔄 Reusing existing tokenizer: data/tokenizer/spm32k.model"; \
+		$(PYTHON) $(SCRIPTS_DIR)/01_prepare_data.py --config_path $(CONFIG) --reuse_tokenizer; \
+	else \
+		echo "🔨 Training new tokenizer"; \
+		$(PYTHON) $(SCRIPTS_DIR)/01_prepare_data.py --config_path $(CONFIG); \
+	fi
 
 # OpenWebText preparation (recommended for production)
 .PHONY: prepare-owt
@@ -123,6 +141,27 @@ prepare-wt103:
 prepare-demo:
 	@echo "Preparing demo tiny dataset..."
 	$(MAKE) prepare CONFIG=config/datasets/demo_tiny.json
+
+# Multi-dataset preparation shortcuts
+.PHONY: prepare-multi-wiki-owt
+prepare-multi-wiki-owt:
+	@echo "🌐 Preparing multi-dataset: Wikipedia + OpenWebText"
+	@echo "Step 1: Preparing Wikipedia (will create/reuse tokenizer)"
+	$(MAKE) prepare-wiki
+	@echo "Step 2: Preparing OpenWebText (will reuse existing tokenizer)"  
+	$(MAKE) prepare-owt
+	@echo "✅ Multi-dataset ready for training!"
+
+.PHONY: prepare-multi-all
+prepare-multi-all:
+	@echo "🌐 Preparing multi-dataset: Wikipedia + OpenWebText + WikiText-103"
+	@echo "Step 1: Preparing Wikipedia (will create/reuse tokenizer)"
+	$(MAKE) prepare-wiki
+	@echo "Step 2: Preparing OpenWebText (will reuse existing tokenizer)"
+	$(MAKE) prepare-owt  
+	@echo "Step 3: Preparing WikiText-103 (will reuse existing tokenizer)"
+	$(MAKE) prepare-wt103
+	@echo "✅ Multi-dataset ready for training!"
 
 # Legacy preparation (backward compatibility)
 .PHONY: prepare-legacy
@@ -718,3 +757,135 @@ session-cleanup:
 	@rm -rf $(DATA_DIR)/test 2>/dev/null || true
 	@find $(SESSION_DIR) -name "*.log" -mtime +7 -delete 2>/dev/null || true
 	@echo "✅ Session cleanup completed (models preserved)!"
+
+# ============================================================================
+# TOKENIZER MANAGEMENT - One tokenizer to rule them all
+# ============================================================================
+
+# Train global tokenizer on dataset mixture (ONLY command that should create tokenizer)
+.PHONY: tokenizer-train-mix
+tokenizer-train-mix:
+	@echo "🔨 Training global tokenizer on dataset mixture..."
+	@echo "⚠️  This will create/replace the global tokenizer at data/tokenizer/spm32k"
+	@if [ -f "data/tokenizer/spm32k.model" ]; then \
+		echo "⚠️  WARNING: Existing tokenizer will be replaced!"; \
+		echo "This may break compatibility with existing processed datasets."; \
+		echo "Consider running 'make tokenizer-reset' first for a clean start."; \
+		sleep 3; \
+	fi
+	$(PYTHON) $(SCRIPTS_DIR)/01_prepare_data.py \
+		--config_path config/datasets/tokenizer_mix.json \
+		--force_tokenizer_training
+	@echo "✅ Global tokenizer created at data/tokenizer/spm32k"
+	@echo "📄 Documentation: data/tokenizer/TOKENIZER_CARD.md"
+	@echo "🔒 SHA256 hash: data/tokenizer/spm32k.model.sha256"
+	@echo ""
+	@echo "🔐 IMPORTANT: This tokenizer is now FROZEN for consistency."
+	@echo "   All future dataset preparation must reuse this tokenizer."
+	@echo "   Use 'make prepare-*-with-tokenizer' targets."
+
+# Prepare datasets with frozen tokenizer (will fail if tokenizer doesn't exist)
+.PHONY: prepare-wiki-with-tokenizer
+prepare-wiki-with-tokenizer:
+	@echo "📚 Preparing Wikipedia with frozen tokenizer..."
+	@if [ ! -f "data/tokenizer/spm32k.model" ]; then \
+		echo "❌ No tokenizer found. Run 'make tokenizer-train-mix' first."; \
+		exit 1; \
+	fi
+	$(PYTHON) $(SCRIPTS_DIR)/01_prepare_data.py \
+		--config_path config/datasets/wikipedia_en.json \
+		--reuse_tokenizer
+	@echo "✅ Wikipedia prepared with frozen tokenizer"
+
+.PHONY: prepare-owt-with-tokenizer  
+prepare-owt-with-tokenizer:
+	@echo "🌐 Preparing OpenWebText with frozen tokenizer..."
+	@if [ ! -f "data/tokenizer/spm32k.model" ]; then \
+		echo "❌ No tokenizer found. Run 'make tokenizer-train-mix' first."; \
+		exit 1; \
+	fi
+	$(PYTHON) $(SCRIPTS_DIR)/01_prepare_data.py \
+		--config_path config/datasets/openwebtext.json \
+		--reuse_tokenizer
+	@echo "✅ OpenWebText prepared with frozen tokenizer"
+
+# Full pipeline: tokenizer training + all datasets
+.PHONY: data-rebuild-all
+data-rebuild-all:
+	@echo "🔄 Full data pipeline: train tokenizer + prepare all datasets"
+	@echo "This will:"
+	@echo "  1. Train global tokenizer on mixture (replaces existing)"
+	@echo "  2. Prepare Wikipedia with the tokenizer"  
+	@echo "  3. Prepare OpenWebText with the tokenizer"
+	@echo "  4. Verify consistency across all datasets"
+	@echo ""
+	@echo "⏱️  Expected duration: 30-60 minutes depending on data size"
+	@echo "Continue? Press Enter to proceed, Ctrl+C to cancel"
+	@read
+	$(MAKE) tokenizer-train-mix
+	$(MAKE) prepare-wiki-with-tokenizer
+	$(MAKE) prepare-owt-with-tokenizer
+	@echo ""
+	@echo "🎉 Full data pipeline completed!"
+	@echo "✅ All datasets now use consistent tokenizer"
+	@echo "🚀 Ready for multi-dataset training with:"
+	@echo "   accelerate launch scripts/02_pretrain.py --data_dirs data/processed/wikipedia_en_32k_1024 data/processed/openwebtext_32k_1024"
+
+# Reset tokenizer (with confirmation to prevent accidents)
+.PHONY: tokenizer-reset
+tokenizer-reset:
+	@echo "⚠️  DANGER: This will permanently delete the global tokenizer!"
+	@echo "This will:"
+	@echo "  - Delete data/tokenizer/* (tokenizer model, vocab, docs)"
+	@echo "  - Break compatibility with existing processed datasets"
+	@echo "  - Require re-processing all datasets after running tokenizer-train-mix"
+	@echo ""
+	@echo "Type 'YES' (in capitals) to confirm tokenizer reset:"
+	@read confirmation; \
+	if [ "$$confirmation" = "YES" ]; then \
+		echo "🗑️  Deleting tokenizer..."; \
+		rm -rf data/tokenizer/*; \
+		echo "✅ Tokenizer reset completed"; \
+		echo "📝 Next steps:"; \
+		echo "   1. Run 'make tokenizer-train-mix' to create new tokenizer"; \
+		echo "   2. Re-process all datasets with new tokenizer"; \
+	else \
+		echo "❌ Tokenizer reset cancelled (confirmation must be exactly 'YES')"; \
+		exit 1; \
+	fi
+
+# Re-encode existing dataset with current frozen tokenizer
+.PHONY: reencode-dataset
+reencode-dataset:
+	@echo "🔄 Re-encoding dataset with current tokenizer..."
+	@if [ -z "$(DIR)" ]; then \
+		echo "❌ Usage: make reencode-dataset DIR=data/processed/dataset_name"; \
+		echo "Available datasets:"; \
+		ls -d data/processed/*/ 2>/dev/null | sed 's|data/processed/||g' | sed 's|/||g' | sed 's/^/  - /' || echo "  (none found)"; \
+		exit 1; \
+	fi
+	@if [ ! -f "data/tokenizer/spm32k.model" ]; then \
+		echo "❌ No tokenizer found. Run 'make tokenizer-train-mix' first."; \
+		exit 1; \
+	fi
+	@if [ ! -d "$(DIR)" ]; then \
+		echo "❌ Dataset directory not found: $(DIR)"; \
+		exit 1; \
+	fi
+	@echo "Re-encoding: $(DIR)"
+	@echo "This will replace the existing dataset with a version using the current tokenizer."
+	@echo "Continue? Press Enter to proceed, Ctrl+C to cancel"
+	@read
+	# Find the config file used for this dataset
+	@config_file=$$(find config/datasets/ -name "*.json" -exec grep -l "$$(basename $(DIR))" {} \; | head -1); \
+	if [ -z "$$config_file" ]; then \
+		echo "❌ Could not find config file for dataset $(DIR)"; \
+		echo "Available configs:"; \
+		ls config/datasets/*.json | sed 's/^/  - /'; \
+		exit 1; \
+	fi; \
+	echo "📄 Using config: $$config_file"; \
+	$(PYTHON) $(SCRIPTS_DIR)/01_prepare_data.py \
+		--config_path "$$config_file" \
+		--reuse_tokenizer
+	@echo "✅ Dataset re-encoded with current tokenizer"

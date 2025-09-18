@@ -1,0 +1,51 @@
+{
+  "model_path": "checkpoints/mix-tiny-fa2-75k/tiny/final",
+  "model_parameters": 23072000,
+  "device": "cuda:0",
+  "tokenizer_metadata": {
+    "tokenizer_sha256": "f2d1de4c87474c287ffa771fe9e5534e6b5ab955f6d611e00b18f2a3184a229f",
+    "tokenizer_vocab_size": 32768,
+    "special_tokens": {
+      "pad": 0,
+      "unk": 1,
+      "bos": 2,
+      "eos": 3
+    },
+    "normalizer": "nmt_nfkc_cf",
+    "byte_fallback": false,
+    "model_type": "unigram"
+  },
+  "ppl_wikipedia_en_32k_1024": 136.00606493730982,
+  "ppl_openwebtext_32k_1024": 236.9981265284005,
+  "ppl_weighted": 207.58468003601115,
+  "boolq_accuracy": 0.43,
+  "boolq_correct": 43,
+  "boolq_total": 100,
+  "smoke_tests": [
+    {
+      "prompt": "What is artificial intelligence?",
+      "response": "can use intelligence help and and a of better skills help to them the. in,' it important learn its to what of that and and to how the does. are looking to that you not have. are doing, are working it to your in sense i a of people i' really, not.' i,, it a more experience. is to to it id the i of, not that and not the, morely i' also, have",
+      "full_text": "what is artificial intelligence can use intelligence help and and a of better skills help to them the. in,' it important learn its to what of that and and to how the does. are looking to that you not have. are doing, are working it to your in sense i a of people i' really, not.' i,, it a more experience. is to to it id the i of, not that and not the, morely i' also, have"
+    },
+    {
+      "prompt": "Explain machine learning in simple terms.",
+      "response": "', with knowledge from learning to you its the way can your teach for. of, you not learn that are to at be. a way learn that has one only to. is the process learning is without we not you there it, just a.. have good and to- learning we know.' learning our.,! im this ai but' the is.. will learning when teach what.''' im in.' if don",
+      "full_text": "explain machine learning in simple terms.', with knowledge from learning to you its the way can your teach for. of, you not learn that are to at be. a way learn that has one only to. is the process learning is without we not you there it, just a.. have good and to- learning we know.' learning our.,! im this ai but' the is.. will learning when teach what.''' im in.' if don"
+    },
+    {
+      "prompt": "How does a neural network work?",
+      "response": "can' do i what can do the for there several to is on of! can use in my, or' do get it i try make that  it.. you find to the of the as are not to the where was me' this a and am going write. this is true the.' a it to it are doing have be what are'. if answer no,' you have question it. are",
+      "full_text": "how does a neural network work can' do i what can do the for there several to is on of! can use in my, or' do get it i try make that  it.. you find to the of the as are not to the where was me' this a and am going write. this is true the.' a it to it are doing have be what are'. if answer no,' you have question it. are"
+    },
+    {
+      "prompt": "What are the benefits of renewable energy?",
+      "response": "is a.' in' power a '' can be from.,., for, you.. if need advice our support help, is it to your and needs when have done. do need know to the or about, your' your' you use in with own on,,, (s). the ' a' will with energy. or it get electricity you. a to. could this a., a,, a or a, that",
+      "full_text": "what are the benefits of renewable energy is a.' in' power a '' can be from.,., for, you.. if need advice our support help, is it to your and needs when have done. do need know to the or about, your' your' you use in with own on,,, (s). the ' a' will with energy. or it get electricity you. a to. could this a., a,, a or a, that"
+    },
+    {
+      "prompt": "Describe the water cycle.",
+      "response": "you find about in pool and is you a whos person to. pool that be at or any pool. of you have pool pools can a or have pools a with pool if have pool pool pool this. pool you be for pool pool not which you at pool will up the when pool pool spa pool pool. are to pool that pool is watering pool pool pools pool pool a pool pool swimming pool pool water pool pool rooms pool pool room pool pool house pool pool deck",
+      "full_text": "describe the water cycle. you find about in pool and is you a whos person to. pool that be at or any pool. of you have pool pools can a or have pools a with pool if have pool pool pool this. pool you be for pool pool not which you at pool will up the when pool pool spa pool pool. are to pool that pool is watering pool pool pools pool pool a pool pool swimming pool pool water pool pool rooms pool pool room pool pool house pool pool deck"
+    }
+  ]
+}

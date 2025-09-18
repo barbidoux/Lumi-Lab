@@ -6,6 +6,7 @@ A complete codebase for training mini-LLMs (decoder-only) optimized for personal
 
 - [🚀 Quick Start](#-quick-start)
 - [⚙️ Installation](#️-installation)
+- [🔒 One Tokenizer to Rule Them All](#-one-tokenizer-to-rule-them-all)
 - [🏗️ Architecture](#️-architecture)
 - [📊 Model Configurations](#-model-configurations)
 - [🔄 Training Pipeline](#-training-pipeline)
@@ -111,6 +112,117 @@ CUDA available: True
 Transformers: 4.40.0
 Accelerate: 0.30.1
 GPU: NVIDIA GeForce RTX 4090
+```
+
+## 🔒 One Tokenizer to Rule Them All
+
+Lumi-Lab implements a **frozen tokenizer system** that ensures perfect consistency across all datasets and prevents the subtle bugs that arise from tokenizer mismatches.
+
+### 🎯 Why This Matters
+
+Traditional multi-dataset training often fails silently due to:
+- Different tokenizers across datasets → incompatible token spaces
+- Vocabulary size mismatches → index out of bounds errors  
+- Special token inconsistencies → corrupted training signals
+- Silent degradation → models that "work" but perform poorly
+
+**Our solution**: One global tokenizer, trained once, frozen forever.
+
+### 🔨 Recommended Workflow
+
+```bash
+# 1. Train the global tokenizer (ONLY ONCE)
+make tokenizer-train-mix
+
+# 2. Prepare all datasets with the frozen tokenizer
+make prepare-wiki-with-tokenizer
+make prepare-owt-with-tokenizer  
+
+# 3. Train with guaranteed consistency
+accelerate launch scripts/02_pretrain.py \\
+    --data_dirs data/processed/wikipedia_en_32k_1024 data/processed/openwebtext_32k_1024 \\
+    --config config/tiny.json
+```
+
+**Or use the full pipeline in one command:**
+```bash
+make data-rebuild-all
+```
+
+### 🛡️ Built-in Safety Features
+
+- **Blocking errors** instead of silent failures
+- **SHA256 verification** of tokenizer consistency  
+- **Automatic validation** in training and evaluation
+- **Clear error messages** with exact fix instructions
+
+### 🔍 Tokenizer Commands
+
+| Command | Purpose | When to Use |
+|---------|---------|-------------|
+| `make tokenizer-train-mix` | Train global tokenizer | **Once** at project start |
+| `make prepare-*-with-tokenizer` | Process datasets | For each dataset |
+| `make tokenizer-reset` | Delete tokenizer (dangerous!) | When starting over |
+| `make reencode-dataset DIR=...` | Re-process single dataset | Fixing individual datasets |
+| `make data-rebuild-all` | Full pipeline | Clean slate setup |
+
+### 📄 Tokenizer Metadata 
+
+Every dataset now includes tokenizer verification:
+
+```json
+// In each manifest.json
+{
+  "tokenizer_metadata": {
+    "tokenizer_sha256": "a1b2c3d4...",
+    "tokenizer_vocab_size": 32768,  
+    "special_tokens": {"pad": 0, "unk": 1, "bos": 2, "eos": 3},
+    "normalizer": "nmt_nfkc_cf",
+    "byte_fallback": false
+  }
+}
+```
+
+### ❌ Common Mistakes (Now Prevented!)
+
+```bash
+# ❌ OLD WAY: Inconsistent tokenizers
+make prepare-wiki      # Creates tokenizer A
+make prepare-owt       # Creates different tokenizer B  
+# → Silent incompatibility, degraded training
+
+# ✅ NEW WAY: One frozen tokenizer
+make tokenizer-train-mix        # Creates THE tokenizer
+make prepare-wiki-with-tokenizer    # Uses THE tokenizer
+make prepare-owt-with-tokenizer     # Uses THE tokenizer  
+# → Guaranteed consistency, optimal training
+```
+
+### 🔧 Troubleshooting
+
+**Error: "Tokenizer mismatch between datasets"**
+```bash
+# Quick fix: Re-encode the problematic dataset
+make reencode-dataset DIR=data/processed/problem_dataset
+
+# Nuclear option: Start fresh  
+make tokenizer-reset
+make data-rebuild-all
+```
+
+**Error: "No tokenizer found"**
+```bash
+# You forgot to train the tokenizer first
+make tokenizer-train-mix
+```
+
+**Want to check tokenizer status?**
+```bash
+# View tokenizer documentation
+cat data/tokenizer/TOKENIZER_CARD.md
+
+# Check SHA256 hash
+cat data/tokenizer/spm32k.model.sha256
 ```
 
 ## 🏗️ Project Structure
@@ -381,6 +493,43 @@ data/processed/dataset_name/
 ```
 
 ### 2. Pre-training from Scratch
+
+#### Multi-Dataset Training (New Feature)
+
+Train on multiple datasets simultaneously with weighted sampling for better model performance:
+
+```bash
+# Basic multi-dataset training with equal weights
+python scripts/02_pretrain.py \
+    --config config/tiny.json \
+    --data_dirs data/processed/wiki_32k data/processed/owt_32k \
+    --max_steps 20000
+
+# Advanced: Custom weights and monitoring
+python scripts/02_pretrain.py \
+    --config config/small.json \
+    --data_dirs data/processed/wiki_32k data/processed/owt_32k data/processed/c4_32k \
+    --data_weights 0.3 0.4 0.3 \
+    --max_steps 50000 \
+    --log_dataset_mix_steps 500 \
+    --output_dir checkpoints/multi_dataset_training
+```
+
+**Multi-dataset features:**
+- ✅ **Weighted Sampling**: Control exact mixing ratios (e.g., 30% Wiki, 70% OWT)
+- ✅ **Deterministic**: Reproducible sampling with seeds and checkpoint resume
+- ✅ **Real-time Monitoring**: Track actual dataset usage every N steps
+- ✅ **Step-based Training**: Efficient epochless training for large datasets
+- ✅ **Backward Compatible**: Existing `--data_dir` still works
+
+**Why Multi-Dataset Training?**
+
+| Benefit | Single Dataset | Multi-Dataset Weighted |
+|---------|---------------|----------------------|
+| **Domain Coverage** | Limited to one source | ✅ Multiple domains (wiki, web, code) |
+| **Quality Control** | Fixed quality level | ✅ Balance high/low quality sources |  
+| **Runtime Flexibility** | Fixed at preprocessing | ✅ Adjust weights without reprocessing |
+| **Reproducibility** | Standard checkpointing | ✅ Exact sampling state preservation |
 
 #### Tiny Model (recommended for beginners)
 
@@ -664,6 +813,35 @@ python scripts/02_pretrain.py --gradient_checkpointing
 python scripts/02_pretrain.py --max_length 512
 ```
 
+#### 🚨 Tokenizer Issues (Multi-Dataset Training)
+
+**Error: "Tokenizer mismatch between datasets"**
+```bash
+# This is a BLOCKING error - do not ignore it!
+# Quick fix: Re-encode the problematic dataset
+make reencode-dataset DIR=data/processed/problem_dataset
+
+# If multiple datasets are problematic:
+make tokenizer-reset  # Type 'YES' when prompted
+make data-rebuild-all
+```
+
+**Error: "No tokenizer metadata in manifest"** 
+```bash
+# Dataset was processed with old version
+make reencode-dataset DIR=data/processed/old_dataset
+```
+
+**Want to verify tokenizer consistency?**
+```bash  
+# Check tokenizer hash across datasets
+find data/processed -name "manifest.json" -exec jq '.tokenizer_metadata.tokenizer_sha256' {} +
+# All should show the same hash
+
+# View full tokenizer info
+cat data/tokenizer/TOKENIZER_CARD.md
+```
+
 #### 🚨 Missing Tokenizer/Dataset
 
 ```bash
@@ -894,6 +1072,52 @@ make pretrain-tiny BATCH_SIZE=8 LEARNING_RATE=1e-4
 ```
 
 ## 📝 Complete Examples
+
+### Multi-Dataset Training Examples
+
+#### Basic Multi-Dataset Training
+
+```bash
+# Train on Wikipedia + OpenWebText with equal weights  
+python scripts/02_pretrain.py \
+    --config config/tiny.json \
+    --data_dirs data/processed/wiki_32k data/processed/owt_32k \
+    --max_steps 10000 \
+    --output_dir checkpoints/multi_wiki_owt
+
+# Custom weights: 30% Wikipedia, 70% OpenWebText
+python scripts/02_pretrain.py \
+    --config config/small.json \
+    --data_dirs data/processed/wiki_32k data/processed/owt_32k \
+    --data_weights 0.3 0.7 \
+    --max_steps 50000 \
+    --log_dataset_mix_steps 500
+```
+
+#### Advanced Multi-Dataset Training
+
+```bash
+# Three datasets with different mixing ratios
+python scripts/02_pretrain.py \
+    --config config/base.json \
+    --data_dirs data/processed/wiki_32k data/processed/owt_32k data/processed/c4_32k \
+    --data_weights 0.2 0.5 0.3 \
+    --max_steps 100000 \
+    --num_workers 4 \
+    --log_dataset_mix_steps 1000
+```
+
+#### Resume Multi-Dataset Training
+
+```bash
+# Resume training maintains exact dataset mixing ratios and RNG state
+python scripts/02_pretrain.py \
+    --config config/small.json \
+    --data_dirs data/processed/wiki_32k data/processed/owt_32k \
+    --data_weights 0.4 0.6 \
+    --resume_from_checkpoint checkpoints/multi_wiki_owt/small/step_25000 \
+    --max_steps 50000
+```
 
 ### Example 1: Quick Test (30 minutes)
 

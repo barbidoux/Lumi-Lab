@@ -1,5 +1,6 @@
 {
-  "input_path": "openwebtext",
+  "input_path": "allenai/c4",
+  "input_config": "en",
   "output_dir": "data/processed/openwebtext_32k_1024",
   "tokenizer_path": "data/tokenizer/spm32k",
   "vocab_size": 32768,
@@ -9,5 +10,6 @@
   "use_minhash": true,
   "minhash_threshold": 0.8,
   "train_ratio": 0.98,
-  "shard_tokens": 5000000
+  "shard_tokens": 5000000,
+  "train_tokenizer": false
 }

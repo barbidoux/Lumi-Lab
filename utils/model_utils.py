@@ -220,116 +220,274 @@ def init_weights(module: nn.Module, config: AutoConfig):
 
 def save_checkpoint(model: PreTrainedModel, optimizer: torch.optim.Optimizer, 
                    scheduler: torch.optim.lr_scheduler._LRScheduler, 
-                   global_step: int, output_dir: str, accelerator=None, scaler=None):
-    """Save a complete checkpoint with deterministic state."""
+                   global_step: int, output_dir: str, accelerator=None, scaler=None, 
+                   extra_state: dict = None):
+    """Save a complete checkpoint with deterministic state using Accelerate's standard format."""
     
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
     
     if accelerator:
-        # Using accelerate for saving
+        # Using accelerate's standardized saving method
         accelerator.wait_for_everyone()
         
-        # Model saving
-        unwrapped_model = accelerator.unwrap_model(model)
-        unwrapped_model.save_pretrained(
-            output_path,
-            save_function=accelerator.save,
-            state_dict=accelerator.get_state_dict(model)
-        )
-        
-        # Training state saving
         if accelerator.is_main_process:
-            training_state = {
-                "global_step": global_step,
-                "optimizer_state_dict": optimizer.state_dict(),
-                "scheduler_state_dict": scheduler.state_dict(),
-                # Deterministic state for reproducibility
+            # Use accelerator.save_state() for standardized checkpoint format
+            accelerator.save_state(str(output_path))
+            
+            # Accelerate peut créer des noms non-standard, créons des liens compatibles
+            model_files = list(output_path.glob("model.*"))
+            if model_files and not (output_path / "pytorch_model.bin").exists():
+                # Créer un lien symbolique pour compatibilité
+                try:
+                    import os
+                    os.link(str(model_files[0]), str(output_path / "pytorch_model.bin"))
+                except:
+                    # Si le lien échoue, copier le fichier
+                    import shutil
+                    shutil.copy(str(model_files[0]), str(output_path / "pytorch_model.bin"))
+            
+            # Save additional metadata and RNG states in separate files for better organization
+            # RNG states for reproducibility
+            rng_state = {
                 "random_state": random.getstate(),
                 "numpy_random_state": np.random.get_state(),
                 "torch_random_state": torch.get_rng_state(),
                 "torch_cuda_random_state": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None,
             }
+            torch.save(rng_state, output_path / "rng_state.pth")
             
-            # Add scaler if provided
-            if scaler is not None:
-                training_state["scaler_state_dict"] = scaler.state_dict()
+            # Save metadata in JSON format
+            meta_data = {
+                "global_step": global_step,
+                "accelerator_mixed_precision": accelerator.mixed_precision,
+                "accelerator_gradient_accumulation_steps": accelerator.gradient_accumulation_steps,
+            }
             
-            torch.save(training_state, output_path / "training_state.pt")
+            # Add extra state to metadata
+            if extra_state is not None:
+                meta_data.update(extra_state)
             
-            print(f"Checkpoint saved to {output_path}")
+            with open(output_path / "meta.json", 'w') as f:
+                json.dump(meta_data, f, indent=2)
+
+            # Save model config for HuggingFace compatibility
+            if hasattr(model, 'config'):
+                model.config.save_pretrained(output_path)
+
+            print(f"✅ Complete checkpoint saved to {output_path}")
+            print(f"   - Model, optimizer, scheduler: Accelerate format")
+            print(f"   - RNG states: rng_state.pth")
+            print(f"   - Metadata: meta.json (step {global_step})")
+            if hasattr(model, 'config'):
+                print(f"   - Model config: config.json")
     
     else:
-        # Standard saving
+        # Fallback: manual saving when not using accelerate
+        # Model saving
         model.save_pretrained(output_path)
         
-        training_state = {
-            "global_step": global_step,
-            "optimizer_state_dict": optimizer.state_dict(),
-            "scheduler_state_dict": scheduler.state_dict(),
-            # Deterministic state for reproducibility
+        # Save components separately for consistency with Accelerate format
+        torch.save(optimizer.state_dict(), output_path / "optimizer.pt")
+        torch.save(scheduler.state_dict(), output_path / "scheduler.pt")
+        
+        if scaler is not None:
+            torch.save(scaler.state_dict(), output_path / "scaler.pt")
+        
+        # RNG states
+        rng_state = {
             "random_state": random.getstate(),
             "numpy_random_state": np.random.get_state(),
             "torch_random_state": torch.get_rng_state(),
             "torch_cuda_random_state": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None,
         }
+        torch.save(rng_state, output_path / "rng_state.pth")
         
-        # Add scaler if provided
-        if scaler is not None:
-            training_state["scaler_state_dict"] = scaler.state_dict()
+        # Metadata
+        meta_data = {
+            "global_step": global_step,
+            "mixed_precision": "no",
+            "gradient_accumulation_steps": 1,
+        }
+        if extra_state is not None:
+            meta_data.update(extra_state)
         
-        torch.save(training_state, output_path / "training_state.pt")
-        print(f"Checkpoint saved to {output_path}")
+        with open(output_path / "meta.json", 'w') as f:
+            json.dump(meta_data, f, indent=2)
+        
+        print(f"✅ Checkpoint saved to {output_path} (manual format)")
 
 
 def load_checkpoint(model: PreTrainedModel, optimizer: torch.optim.Optimizer,
                    scheduler: torch.optim.lr_scheduler._LRScheduler,
-                   checkpoint_dir: str, accelerator=None, scaler=None) -> int:
-    """Load a complete checkpoint with deterministic restoration."""
+                   checkpoint_dir: str, accelerator=None, scaler=None) -> tuple[int, dict]:
+    """Load a complete checkpoint with deterministic restoration using Accelerate's standard format."""
     
     checkpoint_path = Path(checkpoint_dir)
+    
+    # Check for new format first (meta.json + rng_state.pth)
+    meta_path = checkpoint_path / "meta.json"
+    rng_path = checkpoint_path / "rng_state.pth"
+    
+    # Try loading from Accelerate standard format
+    if meta_path.exists() and accelerator:
+        try:
+            # Check if we have the standard Accelerate files
+            model_files = list(checkpoint_path.glob("model.*")) + list(checkpoint_path.glob("pytorch_model.*"))
+            opt_files = list(checkpoint_path.glob("optimizer.*"))
+            sched_files = list(checkpoint_path.glob("scheduler.*"))
+
+            if model_files and opt_files and sched_files:
+                # Load metadata first
+                with open(meta_path, 'r') as f:
+                    meta_data = json.load(f)
+                global_step = meta_data["global_step"]
+
+                # Try to load using accelerator.load_state() for model, optimizer, scheduler, scaler
+                try:
+                    accelerator.load_state(str(checkpoint_path))
+                    print(f"✅ Loaded using accelerator.load_state()")
+                except Exception as accel_e:
+                    print(f"⚠️  accelerator.load_state() failed: {accel_e}")
+                    # Manually load individual components
+                    print("📁 Loading components manually...")
+
+                    # Load model state
+                    if checkpoint_path.joinpath("model.safetensors").exists():
+                        from safetensors.torch import load_file
+                        model.load_state_dict(load_file(checkpoint_path / "model.safetensors"))
+                    elif checkpoint_path.joinpath("pytorch_model.bin").exists():
+                        model.load_state_dict(torch.load(checkpoint_path / "pytorch_model.bin", weights_only=False))
+
+                    # Load optimizer state
+                    if checkpoint_path.joinpath("optimizer.bin").exists():
+                        optimizer.load_state_dict(torch.load(checkpoint_path / "optimizer.bin", weights_only=False))
+
+                    # Load scheduler state
+                    if checkpoint_path.joinpath("scheduler.bin").exists():
+                        scheduler.load_state_dict(torch.load(checkpoint_path / "scheduler.bin", weights_only=False))
+
+                    print("✅ Manual loading completed")
+
+                # Restore RNG states for reproducibility
+                if rng_path.exists():
+                    try:
+                        rng_state = torch.load(rng_path, map_location="cpu", weights_only=False)
+
+                        if "random_state" in rng_state:
+                            try:
+                                random.setstate(rng_state["random_state"])
+                            except (TypeError, ValueError) as e:
+                                print(f"⚠️  Could not restore random state: {e}")
+
+                        if "numpy_random_state" in rng_state:
+                            try:
+                                np.random.set_state(rng_state["numpy_random_state"])
+                            except (TypeError, ValueError) as e:
+                                print(f"⚠️  Could not restore numpy random state: {e}")
+
+                        if "torch_random_state" in rng_state:
+                            try:
+                                torch.set_rng_state(rng_state["torch_random_state"])
+                            except (TypeError, ValueError) as e:
+                                print(f"⚠️  Could not restore torch random state: {e}")
+
+                        if "torch_cuda_random_state" in rng_state and torch.cuda.is_available():
+                            if rng_state["torch_cuda_random_state"] is not None:
+                                try:
+                                    torch.cuda.set_rng_state_all(rng_state["torch_cuda_random_state"])
+                                except (TypeError, ValueError) as e:
+                                    print(f"⚠️  Could not restore cuda random state: {e}")
+
+                        print("✅ RNG states restored for reproducibility")
+                    except Exception as e:
+                        print(f"⚠️  Failed to load RNG states: {e}, continuing without RNG restoration")
+
+                # Extract extra state (remove standard keys)
+                extra_state = {k: v for k, v in meta_data.items()
+                              if k not in ["global_step", "accelerator_mixed_precision", "accelerator_gradient_accumulation_steps"]}
+
+                print(f"✅ Checkpoint loaded from {checkpoint_path} using Accelerate format")
+                print(f"   Step: {global_step}")
+                print(f"   Mixed precision: {meta_data.get('accelerator_mixed_precision', 'unknown')}")
+
+                if extra_state:
+                    print(f"   Extra state: {list(extra_state.keys())}")
+
+                return global_step, extra_state
+            else:
+                print(f"⚠️  Incomplete Accelerate checkpoint (missing files)")
+                print(f"   Model files: {[f.name for f in model_files]}")
+                print(f"   Optimizer files: {[f.name for f in opt_files]}")
+                print(f"   Scheduler files: {[f.name for f in sched_files]}")
+                print("   Falling back to legacy format...")
+
+        except Exception as e:
+            print(f"⚠️  Failed to load with Accelerate format: {e}")
+            print("   Falling back to legacy format...")
+    
+    # Fallback: try loading legacy format (training_state.pt)
     training_state_path = checkpoint_path / "training_state.pt"
     
-    if not training_state_path.exists():
-        raise FileNotFoundError(f"Training state not found: {training_state_path}")
+    if training_state_path.exists():
+        print(f"📁 Loading from legacy format: {training_state_path}")
+        
+        # Loading training state
+        training_state = torch.load(training_state_path, map_location="cpu", weights_only=False)
+        
+        # Restoring training states
+        optimizer.load_state_dict(training_state["optimizer_state_dict"])
+        scheduler.load_state_dict(training_state["scheduler_state_dict"])
+        global_step = training_state["global_step"]
+        
+        # Restoring random states for reproducibility
+        if "random_state" in training_state:
+            random.setstate(training_state["random_state"])
+        if "numpy_random_state" in training_state:
+            np.random.set_state(training_state["numpy_random_state"])
+        if "torch_random_state" in training_state:
+            torch.set_rng_state(training_state["torch_random_state"])
+        if "torch_cuda_random_state" in training_state and torch.cuda.is_available():
+            if training_state["torch_cuda_random_state"] is not None:
+                torch.cuda.set_rng_state_all(training_state["torch_cuda_random_state"])
+        
+        # Restoring scaler if provided
+        if scaler is not None and "scaler_state_dict" in training_state:
+            scaler.load_state_dict(training_state["scaler_state_dict"])
+            print("✅ Scaler state restored")
+        
+        # Loading the model
+        if checkpoint_path.exists() and (checkpoint_path / "pytorch_model.bin").exists():
+            if accelerator:
+                # Try using accelerate if available
+                try:
+                    accelerator.load_state(str(checkpoint_path))
+                except:
+                    # Manual loading as fallback
+                    state_dict = torch.load(checkpoint_path / "pytorch_model.bin", map_location="cpu")
+                    model.load_state_dict(state_dict)
+            else:
+                # Standard loading
+                state_dict = torch.load(checkpoint_path / "pytorch_model.bin", map_location="cpu")
+                model.load_state_dict(state_dict)
+        
+        # Extract extra state if available
+        extra_state = training_state.get("extra_state", {})
+        
+        print(f"✅ Legacy checkpoint loaded from {checkpoint_path}, step {global_step}")
+        print("✅ Random states restored for reproducibility")
+        
+        if extra_state:
+            print(f"✅ Extra state loaded: {list(extra_state.keys())}")
+        
+        return global_step, extra_state
     
-    # Loading training state
-    training_state = torch.load(training_state_path, map_location="cpu")
-    
-    # Restoring training states
-    optimizer.load_state_dict(training_state["optimizer_state_dict"])
-    scheduler.load_state_dict(training_state["scheduler_state_dict"])
-    global_step = training_state["global_step"]
-    
-    # Restoring random states for reproducibility
-    if "random_state" in training_state:
-        random.setstate(training_state["random_state"])
-    if "numpy_random_state" in training_state:
-        np.random.set_state(training_state["numpy_random_state"])
-    if "torch_random_state" in training_state:
-        torch.set_rng_state(training_state["torch_random_state"])
-    if "torch_cuda_random_state" in training_state and torch.cuda.is_available():
-        if training_state["torch_cuda_random_state"] is not None:
-            torch.cuda.set_rng_state_all(training_state["torch_cuda_random_state"])
-    
-    # Restoring scaler if provided
-    if scaler is not None and "scaler_state_dict" in training_state:
-        scaler.load_state_dict(training_state["scaler_state_dict"])
-        print("Scaler state restored")
-    
-    # Loading the model
-    if checkpoint_path.exists() and (checkpoint_path / "pytorch_model.bin").exists():
-        if accelerator:
-            # Using accelerate
-            accelerator.load_state(str(checkpoint_path))
-        else:
-            # Standard loading
-            state_dict = torch.load(checkpoint_path / "pytorch_model.bin", map_location="cpu")
-            model.load_state_dict(state_dict)
-    
-    print(f"Checkpoint loaded from {checkpoint_path}, step {global_step}")
-    print("✅ Random states restored for reproducibility")
-    return global_step
+    # If neither format found
+    else:
+        raise FileNotFoundError(
+            f"No valid checkpoint found in {checkpoint_path}\n"
+            f"Expected either 'meta.json' (new format) or 'training_state.pt' (legacy format)"
+        )
 
 
 def load_pretrained_model(model_path: str, device: str = "auto") -> PreTrainedModel:

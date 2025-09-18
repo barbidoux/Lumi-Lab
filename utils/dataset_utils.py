@@ -9,6 +9,8 @@ from typing import Dict, List, Optional, Union
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import glob
+import random
+import math
 
 
 class ShardedTokenizedDataset(Dataset):
@@ -364,3 +366,189 @@ def create_vocabulary_stats(tokenizer, data_path: str) -> Dict:
     }
     
     return stats
+
+
+class WeightedMultiDatasetSampler:
+    """
+    Multi-dataset sampler with weighted sampling for training.
+    Supports deterministic sampling, checkpoint state management, and async prefetch.
+    """
+    
+    def __init__(
+        self,
+        data_dirs: List[str],
+        weights: Optional[List[float]] = None,
+        seed: int = 42,
+        shuffle_shards: bool = True,
+        batch_size: int = 8,
+        split: str = "train"
+    ):
+        """
+        Args:
+            data_dirs: List of directories containing sharded datasets
+            weights: Sampling weights for each dataset (normalized automatically)
+            seed: Random seed for deterministic sampling
+            shuffle_shards: Whether to shuffle shard order on each epoch
+            batch_size: Batch size for sampling
+            split: Dataset split ('train' or 'val')
+        """
+        self.data_dirs = [Path(d) for d in data_dirs]
+        self.seed = seed
+        self.shuffle_shards = shuffle_shards
+        self.batch_size = batch_size
+        self.split = split
+        
+        # Normalize weights
+        if weights is None:
+            weights = [1.0] * len(data_dirs)
+        elif len(weights) != len(data_dirs):
+            raise ValueError(f"Length of weights ({len(weights)}) must match data_dirs ({len(data_dirs)})")
+        
+        total_weight = sum(weights)
+        self.weights = [w / total_weight for w in weights]
+        
+        # Initialize RNG for deterministic sampling
+        self.rng = random.Random(seed)
+        
+        # Load datasets
+        self.datasets = []
+        self.dataset_names = []
+        
+        for i, data_dir in enumerate(self.data_dirs):
+            try:
+                dataset = ShardedTokenizedDataset(str(data_dir), split=split)
+                self.datasets.append(dataset)
+                self.dataset_names.append(data_dir.name)
+                print(f"📊 Dataset {i}: {data_dir.name} ({len(dataset)} samples, weight: {self.weights[i]:.3f})")
+            except Exception as e:
+                raise RuntimeError(f"Failed to load dataset from {data_dir}: {e}")
+        
+        # Validate tokenizer consistency
+        self._validate_tokenizer_consistency()
+        
+        # Initialize sampling state
+        self.current_step = 0
+        self.dataset_indices = list(range(len(self.datasets)))
+        self.sample_counts = [0] * len(self.datasets)  # Track actual sampling
+        
+        print(f"✅ Multi-dataset sampler initialized:")
+        print(f"   - {len(self.datasets)} datasets")
+        print(f"   - Weights: {[f'{name}={w:.3f}' for name, w in zip(self.dataset_names, self.weights)]}")
+        print(f"   - Total samples: {sum(len(d) for d in self.datasets):,}")
+    
+    def _validate_tokenizer_consistency(self):
+        """Ensure all datasets use compatible tokenizers."""
+        if len(self.datasets) <= 1:
+            return
+        
+        # Check if all datasets have similar token ranges
+        token_ranges = []
+        for dataset in self.datasets:
+            if len(dataset.samples) > 0:
+                sample_tokens = dataset.samples[0]['input_ids']
+                if isinstance(sample_tokens, torch.Tensor):
+                    sample_tokens = sample_tokens.tolist()
+                token_ranges.append((min(sample_tokens), max(sample_tokens)))
+        
+        if len(set(token_ranges)) > 1:
+            print(f"⚠️  Warning: Datasets may use different tokenizers. Token ranges: {token_ranges}")
+    
+    def sample_dataset_index(self) -> int:
+        """Sample a dataset index according to weights."""
+        return self.rng.choices(self.dataset_indices, weights=self.weights)[0]
+    
+    def get_batch(self) -> Dict[str, torch.Tensor]:
+        """
+        Get a batch from the weighted multi-dataset sampler.
+        
+        Returns:
+            Batch dictionary with input_ids, attention_mask, labels
+        """
+        batch_input_ids = []
+        batch_labels = []
+        
+        for _ in range(self.batch_size):
+            # Choose dataset according to weights
+            dataset_idx = self.sample_dataset_index()
+            self.sample_counts[dataset_idx] += 1
+            
+            # Sample from chosen dataset
+            dataset = self.datasets[dataset_idx]
+            sample_idx = self.rng.randint(0, len(dataset) - 1)
+            sample = dataset[sample_idx]
+            
+            batch_input_ids.append(sample['input_ids'])
+            batch_labels.append(sample['labels'])
+        
+        # Stack into tensors
+        batch = {
+            'input_ids': torch.stack(batch_input_ids),
+            'labels': torch.stack(batch_labels)
+        }
+        
+        # Create attention mask
+        batch['attention_mask'] = (batch['input_ids'] != 0).long()
+        
+        self.current_step += 1
+        return batch
+    
+    def get_observed_mix(self) -> Dict[str, float]:
+        """Get the actually observed dataset mixing ratios."""
+        total_samples = sum(self.sample_counts)
+        if total_samples == 0:
+            return {name: 0.0 for name in self.dataset_names}
+        
+        return {
+            name: count / total_samples 
+            for name, count in zip(self.dataset_names, self.sample_counts)
+        }
+    
+    def reset_mix_tracking(self):
+        """Reset the mix tracking counters."""
+        self.sample_counts = [0] * len(self.datasets)
+    
+    def state_dict(self) -> Dict:
+        """Get checkpoint state for resuming training."""
+        return {
+            'current_step': self.current_step,
+            'rng_state': self.rng.getstate(),
+            'sample_counts': self.sample_counts.copy(),
+            'seed': self.seed,
+            'weights': self.weights.copy(),
+            'dataset_names': self.dataset_names.copy()
+        }
+    
+    def load_state_dict(self, state_dict: Dict):
+        """Load checkpoint state for resuming training."""
+        self.current_step = state_dict['current_step']
+
+        # Handle RNG state - JSON serialization converts tuples to lists recursively
+        def convert_to_tuple(obj):
+            """Recursively convert lists back to tuples for RNG state compatibility."""
+            if isinstance(obj, list):
+                return tuple(convert_to_tuple(item) for item in obj)
+            else:
+                return obj
+
+        rng_state = state_dict['rng_state']
+        if isinstance(rng_state, list):
+            rng_state = convert_to_tuple(rng_state)
+        self.rng.setstate(rng_state)
+
+        self.sample_counts = state_dict['sample_counts'].copy()
+        
+        # Validate consistency
+        if state_dict.get('weights') != self.weights:
+            print("⚠️  Warning: Loaded weights differ from current configuration")
+        if state_dict.get('dataset_names') != self.dataset_names:
+            print("⚠️  Warning: Loaded dataset names differ from current configuration")
+        
+        print(f"📁 Resumed multi-dataset sampler from step {self.current_step}")
+    
+    def get_total_samples(self) -> int:
+        """Get total number of samples across all datasets."""
+        return sum(len(dataset) for dataset in self.datasets)
+    
+    def __len__(self) -> int:
+        """Return virtual length for compatibility (infinite sampling)."""
+        return sum(len(dataset) for dataset in self.datasets)

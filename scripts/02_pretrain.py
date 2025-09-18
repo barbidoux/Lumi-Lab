@@ -10,7 +10,7 @@ import math
 import os
 import random
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 import numpy as np
 import torch
@@ -30,13 +30,95 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from utils.dataset_utils import TokenizedDataset
+from utils.dataset_utils import TokenizedDataset, WeightedMultiDatasetSampler
 from utils.model_utils import create_model, save_checkpoint, load_checkpoint
+
+
+def validate_tokenizer_consistency(data_dirs: List[str], accelerator: Accelerator) -> Dict:
+    """Validate that all datasets use the same tokenizer and return metadata."""
+    if not data_dirs:
+        return {}
+    
+    accelerator.print("🔍 Validating tokenizer consistency across datasets...")
+    
+    reference_metadata = None
+    reference_dir = None
+    
+    for data_dir in data_dirs:
+        manifest_path = Path(data_dir) / 'manifest.json'
+        
+        if not manifest_path.exists():
+            raise FileNotFoundError(
+                f"❌ Manifest file not found: {manifest_path}\n"
+                f"This dataset may not have been processed with the new tokenizer system.\n"
+                f"Please re-process using: make reencode-dataset DIR={data_dir}"
+            )
+        
+        try:
+            with open(manifest_path, 'r') as f:
+                manifest = json.load(f)
+        except Exception as e:
+            raise RuntimeError(f"❌ Failed to load manifest {manifest_path}: {e}")
+        
+        if 'tokenizer_metadata' not in manifest:
+            raise ValueError(
+                f"❌ No tokenizer metadata in manifest: {manifest_path}\n"
+                f"This dataset was processed with an older version.\n"
+                f"Please re-process using: make reencode-dataset DIR={data_dir}"
+            )
+        
+        tokenizer_metadata = manifest['tokenizer_metadata']
+        
+        # Validate required fields
+        required_fields = ['tokenizer_sha256', 'tokenizer_vocab_size', 'special_tokens', 'normalizer', 'byte_fallback']
+        for field in required_fields:
+            if field not in tokenizer_metadata:
+                raise ValueError(f"❌ Missing tokenizer metadata field '{field}' in {manifest_path}")
+        
+        if reference_metadata is None:
+            reference_metadata = tokenizer_metadata
+            reference_dir = data_dir
+            accelerator.print(f"📊 Reference tokenizer (from {data_dir}):")
+            accelerator.print(f"   SHA256: {reference_metadata['tokenizer_sha256'][:16]}...")
+            accelerator.print(f"   Vocab size: {reference_metadata['tokenizer_vocab_size']:,}")
+            accelerator.print(f"   Special tokens: {reference_metadata['special_tokens']}")
+        else:
+            # Compare with reference
+            mismatches = []
+            
+            if tokenizer_metadata['tokenizer_sha256'] != reference_metadata['tokenizer_sha256']:
+                mismatches.append(f"SHA256: {tokenizer_metadata['tokenizer_sha256'][:16]}... != {reference_metadata['tokenizer_sha256'][:16]}...")
+            
+            if tokenizer_metadata['tokenizer_vocab_size'] != reference_metadata['tokenizer_vocab_size']:
+                mismatches.append(f"Vocab size: {tokenizer_metadata['tokenizer_vocab_size']} != {reference_metadata['tokenizer_vocab_size']}")
+            
+            if tokenizer_metadata['special_tokens'] != reference_metadata['special_tokens']:
+                mismatches.append(f"Special tokens: {tokenizer_metadata['special_tokens']} != {reference_metadata['special_tokens']}")
+            
+            if tokenizer_metadata['normalizer'] != reference_metadata['normalizer']:
+                mismatches.append(f"Normalizer: {tokenizer_metadata['normalizer']} != {reference_metadata['normalizer']}")
+            
+            if tokenizer_metadata['byte_fallback'] != reference_metadata['byte_fallback']:
+                mismatches.append(f"Byte fallback: {tokenizer_metadata['byte_fallback']} != {reference_metadata['byte_fallback']}")
+            
+            if mismatches:
+                raise ValueError(
+                    f"❌ Tokenizer mismatch between {reference_dir} and {data_dir}:\\n" +
+                    "\\n".join(f"   {mismatch}" for mismatch in mismatches) +
+                    f"\\n\\nAll datasets must use the same tokenizer. Solutions:\\n"
+                    f"1. Re-process inconsistent dataset: make reencode-dataset DIR={data_dir}\\n"
+                    f"2. Use tokenizer-reset + data-rebuild-all to restart with consistent tokenizer"
+                )
+            
+            accelerator.print(f"✅ {data_dir}: tokenizer matches reference")
+    
+    accelerator.print(f"✅ All {len(data_dirs)} datasets use consistent tokenizer")
+    return reference_metadata
 
 
 def set_deterministic_training(seed: int = 42):
     """Configure deterministic training with fixed seed."""
-    print(f"Configuring deterministic training with seed {seed}")
+    print(f"🎲 Configuring deterministic training with seed {seed}")
     
     # Seeds for reproducibility
     random.seed(seed)
@@ -54,7 +136,51 @@ def set_deterministic_training(seed: int = 42):
     g.manual_seed(seed)
     
     print("✅ Deterministic training configured")
+    print(f"   Random state: {hash(str(random.getstate()))}")
+    print(f"   NumPy state: {hash(str(np.random.get_state()))}")
+    print(f"   PyTorch state: {hash(str(torch.get_rng_state()))}")
+    
     return g
+
+
+def validate_training_resumption(accelerator, global_step: int, scheduler, optimizer):
+    """Validate that training resumption is working correctly."""
+    accelerator.print(f"\n🔍 Training resumption validation:")
+    accelerator.print(f"   Global step: {global_step}")
+    accelerator.print(f"   Learning rate: {scheduler.get_last_lr()[0]:.2e}")
+
+    # Handle AcceleratedScheduler wrapper - access the underlying scheduler
+    try:
+        if hasattr(scheduler, 'scheduler'):
+            # AcceleratedScheduler has a .scheduler attribute
+            last_epoch = scheduler.scheduler.last_epoch
+        elif hasattr(scheduler, 'last_epoch'):
+            # Direct access
+            last_epoch = scheduler.last_epoch
+        else:
+            # Fallback - use global_step as approximation
+            last_epoch = global_step
+        accelerator.print(f"   Scheduler last_epoch: {last_epoch}")
+    except Exception as e:
+        accelerator.print(f"   ⚠️  Could not access scheduler last_epoch: {e}")
+        last_epoch = global_step
+
+    accelerator.print(f"   Optimizer state groups: {len(optimizer.state_dict()['state'])}")
+
+    # Check if optimizer has momentum/variance terms (indicating it's not fresh)
+    if len(optimizer.state_dict()['state']) > 0:
+        accelerator.print(f"   ✅ Optimizer state loaded (has momentum/variance terms)")
+    else:
+        accelerator.print(f"   ⚠️  Optimizer state is empty (fresh start)")
+
+    # Check scheduler consistency
+    expected_lr_step = global_step
+    if abs(last_epoch - expected_lr_step) > 1:
+        accelerator.print(f"   ⚠️  Scheduler step mismatch: last_epoch={last_epoch}, expected ~{expected_lr_step}")
+    else:
+        accelerator.print(f"   ✅ Scheduler step is consistent")
+
+    accelerator.print("🔍 Validation complete\n")
 
 
 class PretrainConfig:
@@ -208,7 +334,7 @@ def train_epoch(
     use_flash_attention: bool = False,
     mixed_precision: str = "no"
 ) -> tuple[int, float]:
-    """Train the model for one epoch."""
+    """Train the model for one epoch (single dataset mode)."""
     model.train()
     total_loss = 0.0
     progress_bar = tqdm(dataloader, desc=f"Epoch {epoch}")
@@ -247,9 +373,9 @@ def train_epoch(
             # Save checkpoints
             if global_step % config.save_steps == 0:
                 if accelerator.is_main_process:
-                    checkpoint_dir = f"./checkpoints/pretrain/{config.model_name}/step_{global_step}"
-                    save_checkpoint(model, optimizer, scheduler, global_step, checkpoint_dir, accelerator, scaler=None)
-                    accelerator.print(f"Checkpoint saved at step {global_step}")
+                    checkpoint_dir = f"{config.output_dir}/{config.model_name}/step_{global_step}"
+                    save_checkpoint(model, optimizer, scheduler, global_step, checkpoint_dir, accelerator)
+                    accelerator.print(f"💾 Checkpoint saved at step {global_step} -> {checkpoint_dir}")
         
         progress_bar.set_postfix({"loss": loss.item(), "lr": scheduler.get_last_lr()[0]})
         
@@ -257,6 +383,88 @@ def train_epoch(
         if config.max_steps > 0 and global_step >= config.max_steps:
             break
     
+    return global_step, total_loss
+
+
+def train_multi_dataset(
+    model: nn.Module,
+    multi_dataset_sampler: WeightedMultiDatasetSampler,
+    optimizer: torch.optim.Optimizer,
+    scheduler: torch.optim.lr_scheduler._LRScheduler,
+    accelerator: Accelerator,
+    config: PretrainConfig,
+    global_step: int,
+    max_steps: int,
+    log_dataset_mix_steps: int = 500
+) -> tuple[int, float]:
+    """Train the model using multi-dataset sampler (step-based training)."""
+    model.train()
+    total_loss = 0.0
+    progress_bar = tqdm(total=max_steps, desc="Multi-dataset training", initial=global_step)
+    
+    while global_step < max_steps:
+        # Get batch from multi-dataset sampler
+        batch = multi_dataset_sampler.get_batch()
+        
+        # Move batch to device
+        batch = {k: v.to(accelerator.device) for k, v in batch.items()}
+        
+        with accelerator.accumulate(model):
+            input_ids = batch['input_ids']
+            attention_mask = batch['attention_mask']
+            labels = batch['labels']
+            
+            # Forward pass
+            outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+            loss = outputs.loss
+            
+            accelerator.backward(loss)
+            
+            if accelerator.sync_gradients:
+                accelerator.clip_grad_norm_(model.parameters(), config.max_grad_norm)
+            
+            optimizer.step()
+            scheduler.step()
+            optimizer.zero_grad()
+        
+        if accelerator.sync_gradients:
+            global_step += 1
+            total_loss += loss.item()
+            progress_bar.update(1)
+            
+            # Logging
+            if global_step % config.logging_steps == 0:
+                avg_loss = total_loss / config.logging_steps
+                current_lr = scheduler.get_last_lr()[0]
+                accelerator.print(f"Step {global_step}: loss={avg_loss:.4f}, lr={current_lr:.2e}")
+                total_loss = 0.0
+            
+            # Log dataset mixing every N steps
+            if global_step % log_dataset_mix_steps == 0:
+                mix_observed = multi_dataset_sampler.get_observed_mix()
+                mix_str = ", ".join([f"{name}={ratio:.2f}" for name, ratio in mix_observed.items()])
+                accelerator.print(f"Step {global_step}: mix_observed: {mix_str}")
+                multi_dataset_sampler.reset_mix_tracking()  # Reset for next interval
+            
+            # Save checkpoints
+            if global_step % config.save_steps == 0:
+                if accelerator.is_main_process:
+                    checkpoint_dir = f"{config.output_dir}/{config.model_name}/step_{global_step}"
+                    # Save multi-dataset sampler state as well
+                    sampler_state = multi_dataset_sampler.state_dict()
+                    # Correct the sampler step to match the actual training step
+                    sampler_state['current_step'] = global_step
+                    save_checkpoint(
+                        model, optimizer, scheduler, global_step, checkpoint_dir,
+                        accelerator, extra_state={"multi_dataset_sampler": sampler_state}
+                    )
+                    accelerator.print(f"💾 Multi-dataset checkpoint saved at step {global_step} -> {checkpoint_dir}")
+            
+            # Stop if max steps reached
+            if global_step >= max_steps:
+                break
+    
+    progress_bar.close()
     return global_step, total_loss
 
 
@@ -268,6 +476,16 @@ def main():
                        help="Path to tokenized data file (legacy format)")
     parser.add_argument("--data_dir", type=str,
                        help="Path to directory with sharded data and manifest")
+    
+    # Multi-dataset training arguments
+    parser.add_argument("--data_dirs", nargs='+', type=str,
+                       help="Multiple data directories for weighted multi-dataset training")
+    parser.add_argument("--data_weights", nargs='+', type=float,
+                       help="Weights for multi-dataset sampling (must match --data_dirs length)")
+    parser.add_argument("--num_workers", type=int, default=1,
+                       help="Number of worker processes for data loading (multi-dataset)")
+    parser.add_argument("--log_dataset_mix_steps", type=int, default=500,
+                       help="Log observed dataset mix every N steps")
     
     # Compatibility: allow either data_path or data_dir
     parser.add_argument("--output_dir", type=str, default="./checkpoints/pretrain",
@@ -326,6 +544,7 @@ def main():
     config.warmup_steps = args.warmup_steps
     config.save_steps = args.save_steps
     config.logging_steps = args.logging_steps
+    config.output_dir = args.output_dir
     
     # Deterministic configuration
     dataloader_generator = None
@@ -339,42 +558,79 @@ def main():
     model = create_model(config, use_flash_attention=use_flash_attention)
     accelerator.print(f"Model created: {sum(p.numel() for p in model.parameters()):,} parameters")
     
-    # Data loading
+    # Data loading - with multi-dataset support
     accelerator.print("Loading data...")
-    # Determine data source
-    if args.data_dir:
-        print(f"📁 Using sharded data directory: {args.data_dir}")
+    use_multi_dataset = False
+    multi_dataset_sampler = None
+    tokenizer_metadata = {}
+    
+    if args.data_dirs:
+        # Multi-dataset mode
+        accelerator.print(f"🌐 Using multi-dataset mode with {len(args.data_dirs)} datasets")
+        
+        # Validate arguments
+        if args.data_weights and len(args.data_weights) != len(args.data_dirs):
+            raise ValueError(f"Number of weights ({len(args.data_weights)}) must match number of data_dirs ({len(args.data_dirs)})")
+        
+        # CRITICAL: Validate tokenizer consistency across all datasets
+        tokenizer_metadata = validate_tokenizer_consistency(args.data_dirs, accelerator)
+        
+        # Initialize multi-dataset sampler
+        multi_dataset_sampler = WeightedMultiDatasetSampler(
+            data_dirs=args.data_dirs,
+            weights=args.data_weights,
+            seed=args.seed,
+            batch_size=args.batch_size,
+            split="train"
+        )
+        use_multi_dataset = True
+        train_dataset = None  # Not used in multi-dataset mode
+        
+    elif args.data_dir:
+        accelerator.print(f"📁 Using single sharded data directory: {args.data_dir}")
+        # Validate single dataset tokenizer
+        tokenizer_metadata = validate_tokenizer_consistency([args.data_dir], accelerator)
         train_dataset = TokenizedDataset(args.data_dir, config.sequence_length)
     elif args.data_path:
-        print(f"📄 Using legacy data file: {args.data_path}")
+        accelerator.print(f"📄 Using legacy data file: {args.data_path}")
         train_dataset = TokenizedDataset(args.data_path, config.sequence_length)
     else:
-        raise ValueError("Either --data_dir or --data_path must be specified")
+        raise ValueError("Either --data_dirs, --data_dir, or --data_path must be specified")
     
-    # Division train/validation (90/10)
-    train_size = int(0.9 * len(train_dataset))
-    val_size = len(train_dataset) - train_size
-    train_dataset, val_dataset = torch.utils.data.random_split(
-        train_dataset, [train_size, val_size]
-    )
-    
-    train_dataloader = DataLoader(
-        train_dataset,
-        batch_size=config.batch_size,
-        shuffle=True,
-        num_workers=4,
-        pin_memory=True,
-        generator=dataloader_generator
-    )
-    
-    val_dataloader = DataLoader(
-        val_dataset,
-        batch_size=config.batch_size,
-        shuffle=False,
-        num_workers=4,
-        pin_memory=True,
-        generator=dataloader_generator
-    )
+    # Setup data loaders based on mode
+    if use_multi_dataset:
+        # Multi-dataset mode: no traditional DataLoader needed
+        train_dataloader = None
+        val_dataloader = None
+        total_samples = multi_dataset_sampler.get_total_samples()
+        accelerator.print(f"📊 Multi-dataset total samples: {total_samples:,}")
+        
+    else:
+        # Single dataset mode (backward compatibility)
+        # Division train/validation (90/10)
+        train_size = int(0.9 * len(train_dataset))
+        val_size = len(train_dataset) - train_size
+        train_dataset, val_dataset = torch.utils.data.random_split(
+            train_dataset, [train_size, val_size]
+        )
+        
+        train_dataloader = DataLoader(
+            train_dataset,
+            batch_size=config.batch_size,
+            shuffle=True,
+            num_workers=4,
+            pin_memory=True,
+            generator=dataloader_generator
+        )
+        
+        val_dataloader = DataLoader(
+            val_dataset,
+            batch_size=config.batch_size,
+            shuffle=False,
+            num_workers=4,
+            pin_memory=True,
+            generator=dataloader_generator
+        )
     
     # Optimizer and scheduler
     optimizer = AdamW(
@@ -402,41 +658,118 @@ def main():
         model, optimizer, train_dataloader, val_dataloader, scheduler
     )
     
+    # Get reference to the scaler if using mixed precision
+    scaler = getattr(accelerator, "scaler", None)
+    if scaler is not None:
+        accelerator.print(f"🔧 Mixed precision scaler detected: {type(scaler).__name__}")
+    else:
+        accelerator.print("🔧 No mixed precision scaler (using full precision or automatic mixed precision)")
+    
     # Resume from checkpoint if specified
     global_step = 0
     start_epoch = 0
     
     if args.resume_from_checkpoint:
-        accelerator.print(f"Resuming from {args.resume_from_checkpoint}")
-        global_step = load_checkpoint(model, optimizer, scheduler, args.resume_from_checkpoint, accelerator, scaler=None)
-        start_epoch = global_step // len(train_dataloader)
+        accelerator.print(f"🔄 Resuming training from checkpoint: {args.resume_from_checkpoint}")
+        
+        try:
+            # Load complete checkpoint state (includes model, optimizer, scheduler, scaler, RNG states)
+            global_step, extra_state = load_checkpoint(
+                model, optimizer, scheduler, args.resume_from_checkpoint, accelerator
+            )
+            
+            # Restore multi-dataset sampler state if resuming multi-dataset training
+            if use_multi_dataset and "multi_dataset_sampler" in extra_state:
+                multi_dataset_sampler.load_state_dict(extra_state["multi_dataset_sampler"])
+                accelerator.print("📊 Multi-dataset sampler state restored")
+            
+            if not use_multi_dataset:
+                start_epoch = global_step // len(train_dataloader)
+            
+            accelerator.print(f"✅ Successfully resumed from step {global_step}")
+            
+            # Validate that resumption is working correctly
+            validate_training_resumption(accelerator, global_step, scheduler, optimizer)
+            
+        except Exception as e:
+            accelerator.print(f"❌ Failed to load checkpoint: {e}")
+            accelerator.print("Continuing with fresh training...")
+            global_step = 0
+            start_epoch = 0
+    
+    # Log tokenizer information before training starts  
+    if tokenizer_metadata:
+        accelerator.print("\\n🔒 Tokenizer Information:")
+        accelerator.print(f"   SHA256: {tokenizer_metadata.get('tokenizer_sha256', 'N/A')}")
+        accelerator.print(f"   Vocab Size: {tokenizer_metadata.get('tokenizer_vocab_size', 'N/A'):,}")
+        accelerator.print(f"   Special Tokens: {tokenizer_metadata.get('special_tokens', 'N/A')}")
+        accelerator.print(f"   Normalizer: {tokenizer_metadata.get('normalizer', 'N/A')}")
+        
+        if use_multi_dataset and args.data_dirs:
+            accelerator.print(f"   Datasets using this tokenizer:")
+            for i, data_dir in enumerate(args.data_dirs):
+                weight = args.data_weights[i] if args.data_weights else "auto"
+                accelerator.print(f"     - {data_dir} (weight: {weight})")
     
     # Training loop
-    accelerator.print("Starting training...")
+    accelerator.print("\\nStarting training...")
     
-    for epoch in range(start_epoch, config.num_train_epochs):
-        accelerator.print(f"Epoch {epoch + 1}/{config.num_train_epochs}")
+    if use_multi_dataset:
+        # Multi-dataset training (step-based)
+        accelerator.print(f"🌐 Starting multi-dataset training for {config.max_steps} steps")
         
-        global_step, _ = train_epoch(
-            model, train_dataloader, optimizer, scheduler, 
-            accelerator, config, epoch + 1, global_step, use_flash_attention, mixed_precision
+        global_step, _ = train_multi_dataset(
+            model, multi_dataset_sampler, optimizer, scheduler,
+            accelerator, config, global_step, config.max_steps, args.log_dataset_mix_steps
         )
         
-        # Evaluation
-        if accelerator.is_main_process and (epoch + 1) % 1 == 0:  # Evaluation every epoch
-            accelerator.print("Evaluation...")
-            perplexity = calculate_perplexity(model, val_dataloader, accelerator.device, accelerator)
-            accelerator.print(f"Validation perplexity: {perplexity:.2f}")
-        
-        # Stop if max_steps reached
-        if config.max_steps > 0 and global_step >= config.max_steps:
-            break
+    else:
+        # Traditional epoch-based training (backward compatibility)
+        for epoch in range(start_epoch, config.num_train_epochs):
+            accelerator.print(f"Epoch {epoch + 1}/{config.num_train_epochs}")
+            
+            global_step, _ = train_epoch(
+                model, train_dataloader, optimizer, scheduler, 
+                accelerator, config, epoch + 1, global_step, use_flash_attention, mixed_precision
+            )
+            
+            # Evaluation
+            if accelerator.is_main_process and (epoch + 1) % 1 == 0:  # Evaluation every epoch
+                accelerator.print("Evaluation...")
+                perplexity = calculate_perplexity(model, val_dataloader, accelerator.device, accelerator)
+                accelerator.print(f"Validation perplexity: {perplexity:.2f}")
+            
+            # Stop if max_steps reached
+            if config.max_steps > 0 and global_step >= config.max_steps:
+                break
     
-    # Final save
+    # Final save with tokenizer metadata
     if accelerator.is_main_process:
         final_dir = f"{args.output_dir}/{config.model_name}/final"
-        save_checkpoint(model, optimizer, scheduler, global_step, final_dir, accelerator, scaler=None)
+        
+        # Prepare extra metadata including tokenizer information
+        extra_state = {}
+        if tokenizer_metadata:
+            extra_state["tokenizer_metadata"] = tokenizer_metadata
+        if use_multi_dataset and args.data_dirs:
+            extra_state["training_datasets"] = args.data_dirs
+            if args.data_weights:
+                extra_state["dataset_weights"] = args.data_weights
+        
+        save_checkpoint(model, optimizer, scheduler, global_step, final_dir, accelerator, extra_state=extra_state)
         accelerator.print(f"Final model saved in {final_dir}")
+        
+        # Save tokenizer metadata to a separate JSON file for easy access
+        if tokenizer_metadata:
+            metadata_path = Path(final_dir) / "tokenizer_metadata.json"
+            with open(metadata_path, 'w') as f:
+                json.dump({
+                    "tokenizer_metadata": tokenizer_metadata,
+                    "training_datasets": args.data_dirs if args.data_dirs else [args.data_dir] if args.data_dir else [],
+                    "dataset_weights": args.data_weights if args.data_weights else [],
+                    "training_date": str(Path().cwd()),  # Will be replaced by actual date in practice
+                }, f, indent=2)
+            accelerator.print(f"📄 Tokenizer metadata saved: {metadata_path}")
     
     accelerator.print("Training completed!")
 
