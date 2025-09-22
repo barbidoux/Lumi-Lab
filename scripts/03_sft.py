@@ -37,6 +37,112 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.model_utils import load_pretrained_model
 
 
+def find_latest_sft_checkpoint(output_dir: str) -> Optional[str]:
+    """
+    Find the latest SFT checkpoint in the output directory.
+
+    This function looks for checkpoint directories in the HuggingFace Transformers format:
+    checkpoint-{step_number}
+
+    Args:
+        output_dir: The output directory containing checkpoints
+
+    Returns:
+        Path to the latest checkpoint directory, or None if no valid checkpoints found
+    """
+    if not output_dir or not os.path.exists(output_dir):
+        return None
+
+    checkpoint_dirs = []
+
+    try:
+        # Find all checkpoint directories
+        for item_name in os.listdir(output_dir):
+            item_path = os.path.join(output_dir, item_name)
+
+            # Check if it's a directory and follows checkpoint pattern
+            if os.path.isdir(item_path) and item_name.startswith("checkpoint-"):
+                try:
+                    # Extract step number from checkpoint-{step}
+                    step_str = item_name.split("checkpoint-")[1]
+                    step_num = int(step_str)
+                    checkpoint_dirs.append((step_num, item_path))
+                except (ValueError, IndexError):
+                    # Skip invalid checkpoint directory names
+                    continue
+
+    except OSError as e:
+        print(f"⚠️  Warning: Could not list directory {output_dir}: {e}")
+        return None
+
+    if not checkpoint_dirs:
+        return None
+
+    # Sort by step number (latest first) to check from newest to oldest
+    checkpoint_dirs.sort(key=lambda x: x[0], reverse=True)
+
+    # Check each checkpoint from latest to oldest until we find a valid one
+    for step_num, checkpoint_path in checkpoint_dirs:
+        # Check for alternative model file formats
+        model_files = [
+            "pytorch_model.bin",
+            "model.safetensors",
+            "adapter_model.bin",      # For LoRA adapters
+            "adapter_model.safetensors"
+        ]
+
+        has_model_file = any(
+            os.path.exists(os.path.join(checkpoint_path, model_file))
+            for model_file in model_files
+        )
+
+        # Check required files for HuggingFace Trainer checkpoints
+        # These files are CRITICAL for proper training resumption
+        required_files = [
+            "training_args.bin",      # Training configuration
+            "trainer_state.json",     # Trainer state (step, epoch, etc.)
+            "optimizer.pt",           # Optimizer state (momentum, etc.)
+            "scheduler.pt",           # Scheduler state (learning rate schedule)
+            "rng_state.pth"          # RNG states for reproducibility
+        ]
+
+        # Optional but recommended files
+        optional_files = [
+            "tokenizer_config.json",  # Tokenizer configuration
+            "special_tokens_map.json" # Special tokens mapping
+        ]
+
+        missing_required = []
+        missing_optional = []
+
+        # Check required files
+        for required_file in required_files:
+            if not os.path.exists(os.path.join(checkpoint_path, required_file)):
+                missing_required.append(required_file)
+
+        # Check optional files (for info only)
+        for optional_file in optional_files:
+            if not os.path.exists(os.path.join(checkpoint_path, optional_file)):
+                missing_optional.append(optional_file)
+
+        # A checkpoint is valid if it has model + all required state files
+        if not missing_required and has_model_file:
+            if missing_optional:
+                print(f"ℹ️  Note: Checkpoint {checkpoint_path} is missing optional files: {missing_optional}")
+            return checkpoint_path
+        else:
+            # This checkpoint is invalid, log and continue to next
+            print(f"⚠️  Warning: Checkpoint {checkpoint_path} is incomplete, skipping:")
+            if missing_required:
+                print(f"    Missing REQUIRED files: {missing_required}")
+            if not has_model_file:
+                print(f"    No model file found (checked: {model_files})")
+            print(f"    Complete resume requires: model + optimizer + scheduler + trainer state + RNG state")
+
+    # No valid checkpoint found
+    return None
+
+
 def validate_sp32k_tokenizer(tokenizer_path: str, model_path: str = None) -> AutoTokenizer:
     """Load and validate SP32k tokenizer using model metadata."""
 
@@ -395,7 +501,7 @@ def main():
     parser.add_argument("--no_packing", action="store_true",
                        help="Disable packing")
     parser.add_argument("--resume_from_checkpoint", type=str, nargs="?", const="auto", default=None,
-                       help="Resume training from checkpoint (use 'auto' to find latest, or provide path)")
+                       help="Resume training from checkpoint: 'auto' to automatically find latest checkpoint, or provide specific checkpoint directory path")
     parser.add_argument("--val_split_ratio", type=float, default=0.02,
                        help="Validation split ratio (default: 0.02)")
     parser.add_argument("--system_prompt", type=str, default=None,
@@ -602,23 +708,51 @@ def main():
     
     print("Starting SFT training...")
 
-    # Training
+    # Training - Enhanced checkpoint resume logic
     resume_checkpoint = None
     if args.resume_from_checkpoint:
         if args.resume_from_checkpoint == "auto":
-            # Auto-detect latest checkpoint
-            checkpoints = [d for d in os.listdir(args.output_dir) if d.startswith("checkpoint-")] if os.path.exists(args.output_dir) else []
-            if checkpoints:
-                latest_checkpoint = sorted(checkpoints, key=lambda x: int(x.split("-")[1]))[-1]
-                resume_checkpoint = os.path.join(args.output_dir, latest_checkpoint)
-                print(f"Auto-resuming from latest checkpoint: {resume_checkpoint}")
+            print("🔍 Auto-detecting latest SFT checkpoint...")
+            resume_checkpoint = find_latest_sft_checkpoint(args.output_dir)
+            if resume_checkpoint:
+                print(f"✅ Found latest checkpoint: {resume_checkpoint}")
+                # Extract step number for user info
+                checkpoint_name = os.path.basename(resume_checkpoint)
+                if checkpoint_name.startswith("checkpoint-"):
+                    step_num = checkpoint_name.split("checkpoint-")[1]
+                    print(f"   Resuming from step: {step_num}")
             else:
-                print("No checkpoints found for auto-resume")
-        elif os.path.exists(args.resume_from_checkpoint):
-            resume_checkpoint = args.resume_from_checkpoint
-            print(f"Resuming from checkpoint: {resume_checkpoint}")
+                print("ℹ️  No existing checkpoints found, starting fresh training")
         else:
-            print(f"WARNING: Checkpoint not found: {args.resume_from_checkpoint}")
+            # Validate provided checkpoint path
+            if os.path.exists(args.resume_from_checkpoint):
+                # Additional validation for explicit checkpoint paths
+                if os.path.isdir(args.resume_from_checkpoint):
+                    # Check if it's a valid checkpoint directory
+                    required_files = ["config.json", "training_args.bin"]
+                    model_files = ["pytorch_model.bin", "model.safetensors", "adapter_model.bin", "adapter_model.safetensors"]
+
+                    has_required = all(os.path.exists(os.path.join(args.resume_from_checkpoint, f)) for f in required_files)
+                    has_model = any(os.path.exists(os.path.join(args.resume_from_checkpoint, f)) for f in model_files)
+
+                    if has_required and has_model:
+                        resume_checkpoint = args.resume_from_checkpoint
+                        print(f"✅ Resuming from validated checkpoint: {resume_checkpoint}")
+                    else:
+                        print(f"❌ Invalid checkpoint directory: {args.resume_from_checkpoint}")
+                        missing = []
+                        if not has_required:
+                            missing.extend([f for f in required_files if not os.path.exists(os.path.join(args.resume_from_checkpoint, f))])
+                        if not has_model:
+                            missing.append("model file (pytorch_model.bin, model.safetensors, etc.)")
+                        print(f"   Missing: {missing}")
+                        print("   Starting fresh training instead...")
+                else:
+                    print(f"❌ Checkpoint path is not a directory: {args.resume_from_checkpoint}")
+                    print("   Starting fresh training instead...")
+            else:
+                print(f"❌ Checkpoint path does not exist: {args.resume_from_checkpoint}")
+                print("   Starting fresh training instead...")
 
     trainer.train(resume_from_checkpoint=resume_checkpoint)
 

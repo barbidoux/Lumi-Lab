@@ -34,6 +34,118 @@ from utils.dataset_utils import TokenizedDataset, WeightedMultiDatasetSampler
 from utils.model_utils import create_model, save_checkpoint, load_checkpoint
 
 
+def find_latest_checkpoint(output_dir: str, model_name: str) -> Optional[str]:
+    """
+    Find the latest checkpoint in the output directory.
+
+    This function looks for checkpoints in two possible locations:
+    1. {output_dir}/{model_name}/step_* (recommended structure)
+    2. {output_dir}/step_* (fallback for different structures)
+
+    Args:
+        output_dir: The base output directory
+        model_name: The model name
+
+    Returns:
+        Path to the latest checkpoint directory, or None if no checkpoints found
+    """
+    def scan_for_checkpoints(search_dir: Path) -> list:
+        """Scan a directory for checkpoint directories."""
+        step_dirs = []
+
+        if not search_dir.exists():
+            return step_dirs
+
+        for item in search_dir.iterdir():
+            if item.is_dir() and item.name.startswith("step_"):
+                try:
+                    step_num = int(item.name.split("_")[1])
+                    step_dirs.append((step_num, item))
+                except (ValueError, IndexError):
+                    continue
+
+        # Also check for 'final' directory
+        final_dir = search_dir / "final"
+        if final_dir.exists() and final_dir.is_dir():
+            # Get the highest step number + 1 for final dir to make it the latest
+            max_step = max([step for step, _ in step_dirs], default=-1)
+            step_dirs.append((max_step + 1, final_dir))
+
+        return step_dirs
+
+    # Method 1: Look in {output_dir}/{model_name}/ (standard structure)
+    model_dir = Path(output_dir) / model_name
+    step_dirs = scan_for_checkpoints(model_dir)
+
+    # Method 2: If no checkpoints found, look directly in {output_dir}/ (fallback)
+    if not step_dirs:
+        output_path = Path(output_dir)
+        step_dirs = scan_for_checkpoints(output_path)
+
+    if not step_dirs:
+        return None
+
+    # Sort by step number (latest first) to check from newest to oldest
+    step_dirs.sort(key=lambda x: x[0], reverse=True)
+
+    # Check each checkpoint from latest to oldest until we find a valid one
+    for step_num, checkpoint_dir in step_dirs:
+        # Check for alternative model file formats
+        model_files = [
+            "pytorch_model.bin",
+            "model.safetensors"
+        ]
+
+        has_model_file = any(
+            (checkpoint_dir / model_file).exists()
+            for model_file in model_files
+        )
+
+        # Check required files for Accelerate checkpoints
+        # These files are CRITICAL for proper training resumption
+        required_files = [
+            "config.json",            # Model configuration
+            "meta.json",              # Training metadata (global_step, etc.)
+            "rng_state.pth"          # RNG states for reproducibility
+        ]
+
+        # Check for Accelerate optimizer/scheduler files (different naming patterns)
+        accelerate_state_files = [
+            "optimizer.bin",          # Accelerate optimizer state
+            "scheduler.bin"           # Accelerate scheduler state
+        ]
+
+        missing_required = []
+        missing_accelerate = []
+
+        # Check required files
+        for required_file in required_files:
+            if not (checkpoint_dir / required_file).exists():
+                missing_required.append(required_file)
+
+        # Check Accelerate state files
+        for state_file in accelerate_state_files:
+            if not (checkpoint_dir / state_file).exists():
+                missing_accelerate.append(state_file)
+
+        # A checkpoint is valid if it has model + required files + accelerate states
+        if not missing_required and not missing_accelerate and has_model_file:
+            return str(checkpoint_dir)
+        else:
+            # This checkpoint is invalid, log and continue to next
+            print(f"⚠️  Warning: Checkpoint {checkpoint_dir} is incomplete, skipping:")
+            if missing_required:
+                print(f"    Missing REQUIRED files: {missing_required}")
+            if missing_accelerate:
+                print(f"    Missing ACCELERATE state files: {missing_accelerate}")
+            if not has_model_file:
+                print(f"    No model file found (checked: {model_files})")
+            print(f"    Complete resume requires: model + meta + optimizer + scheduler + RNG state")
+
+    # No valid checkpoint found
+    return None
+
+
 def validate_tokenizer_consistency(data_dirs: List[str], accelerator: Accelerator) -> Dict:
     """Validate that all datasets use the same tokenizer and return metadata."""
     if not data_dirs:
@@ -491,7 +603,7 @@ def main():
     parser.add_argument("--output_dir", type=str, default="./checkpoints/pretrain",
                        help="Output directory for checkpoints")
     parser.add_argument("--resume_from_checkpoint", type=str, default=None,
-                       help="Path to the checkpoint to resume from")
+                       help="Path to the checkpoint to resume from, or 'auto' to automatically find the latest checkpoint")
     parser.add_argument("--learning_rate", type=float, default=3e-4,
                        help="Learning rate")
     parser.add_argument("--batch_size", type=int, default=8,
@@ -668,14 +780,25 @@ def main():
     # Resume from checkpoint if specified
     global_step = 0
     start_epoch = 0
-    
-    if args.resume_from_checkpoint:
-        accelerator.print(f"🔄 Resuming training from checkpoint: {args.resume_from_checkpoint}")
+
+    # Handle 'auto' checkpoint detection
+    resume_checkpoint_path = args.resume_from_checkpoint
+    if args.resume_from_checkpoint == "auto":
+        accelerator.print("🔍 Auto-detecting latest checkpoint...")
+        resume_checkpoint_path = find_latest_checkpoint(args.output_dir, config.model_name)
+        if resume_checkpoint_path:
+            accelerator.print(f"✅ Found latest checkpoint: {resume_checkpoint_path}")
+        else:
+            accelerator.print("ℹ️  No existing checkpoints found, starting fresh training")
+            resume_checkpoint_path = None
+
+    if resume_checkpoint_path:
+        accelerator.print(f"🔄 Resuming training from checkpoint: {resume_checkpoint_path}")
         
         try:
             # Load complete checkpoint state (includes model, optimizer, scheduler, scaler, RNG states)
             global_step, extra_state = load_checkpoint(
-                model, optimizer, scheduler, args.resume_from_checkpoint, accelerator
+                model, optimizer, scheduler, resume_checkpoint_path, accelerator
             )
             
             # Restore multi-dataset sampler state if resuming multi-dataset training

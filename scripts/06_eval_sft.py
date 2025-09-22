@@ -107,7 +107,7 @@ def calculate_sft_adapted_perplexity(model, tokenizer, prompt_template: str = "c
                                      max_samples: Optional[int] = None) -> Dict:
     """Calculate perplexity using the same method as 05_evaluate but with SFT format."""
 
-    print(f"\n📈 Calculating SFT-adapted perplexity (using real text data)...")
+    print(f"\nCalculating perplexity using real text data...")
 
     # Load some real text data like WikiText-2 but format it conversationally
     try:
@@ -188,13 +188,12 @@ def calculate_sft_adapted_perplexity(model, tokenizer, prompt_template: str = "c
         "template": "raw_text"
     }
 
-    print(f"\n📊 Raw Text Perplexity Results (same as 05_evaluate):")
-    print(f"  Format: Raw text (no ChatML/conversational formatting)")
+    print(f"\nPerplexity Results:")
+    print(f"  Format: Raw text (no conversational formatting)")
     print(f"  Samples: {processed_samples:,}")
     print(f"  Tokens: {total_tokens:,}")
     print(f"  Average Loss: {avg_loss:.4f}")
     print(f"  Perplexity: {perplexity:.2f}")
-    print(f"  Note: Uses identical calculation to 05_evaluate script")
 
     return results
 
@@ -203,7 +202,7 @@ def evaluate_boolq(model, tokenizer, prompt_template: str = "chatml",
                    max_samples: int = 100) -> Dict:
     """Evaluate model on BoolQ dataset for yes/no reasoning."""
 
-    print(f"\n🤔 Evaluating BoolQ accuracy (max {max_samples} samples)...")
+    print(f"\nEvaluating BoolQ accuracy (max {max_samples} samples)...")
 
     # Load BoolQ dataset
     try:
@@ -278,7 +277,7 @@ def evaluate_boolq(model, tokenizer, prompt_template: str = "chatml",
         "samples": total
     }
 
-    print(f"\n📊 BoolQ Results:")
+    print(f"\nBoolQ Results:")
     print(f"  Samples: {total}")
     print(f"  Correct: {correct}")
     print(f"  Accuracy: {accuracy:.3f} ({accuracy*100:.1f}%)")
@@ -290,7 +289,7 @@ def run_smoke_tests(model, tokenizer, prompt_template: str = "chatml",
                    mode: str = "standard") -> Dict:
     """Run comprehensive smoke tests using evaluation/smoke_prompts.json."""
 
-    print(f"\n💨 Running smoke tests ({mode} mode)...")
+    print(f"\nRunning smoke tests ({mode} mode)...")
 
     # Load smoke test prompts
     smoke_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), "evaluation", "smoke_prompts.json")
@@ -390,7 +389,7 @@ def run_smoke_tests(model, tokenizer, prompt_template: str = "chatml",
         "individual_results": all_results
     }
 
-    print(f"\n📊 Smoke Test Results:")
+    print(f"\nSmoke Test Results:")
     print(f"  Categories: {len(category_results)}")
     print(f"  Total prompts: {len(all_results)}")
     print(f"  Average quality: {summary_stats['avg_quality_score']:.3f}")
@@ -481,7 +480,7 @@ def run_inference(model, tokenizer, prompt: str, prompt_template: str = "chatml"
 def generation_test(model, tokenizer, prompt_template: str = "chatml", num_samples: int = 5):
     """Run generation tests with sample prompts."""
 
-    print(f"\n🎯 Generation Test ({num_samples} samples):")
+    print(f"\nGeneration Test ({num_samples} samples):")
     print("=" * 60)
 
     # Sample prompts
@@ -558,8 +557,6 @@ def main():
     # Output options
     parser.add_argument("--output_file", type=str, default=None,
                        help="Save results to JSON file")
-    parser.add_argument("--assess", action="store_true",
-                       help="Run performance assessment after evaluation")
 
     args = parser.parse_args()
 
@@ -586,12 +583,14 @@ def main():
         print(f"\nResponse: {response}")
         return
 
-    print("=== SFT Model Comprehensive Evaluation ===")
-    print(f"Model: {args.model_path}")
-    print(f"Tokenizer: {args.tokenizer_path}")
-    print(f"Template: {args.prompt_template}")
-    print(f"Mode: {args.mode}")
-    print(f"LoRA: {use_lora}")
+    print("SFT Model Evaluation Report")
+    print("=" * 60)
+    print(f"Model Path: {args.model_path}")
+    print(f"Tokenizer Path: {args.tokenizer_path}")
+    print(f"Prompt Template: {args.prompt_template}")
+    print(f"Evaluation Mode: {args.mode}")
+    print(f"LoRA Enabled: {use_lora}")
+    print("=" * 60)
 
     start_time = time.time()
 
@@ -641,40 +640,30 @@ def main():
     if args.output_file:
         with open(args.output_file, 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
-        print(f"\n💾 Results saved to: {args.output_file}")
+        print(f"\nResults saved to: {args.output_file}")
 
-    # Run assessment if requested
-    if args.assess and args.output_file:
-        try:
-            assess_script = os.path.join(os.path.dirname(os.path.dirname(__file__)), "evaluation", "assess_performance.py")
-            if os.path.exists(assess_script):
-                print("\n" + "="*60)
-                print("Running performance assessment...")
-                os.system(f'python "{assess_script}" "{args.output_file}"')
-        except Exception as e:
-            print(f"Assessment failed: {e}")
+    # Skip performance assessment (removed subjective evaluations)
 
-    print(f"\n✅ Evaluation completed in {total_time:.1f} seconds!")
-
-    # Print summary
+    # Final Summary
     print("\n" + "="*60)
-    print("📊 EVALUATION SUMMARY")
+    print("EVALUATION RESULTS")
     print("="*60)
 
     if "perplexity_metrics" in results:
         ppl = results["perplexity_metrics"]["perplexity"]
-        print(f"📈 Perplexity: {ppl:.2f}")
+        print(f"Perplexity: {ppl:.2f}")
 
     if "boolq_accuracy" in results:
         acc = results["boolq_accuracy"]
-        print(f"🤔 BoolQ Accuracy: {acc:.3f} ({acc*100:.1f}%)")
+        print(f"BoolQ Accuracy: {acc:.3f} ({acc*100:.1f}%)")
 
     if "smoke_tests" in results:
         quality = results["smoke_tests"]["summary_stats"]["avg_quality_score"]
-        print(f"💨 Smoke Test Quality: {quality:.3f}")
+        print(f"Smoke Test Quality: {quality:.3f}")
 
-    print(f"⏱️ Total Time: {total_time:.1f}s")
-    print(f"🏷️ Model Size: {total_params:,} parameters")
+    print(f"Evaluation Time: {total_time:.1f}s")
+    print(f"Model Parameters: {total_params:,}")
+    print("="*60)
 
 
 if __name__ == "__main__":

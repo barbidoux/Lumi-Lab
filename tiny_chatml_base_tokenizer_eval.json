@@ -1,43 +1,43 @@
 {
-  "model_path": "./checkpoints/sft/tiny_chatml_v2_phase2_oasst",
-  "tokenizer_path": "./checkpoints/sft/tiny_chatml_v2_phase2_oasst",
+  "model_path": "checkpoints/sft/chinchilla_tiny_chatml_23m/merged",
+  "tokenizer_path": "checkpoints/sft/chinchilla_tiny_chatml_23m/merged",
   "prompt_template": "chatml",
   "evaluation_mode": "standard",
   "model_parameters": 23073024,
-  "timestamp": "2025-09-19 16:44:12",
-  "evaluation_time_seconds": 41.98911237716675,
+  "timestamp": "2025-09-22 10:34:05",
+  "evaluation_time_seconds": 41.037741899490356,
   "perplexity_metrics": {
-    "perplexity": 717.276422139432,
-    "avg_loss": 6.575461292299987,
+    "perplexity": 987.989543665054,
+    "avg_loss": 6.895672114356898,
     "total_tokens": 8633,
     "processed_samples": 50,
     "dataset": "wikitext_raw_text",
     "template": "raw_text"
   },
   "boolq_metrics": {
-    "accuracy": 0.46,
-    "correct": 46,
+    "accuracy": 0.42,
+    "correct": 42,
     "total": 100,
     "samples": 100
   },
-  "boolq_accuracy": 0.46,
+  "boolq_accuracy": 0.42,
   "smoke_tests": {
     "summary_stats": {
-      "avg_quality_score": 0.5249999999999999,
+      "avg_quality_score": 0.5708333333333333,
       "total_prompts": 24,
       "categories_tested": 8
     },
     "category_results": {
       "basic_knowledge": {
-        "avg_score": 0.6,
+        "avg_score": 0.6333333333333333,
         "samples": 3
       },
       "language_understanding": {
-        "avg_score": 0.6,
+        "avg_score": 0.4666666666666666,
         "samples": 3
       },
       "reasoning": {
-        "avg_score": 0.5333333333333333,
+        "avg_score": 0.43333333333333335,
         "samples": 3
       },
       "creativity": {
@@ -45,19 +45,19 @@
         "samples": 3
       },
       "instruction_following": {
-        "avg_score": 0.43333333333333335,
+        "avg_score": 0.5333333333333333,
         "samples": 3
       },
       "wikipedia_style": {
-        "avg_score": 0.5666666666666668,
+        "avg_score": 0.6666666666666666,
         "samples": 3
       },
       "conversation": {
-        "avg_score": 0.39999999999999997,
+        "avg_score": 0.7333333333333333,
         "samples": 3
       },
       "multilingual": {
-        "avg_score": 0.5666666666666667,
+        "avg_score": 0.6,
         "samples": 3
       }
     },
@@ -65,146 +65,146 @@
       {
         "category": "basic_knowledge",
         "prompt": "What is the capital of France?",
-        "response": "i am a professional professor and a master of philosophy. i want to learn how to learn my own knowledge and build a strong passion to teach me. i will be interested in what you have learned, and i would like to study your own skills and skills. i will be part of a university that will be a very kind of student. i will be a good partner and will be an wonderful mentor and an mentor. i will be a professional professional. i will be a great player and be",
-        "quality_score": 0.5
+        "response": "'s book what was a city in the republic of russia the city was a populated city and an town, which existed from to 1th. the city was renamed the city in the city as a town in the capital of russia. it was later as the capital of russia in a city, by the town of the kingdom of the russia. it was also as an village for the cities of bulgaria and russia. it is been as a hub of the russian capital of germany. there",
+        "quality_score": 0.3
       },
       {
         "category": "basic_knowledge",
         "prompt": "How many days are in a year?",
-        "response": "2 - 1. the number of time you want to live is 15. 3. the number of time you want to live is 19. 4. the number of time you want to live is 19. 5. the number of time you want to live is 10. 8. the number of time you need to live is 19. . the number of time you need to live is 19. 9.",
-        "quality_score": 0.5
+        "response": "user is any a-aaa. i am in the 20th, with my school, and i is currently be a teacher. if you have questions about it, please me, we can help to help find what is the school in the 20th.",
+        "quality_score": 0.9999999999999999
       },
       {
         "category": "basic_knowledge",
         "prompt": "What is 2+2?",
-        "response": "2 is 18 (.), and is 3.5.2 - 14 (1.4) - 12 (1.3) - 2.4 (1.4) - 3.4 (.8) - 4.4 (1.2) - 4.4 (.5) - 4.4 (.1) -.4 (.2) -.4 (.9) -.4 (.",
-        "quality_score": 0.7999999999999999
+        "response": "editor's best best most best best greatest ever. muvee\" \"cz\".\" \"cz\" \"dz\" \"bz\" \"bz\" \"fz\" \"bz\" \"bz\" \"bz\" \"bz\" \"bz\" \"bz\" \"bz\" \"bz\" \"bz\" \"bz \"bz\" \"bz\" \"bz\" \"bz\" \"bz\" \"",
+        "quality_score": 0.6
       },
       {
         "category": "language_understanding",
         "prompt": "Complete this sentence: The quick brown fox",
-        "response": "vte he easy brown fox is a english-language word of a english-language word that describes the same type of language and uses its latin to describe the word \"s\". it refers to a language, which is used in the language to convey the word \"s\" meaning. it is considered a term for languages. lennylamb, \"s\". it has a distinct meaning, which means that it is used to refer with the word \"s\". it is commonly used in the language",
-        "quality_score": 0.5
+        "response": "v1, a hey, hey, hey and the red black. the white white white white blue white white white white white blue green blue white blue white black white white white white white white white blue blue white white white white white black white black white white red white white white white black white black black white black white white white black white white black white black black white white white white white black white black white white white black white black white white white white white white white",
+        "quality_score": 0.3
       },
       {
         "category": "language_understanding",
         "prompt": "What is the opposite of 'hot'?",
-        "response": "is a word that describes a language in an language, which does not mean that it is a language. it was originally used in modern languages and has been translated into english as the english language for languages. it is considered be the first popular language in the country and is considered to be the first language in the world. es is known for its language and meaning that it is widely called \"the\" and \"all\". there are many languages and languages and are also used in the country. there are",
+        "response": "assistant \"he's first\" that is the common word that is a -theian language. his son was a son, and his wife were the son, and they have been the brother of the uncle. he was the father of his grandfather i'm a friend who had seen him as the most person ever to get the son in his life. it has been an time that has been so more than a time. this is a story that can be an important tool for people",
         "quality_score": 0.5
       },
       {
         "category": "language_understanding",
         "prompt": "Rephrase: 'The cat sat on the mat'",
-        "response": "k.mri, a man who has a bad job with a bad job and his job is not being good. she's a girl who is a good guy and does she'll have a bad job as she can help her with your job.",
-        "quality_score": 0.7999999999999999
-      },
-      {
-        "category": "reasoning",
-        "prompt": "If it's raining, should you take an umbrella?",
-        "response": "0010024 pm00222153021121221212122122222222221222222222222222",
+        "response": "do's to s---------------------------------------------------------------------------------------------",
         "quality_score": 0.6
       },
       {
         "category": "reasoning",
-        "prompt": "Why do we need to sleep?",
-        "response": "1. - how is your room you'll be able to sleep at a small area, which is the most known for that. if you're unable to sleep, it's important to note that the room is always a good option for sleeping. - if the room is not bed and there are no room in the room, it's important to see that this is not a same as the house. - if the room is not bed, you can also see that the room",
+        "prompt": "If it's raining, should you take an umbrella?",
+        "response": "a other  the white tree (oeon) is a small small white tree (geon). the tree is the common tree (mpa), which is from the north of the eastern valley. it is known as \"i\" and a other that is located in the north of the northern border of the south area. there are many types of tree (hpa) that may contain a small small white tree. it has been known to grow to a small white",
         "quality_score": 0.5
       },
       {
         "category": "reasoning",
+        "prompt": "Why do we need to sleep?",
+        "response": "does you do have a room with a bed and a bath in the house yes, there is a room with a shower. i can make a room with a bathroom with a shower, a bathroom or a bathroom. there are some bedrooms that will be comfortable. my is an modern bedroom with a bathroom with a shower and a shower. it has a bathroom with a bathroom, a bathroom, a shower, a bathroom, a tub, a shower, a shower, a shower, a shower,",
+        "quality_score": 0.3
+      },
+      {
+        "category": "reasoning",
         "prompt": "What happens when water freezes?",
-        "response": "water is not cold and is a rare source of salt, water can be avoided or difficult to prevent. however, water may be required for certain conditions such as water, water, and water. however, if water gets out of water, water will be likely able to cause the water to be dry, causing the water to die. caressinine is an rare source of salt in its form that has been used in agriculture. it is also important to consider its ability to find a",
+        "response": "i have a problem that can make the process. how i i try in some of the natural effects, there are many things that should make the process in a way to reduce the heat of the environment, and that is not necessary. it is important to get a energy in your atmosphere, which does you think that you want to take a water of water for the time to run for a time or it doesn't mean it should be likely to go into a place. if you're",
         "quality_score": 0.5
       },
       {
         "category": "creativity",
         "prompt": "Write a short poem about winter.",
-        "response": "was this poem and it is not the first thing i am saying, but it does not have a theme or theme. you have to use this word as a sentence to describe it. gevedon, a simple poem that makes it like a song, is a piece of ice that is a piece of snow. he is trying to make his way with his child's child, which is a different form of ice. he also has a more theme, and he is always up to the side of the",
-        "quality_score": 0.5
+        "response": "etic aoism is an concept that will help people to work with the environment and build their own knowledge. those who are doing research on their lives, as they may be a important decision for their life, or not making a difference for the future. gutale-aoism is a example of a natural learning, which can help to learn about the culture of life. this was the time of the war, a american army, and the war. the occupation of the world was a",
+        "quality_score": 0.7
       },
       {
         "category": "creativity",
         "prompt": "Describe a perfect day in 3 sentences.",
-        "response": "3 1. text, 2 words, 2 words, 4 words, 3 words, 2 words, 5 words, 2 words, 4 words, 3 words, 3 words, 3 words, 2 words, 2 words, 4 words, 3 words, 3 words, 4 words, 2 words, 3 words, 2 words, 2 words, 3 words, 4 words, 3 words, 3 words, 3 words, 3 words, 2 words, 2 words, 2 words, 3 words, 3",
-        "quality_score": 0.39999999999999997
+        "response": "hl a teacher to teach the a class. monterdehl an teacher to take the students to a grade class and a grade class. caress is a student who helps students to find their new children and help them from their students. bucates is a student who has worked for a school and a class. muvees has many opportunities to learn about the and problems of those students. tosss has the most great students in the field, with the emphasis on teaching and understanding that the class will",
+        "quality_score": 0.5
       },
       {
         "category": "creativity",
         "prompt": "Create a name for a new planet.",
-        "response": "( -) -\"\"\"\"\"\"\"\",\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\".\"\"\"\"\"\"\"\" \"\"\" \"\"\" \"\"\" \"\"\" \"\"\" \"\"\"\"\"\" \"\"\" \"\"\" \"\"\" \"\"\"\"\" \"\"\" \"\"\" \"",
-        "quality_score": 0.6
+        "response": "v the planet is one to one, the stars. this is a star of the earth. the star is about hundred and 5 times from the world. this will be a star of the earth, it is the star of earth. this will have a star of the sun. it is a star of earth. this was a star of the earth and also it has a star of the planet. there can also have a star of earth and light. they are an other stars of the",
+        "quality_score": 0.3
       },
       {
         "category": "instruction_following",
         "prompt": "List exactly 3 animals that live in the ocean.",
-        "response": "are you sure me would be a good answer for all your questions. if i'm looking to give you an quote for me, i can help you with this question. norzagaray, - we have a new route of the sea, which is located on the coast of the pacific coast. we also have a new route of the sea, which has a large and wide island. the island of nan, the islands of man, and the sea, is one of the largest of the worlds",
+        "response": "owner the species is a natural environment that will be natural and not be useful for animals, as it can be not suitable to the land of a earth. it's a species of water that can be used to a earth. this is the common climate which can be found in the waters of the ocean. it does contain such types as the natural atmosphere, the surface, the energy and surface of the sea, the wind, the sea, and the air. there can also have many factors",
         "quality_score": 0.5
       },
       {
         "category": "instruction_following",
         "prompt": "Write 'Hello World' in uppercase.",
-        "response": "3.a.,sy orld, l, l, l, l, l, l, l, l, l, l, l, l, l, l, l, l, l, l,",
-        "quality_score": 0.49999999999999994
+        "response": "'' 'bert'  ' .  ' . ' . ' .  . ' . . . ' . ' . . . ' . . ' . . ' . . ' . ' . .",
+        "quality_score": 0.6
       },
       {
         "category": "instruction_following",
         "prompt": "Count from 1 to 5.",
-        "response": ", here are some tips for reading the article 1. read a list of articles and articles in the article. 3. review the article read the article about the article and write reviews. 4. read an article about the article. 3. read a list of articles and articles that were published on the website. 8. read a list of articles and publications about the article. . read a list of articles and reviews. . read a list of articles and reports and reviews. 9",
-        "quality_score": 0.3
+        "response": "uc is an example of the modern modern contemporary architecture that can be used as a modern architecture. there also are a many features of the modern renaissance and been known for a style. it has a number of features and have some unique designs. the main building is a long high wall with a large glass and a solid wall. this was be a oneyear plan that will be designed to make a small square of the large wall. it's a old room with a white windows, the",
+        "quality_score": 0.5
       },
       {
         "category": "wikipedia_style",
         "prompt": "Paris is the capital of",
-        "response": "imoto deso de deso (i.e., c.e., c.e., c.e., c.e., c.e., d.e., c.e., c.e., c.e., c.e., c.e., c.e., e.e., c.e., c.e., c.e., c.e.",
+        "response": "-tic-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m-m",
         "quality_score": 0.6
       },
       {
         "category": "wikipedia_style",
         "prompt": "The Earth orbits around",
-        "response": "arth orbits about 11 million years ago - the star-ted orbit was the first orbit in a orbit of the sun, and the most known orbit of the earth. this orbit could be called \"ai\" or \"s--.\" the orbit of the sun would be an third orbit than the sun, but the orbit of the sun would be a smaller and more likely to have a orbit of 10. the orbit of the sun would be a large planet that has been in",
-        "quality_score": 0.5
+        "response": "v, im. im., i't have a few of a different sized space in the space, but i'm to take a break with the solar and it is possible to get down at a more low level to the space. there are many differents that can be found on the planet in a way ofing the solar. im., im., im., im., im., im., im.",
+        "quality_score": 0.9
       },
       {
         "category": "wikipedia_style",
         "prompt": "Photosynthesis is the process by which",
-        "response": "ky-- - a name that is commonly used for identification and identification. i am a ai who has a strong knowledge of the language, language, and language, and is often used as a tool to identify and determine specific words in a specific topic. my idea is to use a variety of techniques in order to communicate, and create an way that helps me understand how it can be used. this can be useful for finding a specific word that is important for the development of information.",
-        "quality_score": 0.6
+        "response": "assistant a example is the solution of the problem - the way to define a problem is the way to create an task that makes the effective step. - there is a much way to make it easier to find the problem. if do you want to understand how the problem are used in the process, do you need to use a problem - the reason to get your information is using a solution from the field, you should should consider to give a idea of a solution for your particular task. -",
+        "quality_score": 0.5
       },
       {
         "category": "conversation",
         "prompt": "Hello, how are you today?",
-        "response": "ze i'm a fan of the game, and i'm a fan of the legend of the dragon. i'm a fan of the game, but i don't have any other reasons. i'm a fan of the game, and i don't want to give something or a good word. i'll also share some examples that can help you find a best game in all of your games. my biggest game is the dragon, so i'm not",
-        "quality_score": 0.5
+        "response": "says what of a different group why you would do you need to give something to say about the group or a group. i didnt you ask what you thought was the one you'll know about. i did there as the group, i't have a more way with it. i're afraid that they will be up out, and you can go with another group of friends, if you you would want to try up them or want to get the team for some reasons. don",
+        "quality_score": 0.7
       },
       {
         "category": "conversation",
         "prompt": "What's your favorite hobby?",
-        "response": "",
-        "quality_score": 0.0
+        "response": "n's \"'t be good'\" your popular friend is a young native who had married the children of the indian family. she was one of the most people of the world to be so more, as she was known for his long life and love. he became a good boy in the school. he was married and his husband was youngest younger. it like me would be one of the best children of the world. after years, i'm glad would want to go with my",
+        "quality_score": 0.7
       },
       {
         "category": "conversation",
         "prompt": "Can you help me with a problem?",
-        "response": "r. here's a example of a machine machine that is used to make things easier p.g. p.g. p.g. p.g. p.g. p.g. p.g. p.g. p.g. p.g. p.g. p.g. p.g. p",
-        "quality_score": 0.7
+        "response": "creator dr als's work is a way to determine what the problem should be in the future. it is an idea that can help improve the situation and find what they do in the future. it allows people to understand a problem and take their out and on this time. there are many reasons to avoid the problems of certain issues that may include some information or issues such as a problem or a error.",
+        "quality_score": 0.7999999999999999
       },
       {
         "category": "multilingual",
         "prompt": "Bonjour, comment allez-vous?",
-        "response": "- - - - - - - - - - - - - - - - - - - - - - - - - the world has been the world's longest nation. - - - - - - - - - - - -... - - - -!! - - - -\" - - - -..... - -) - - -!!! - - -( - -) - - 0 - 10 - 5 - - - - you can follow the path of a 2.",
-        "quality_score": 0.5
+        "response": "r. you will be an athethethea,n-lt.'s aas \"\"., the\"n-ltt. i'm the'''''''' ''''''''''''''''''''''''''''''''''m'''re going to'''''''''",
+        "quality_score": 0.9999999999999999
       },
       {
         "category": "multilingual",
         "prompt": "Hola, ¿cómo estás?",
-        "response": ", cmo ests que aos.comn de aos.comnesa de o. la so.comnesa conto to, cmo ests ests que aos.comnesa to, cmo ests que aos.comnesa de d. la so.comnesa de yos.comnesa de",
-        "quality_score": 0.49999999999999994
+        "response": "a is a word of a name that can be used to describe the nature of a person. if you not have an word in the place, then that should be be defined to use the name. i'm sure to be an name for it) it is a form of the \"\" type of meaning of a person. between the name of a person (sb) in the place, it is a name that can be used as an name from the name to be considered a name",
+        "quality_score": 0.3
       },
       {
         "category": "multilingual",
         "prompt": "Guten Tag, wie geht es Ihnen?",
-        "response": ". it is a large number of different types of people that are similar to one, but there are many of the most commonly known people who are known for the work of a man and a man. it was founded by the philosopher david srer and paul dems. they have been called \"thethe greatest in society\", and are known as \"my\" \"the best of the world.\" the goal of this mission is to help individuals with a diverse range of mental and physical needs",
-        "quality_score": 0.7
+        "response": "he, a ac of ans, were a number in the german language language and studied in czech english. the german language language is used to a extent of the world of english in the century, from to the modernththththththththththththththththththththththththththththththththththththththththththththththththththththth",
+        "quality_score": 0.5
       }
     ]
   }

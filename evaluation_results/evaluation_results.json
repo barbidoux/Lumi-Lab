@@ -1,6 +1,6 @@
 {
-  "model_path": "checkpoints/sft/tiny_chatml_v2_phase2_oasst/merged",
-  "model_parameters": 23073024,
+  "model_path": "checkpoints/chinchilla_23m_15k/tiny/final",
+  "model_parameters": 23072000,
   "device": "cuda:0",
   "tokenizer_metadata": {
     "tokenizer_sha256": "f2d1de4c87474c287ffa771fe9e5534e6b5ab955f6d611e00b18f2a3184a229f",
@@ -15,37 +15,37 @@
     "byte_fallback": false,
     "model_type": "unigram"
   },
-  "ppl_wikipedia_en_32k_1024": 1004.9429421652674,
-  "ppl_openwebtext_32k_1024": 1973.6237343283613,
-  "ppl_weighted": 1680.0499942740896,
-  "boolq_accuracy": 0.59,
-  "boolq_correct": 59,
+  "ppl_wikipedia_en_32k_1024": 173.47574715276875,
+  "ppl_openwebtext_32k_1024": 289.9242795185974,
+  "ppl_weighted": 256.4859372851196,
+  "boolq_accuracy": 0.39,
+  "boolq_correct": 39,
   "boolq_total": 100,
   "smoke_tests": [
     {
       "prompt": "What is artificial intelligence?",
-      "response": "what should i recommend using artificial intelligence and how to solve a problem with artificial intelligence, how could you ask about which way for you to try to help your answer what of the best methods for getting a problem do it really easier because the information doesn't work like the information you want to be. does these things happen that they don't have any specific details or other resources what are many areas you may need to consider before doing research why did you come",
-      "full_text": "what is artificial intelligence what should i recommend using artificial intelligence and how to solve a problem with artificial intelligence, how could you ask about which way for you to try to help your answer what of the best methods for getting a problem do it really easier because the information doesn't work like the information you want to be. does these things happen that they don't have any specific details or other resources what are many areas you may need to consider before doing research why did you come"
+      "response": "is a and organization to a,-. the has the tos science science to to a where the ofs ( ) not be by or a of. the of' it the ' and you be all. a that are as a. science have there no what is \"\". the does do want change a science is possible we the. i been the and for now have. i no need the to to world",
+      "full_text": "what is artificial intelligence. is a and organization to a,-. the has the tos science science to to a where the ofs ( ) not be by or a of. the of' it the ' and you be all. a that are as a. science have there no what is \"\". the does do want change a science is possible we the. i been the and for now have. i no need the to to world"
     },
     {
       "prompt": "Explain machine learning in simple terms.",
-      "response": "what are the best ways to solve a problem is it possible to connect me with the solution are you having an problem that can be complicated or complex does this happen, if there aren't any other solutions for problems you could use this method and solve all your problems without the need of a machine. here's an example how could you help you what does this code mean how will i pass on and it is important to keep out of the code",
-      "full_text": "explain machine learning in simple terms. what are the best ways to solve a problem is it possible to connect me with the solution are you having an problem that can be complicated or complex does this happen, if there aren't any other solutions for problems you could use this method and solve all your problems without the need of a machine. here's an example how could you help you what does this code mean how will i pass on and it is important to keep out of the code"
+      "response": "is a where is, that not is the th-s. is the of, you' thinking yours be that,'. can tell where are and it about is possible ask how a is or you, you', what that what if were are other are and, im a is to ia and have time learn what is to an () am theim i",
+      "full_text": "explain machine learning in simple terms. is a where is, that not is the th-s. is the of, you' thinking yours be that,'. can tell where are and it about is possible ask how a is or you, you', what that what if were are other are and, im a is to ia and have time learn what is to an () am theim i"
     },
     {
       "prompt": "How does a neural network work?",
-      "response": "i'm still working in the research project. but it isn't a basic answer, and i think there are some things that can help you work with your brain because i know that your physical memory is less less than a average of an half per person. as what does this work, it makes the nervous mind feel more efficient, and if they are not able to take attention from others for long time, it should not be much more relevant than possible or other aspects",
-      "full_text": "how does a neural network work i'm still working in the research project. but it isn't a basic answer, and i think there are some things that can help you work with your brain because i know that your physical memory is less less than a average of an half per person. as what does this work, it makes the nervous mind feel more efficient, and if they are not able to take attention from others for long time, it should not be much more relevant than possible or other aspects"
+      "response": "can find more on- ' your systems the-'' and-' is to to and the-. youll need have of resources a,, or that be. is anything than that are looking a new for, to what do want for, should have own it not a thing but in future can a be task of this i' been. have ever had great this to a level' as people at level,",
+      "full_text": "how does a neural network work can find more on- ' your systems the-'' and-' is to to and the-. youll need have of resources a,, or that be. is anything than that are looking a new for, to what do want for, should have own it not a thing but in future can a be task of this i' been. have ever had great this to a level' as people at level,"
     },
     {
       "prompt": "What are the benefits of renewable energy?",
-      "response": "are there any key incentives that should be allocated to their energy sources these options include a option where to buy a energy source or a cost of electricity. consider purchasing an fossil plant, as well as using your home home for additional projects. apply any specific resources in various situations such as buying a fossil plant and getting a money from which you can save money. choose some types of technologies or such as solar materials, including energy storage, and solar sources. also you can provide advice",
-      "full_text": "what are the benefits of renewable energy are there any key incentives that should be allocated to their energy sources these options include a option where to buy a energy source or a cost of electricity. consider purchasing an fossil plant, as well as using your home home for additional projects. apply any specific resources in various situations such as buying a fossil plant and getting a money from which you can save money. choose some types of technologies or such as solar materials, including energy storage, and solar sources. also you can provide advice"
+      "response": "will use energy and electricity to a. a renewable should  gas water be from gas so gas have beed water to and. the that not will, carbon gas, oil or would be by power is from. is to the that for emissions a energy to more than carbon gas tos and waste. carbon can the water, as gas. the in and solar the and water energy be. could carbon in greenhouse emissions energy a must the need solar for the",
+      "full_text": "what are the benefits of renewable energy, will use energy and electricity to a. a renewable should  gas water be from gas so gas have beed water to and. the that not will, carbon gas, oil or would be by power is from. is to the that for emissions a energy to more than carbon gas tos and waste. carbon can the water, as gas. the in and solar the and water energy be. could carbon in greenhouse emissions energy a must the need solar for the"
     },
     {
       "prompt": "Describe the water cycle.",
-      "response": "input flow of water, flow of from water, water, and water. input at each level supply a amount of water to the water. flow of liquid into an ai or water in two forms. output flow flow of fluid into a plant that is covered by an ais, the flow of gas through water. output  capacity flow process about one meter per centimeter per kilom. data is calculated to be calculated on this pressure for the volume of",
-      "full_text": "describe the water cycle. input flow of water, flow of from water, water, and water. input at each level supply a amount of water to the water. flow of liquid into an ai or water in two forms. output flow flow of fluid into a plant that is covered by an ais, the flow of gas through water. output  capacity flow process about one meter per centimeter per kilom. data is calculated to be calculated on this pressure for the volume of"
+      "response": ", was a for it to out. that is im. you a. the of!. you to a.,... are not in same, or s  so no what you to and.' can be and. its to.. there other in. to.' your,' to' on \"\", am not..\" ''' to. ' in the..' '' 's my..",
+      "full_text": "describe the water cycle., was a for it to out. that is im. you a. the of!. you to a.,... are not in same, or s  so no what you to and.' can be and. its to.. there other in. to.' your,' to' on \"\", am not..\" ''' to. ' in the..' '' 's my.."
     }
   ]
 }
