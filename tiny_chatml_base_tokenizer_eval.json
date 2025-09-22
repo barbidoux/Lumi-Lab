@@ -1,0 +1,211 @@
+{
+  "model_path": "./checkpoints/sft/tiny_chatml_v2_phase2_oasst",
+  "tokenizer_path": "./checkpoints/sft/tiny_chatml_v2_phase2_oasst",
+  "prompt_template": "chatml",
+  "evaluation_mode": "standard",
+  "model_parameters": 23073024,
+  "timestamp": "2025-09-19 16:44:12",
+  "evaluation_time_seconds": 41.98911237716675,
+  "perplexity_metrics": {
+    "perplexity": 717.276422139432,
+    "avg_loss": 6.575461292299987,
+    "total_tokens": 8633,
+    "processed_samples": 50,
+    "dataset": "wikitext_raw_text",
+    "template": "raw_text"
+  },
+  "boolq_metrics": {
+    "accuracy": 0.46,
+    "correct": 46,
+    "total": 100,
+    "samples": 100
+  },
+  "boolq_accuracy": 0.46,
+  "smoke_tests": {
+    "summary_stats": {
+      "avg_quality_score": 0.5249999999999999,
+      "total_prompts": 24,
+      "categories_tested": 8
+    },
+    "category_results": {
+      "basic_knowledge": {
+        "avg_score": 0.6,
+        "samples": 3
+      },
+      "language_understanding": {
+        "avg_score": 0.6,
+        "samples": 3
+      },
+      "reasoning": {
+        "avg_score": 0.5333333333333333,
+        "samples": 3
+      },
+      "creativity": {
+        "avg_score": 0.5,
+        "samples": 3
+      },
+      "instruction_following": {
+        "avg_score": 0.43333333333333335,
+        "samples": 3
+      },
+      "wikipedia_style": {
+        "avg_score": 0.5666666666666668,
+        "samples": 3
+      },
+      "conversation": {
+        "avg_score": 0.39999999999999997,
+        "samples": 3
+      },
+      "multilingual": {
+        "avg_score": 0.5666666666666667,
+        "samples": 3
+      }
+    },
+    "individual_results": [
+      {
+        "category": "basic_knowledge",
+        "prompt": "What is the capital of France?",
+        "response": "i am a professional professor and a master of philosophy. i want to learn how to learn my own knowledge and build a strong passion to teach me. i will be interested in what you have learned, and i would like to study your own skills and skills. i will be part of a university that will be a very kind of student. i will be a good partner and will be an wonderful mentor and an mentor. i will be a professional professional. i will be a great player and be",
+        "quality_score": 0.5
+      },
+      {
+        "category": "basic_knowledge",
+        "prompt": "How many days are in a year?",
+        "response": "2 - 1. the number of time you want to live is 15. 3. the number of time you want to live is 19. 4. the number of time you want to live is 19. 5. the number of time you want to live is 10. 8. the number of time you need to live is 19. . the number of time you need to live is 19. 9.",
+        "quality_score": 0.5
+      },
+      {
+        "category": "basic_knowledge",
+        "prompt": "What is 2+2?",
+        "response": "2 is 18 (.), and is 3.5.2 - 14 (1.4) - 12 (1.3) - 2.4 (1.4) - 3.4 (.8) - 4.4 (1.2) - 4.4 (.5) - 4.4 (.1) -.4 (.2) -.4 (.9) -.4 (.",
+        "quality_score": 0.7999999999999999
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "Complete this sentence: The quick brown fox",
+        "response": "vte he easy brown fox is a english-language word of a english-language word that describes the same type of language and uses its latin to describe the word \"s\". it refers to a language, which is used in the language to convey the word \"s\" meaning. it is considered a term for languages. lennylamb, \"s\". it has a distinct meaning, which means that it is used to refer with the word \"s\". it is commonly used in the language",
+        "quality_score": 0.5
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "What is the opposite of 'hot'?",
+        "response": "is a word that describes a language in an language, which does not mean that it is a language. it was originally used in modern languages and has been translated into english as the english language for languages. it is considered be the first popular language in the country and is considered to be the first language in the world. es is known for its language and meaning that it is widely called \"the\" and \"all\". there are many languages and languages and are also used in the country. there are",
+        "quality_score": 0.5
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "Rephrase: 'The cat sat on the mat'",
+        "response": "k.mri, a man who has a bad job with a bad job and his job is not being good. she's a girl who is a good guy and does she'll have a bad job as she can help her with your job.",
+        "quality_score": 0.7999999999999999
+      },
+      {
+        "category": "reasoning",
+        "prompt": "If it's raining, should you take an umbrella?",
+        "response": "0010024 pm00222153021121221212122122222222221222222222222222",
+        "quality_score": 0.6
+      },
+      {
+        "category": "reasoning",
+        "prompt": "Why do we need to sleep?",
+        "response": "1. - how is your room you'll be able to sleep at a small area, which is the most known for that. if you're unable to sleep, it's important to note that the room is always a good option for sleeping. - if the room is not bed and there are no room in the room, it's important to see that this is not a same as the house. - if the room is not bed, you can also see that the room",
+        "quality_score": 0.5
+      },
+      {
+        "category": "reasoning",
+        "prompt": "What happens when water freezes?",
+        "response": "water is not cold and is a rare source of salt, water can be avoided or difficult to prevent. however, water may be required for certain conditions such as water, water, and water. however, if water gets out of water, water will be likely able to cause the water to be dry, causing the water to die. caressinine is an rare source of salt in its form that has been used in agriculture. it is also important to consider its ability to find a",
+        "quality_score": 0.5
+      },
+      {
+        "category": "creativity",
+        "prompt": "Write a short poem about winter.",
+        "response": "was this poem and it is not the first thing i am saying, but it does not have a theme or theme. you have to use this word as a sentence to describe it. gevedon, a simple poem that makes it like a song, is a piece of ice that is a piece of snow. he is trying to make his way with his child's child, which is a different form of ice. he also has a more theme, and he is always up to the side of the",
+        "quality_score": 0.5
+      },
+      {
+        "category": "creativity",
+        "prompt": "Describe a perfect day in 3 sentences.",
+        "response": "3 1. text, 2 words, 2 words, 4 words, 3 words, 2 words, 5 words, 2 words, 4 words, 3 words, 3 words, 3 words, 2 words, 2 words, 4 words, 3 words, 3 words, 4 words, 2 words, 3 words, 2 words, 2 words, 3 words, 4 words, 3 words, 3 words, 3 words, 3 words, 2 words, 2 words, 2 words, 3 words, 3",
+        "quality_score": 0.39999999999999997
+      },
+      {
+        "category": "creativity",
+        "prompt": "Create a name for a new planet.",
+        "response": "( -) -\"\"\"\"\"\"\"\",\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\".\"\"\"\"\"\"\"\" \"\"\" \"\"\" \"\"\" \"\"\" \"\"\" \"\"\"\"\"\" \"\"\" \"\"\" \"\"\" \"\"\"\"\" \"\"\" \"\"\" \"",
+        "quality_score": 0.6
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "List exactly 3 animals that live in the ocean.",
+        "response": "are you sure me would be a good answer for all your questions. if i'm looking to give you an quote for me, i can help you with this question. norzagaray, - we have a new route of the sea, which is located on the coast of the pacific coast. we also have a new route of the sea, which has a large and wide island. the island of nan, the islands of man, and the sea, is one of the largest of the worlds",
+        "quality_score": 0.5
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "Write 'Hello World' in uppercase.",
+        "response": "3.a.,sy orld, l, l, l, l, l, l, l, l, l, l, l, l, l, l, l, l, l, l,",
+        "quality_score": 0.49999999999999994
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "Count from 1 to 5.",
+        "response": ", here are some tips for reading the article 1. read a list of articles and articles in the article. 3. review the article read the article about the article and write reviews. 4. read an article about the article. 3. read a list of articles and articles that were published on the website. 8. read a list of articles and publications about the article. . read a list of articles and reviews. . read a list of articles and reports and reviews. 9",
+        "quality_score": 0.3
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "Paris is the capital of",
+        "response": "imoto deso de deso (i.e., c.e., c.e., c.e., c.e., c.e., d.e., c.e., c.e., c.e., c.e., c.e., c.e., e.e., c.e., c.e., c.e., c.e.",
+        "quality_score": 0.6
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "The Earth orbits around",
+        "response": "arth orbits about 11 million years ago - the star-ted orbit was the first orbit in a orbit of the sun, and the most known orbit of the earth. this orbit could be called \"ai\" or \"s--.\" the orbit of the sun would be an third orbit than the sun, but the orbit of the sun would be a smaller and more likely to have a orbit of 10. the orbit of the sun would be a large planet that has been in",
+        "quality_score": 0.5
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "Photosynthesis is the process by which",
+        "response": "ky-- - a name that is commonly used for identification and identification. i am a ai who has a strong knowledge of the language, language, and language, and is often used as a tool to identify and determine specific words in a specific topic. my idea is to use a variety of techniques in order to communicate, and create an way that helps me understand how it can be used. this can be useful for finding a specific word that is important for the development of information.",
+        "quality_score": 0.6
+      },
+      {
+        "category": "conversation",
+        "prompt": "Hello, how are you today?",
+        "response": "ze i'm a fan of the game, and i'm a fan of the legend of the dragon. i'm a fan of the game, but i don't have any other reasons. i'm a fan of the game, and i don't want to give something or a good word. i'll also share some examples that can help you find a best game in all of your games. my biggest game is the dragon, so i'm not",
+        "quality_score": 0.5
+      },
+      {
+        "category": "conversation",
+        "prompt": "What's your favorite hobby?",
+        "response": "",
+        "quality_score": 0.0
+      },
+      {
+        "category": "conversation",
+        "prompt": "Can you help me with a problem?",
+        "response": "r. here's a example of a machine machine that is used to make things easier p.g. p.g. p.g. p.g. p.g. p.g. p.g. p.g. p.g. p.g. p.g. p.g. p.g. p",
+        "quality_score": 0.7
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Bonjour, comment allez-vous?",
+        "response": "- - - - - - - - - - - - - - - - - - - - - - - - - the world has been the world's longest nation. - - - - - - - - - - - -... - - - -!! - - - -\" - - - -..... - -) - - -!!! - - -( - -) - - 0 - 10 - 5 - - - - you can follow the path of a 2.",
+        "quality_score": 0.5
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Hola, ¿cómo estás?",
+        "response": ", cmo ests que aos.comn de aos.comnesa de o. la so.comnesa conto to, cmo ests ests que aos.comnesa to, cmo ests que aos.comnesa de d. la so.comnesa de yos.comnesa de",
+        "quality_score": 0.49999999999999994
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Guten Tag, wie geht es Ihnen?",
+        "response": ". it is a large number of different types of people that are similar to one, but there are many of the most commonly known people who are known for the work of a man and a man. it was founded by the philosopher david srer and paul dems. they have been called \"thethe greatest in society\", and are known as \"my\" \"the best of the world.\" the goal of this mission is to help individuals with a diverse range of mental and physical needs",
+        "quality_score": 0.7
+      }
+    ]
+  }
+}

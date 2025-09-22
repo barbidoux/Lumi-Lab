@@ -1,0 +1,47 @@
+{
+  "name": "mixed_sft",
+  "description": "Mixed SFT dataset with optimal weighting",
+  "datasets": [
+    {
+      "name": "dolly15k",
+      "path": "data/sft/dolly15k.jsonl",
+      "weight": 0.4,
+      "description": "High-quality instruction following"
+    },
+    {
+      "name": "oasst1_en",
+      "path": "data/sft/oasst1_en.jsonl",
+      "weight": 0.4,
+      "description": "Conversational responses"
+    },
+    {
+      "name": "alpaca",
+      "path": "data/sft/alpaca.jsonl",
+      "weight": 0.2,
+      "description": "Instruction-following baseline"
+    }
+  ],
+  "total_expected_samples": "~100k samples (weighted)",
+  "recommended_configs": {
+    "tiny": {
+      "max_samples_per_dataset": 5000,
+      "total_samples": "~15k",
+      "config": "config/sft_tiny.json"
+    },
+    "small": {
+      "max_samples_per_dataset": 15000,
+      "total_samples": "~45k",
+      "config": "config/sft_small.json"
+    },
+    "full": {
+      "max_samples_per_dataset": null,
+      "total_samples": "~100k",
+      "config": "config/sft.json"
+    }
+  },
+  "example_commands": {
+    "prepare_all": "python scripts/prepare_sft_datasets.py --dataset all --output_dir data/sft",
+    "sft_tiny": "accelerate launch --mixed_precision bf16 scripts/03_sft.py --model_path checkpoints/tiny/final --tokenizer_path data/tokenizer/spm32k.model --dataset_paths data/sft/dolly15k.jsonl data/sft/oasst1_en.jsonl data/sft/alpaca.jsonl --dataset_weights 0.4 0.4 0.2 --prompt_template chatml --output_dir checkpoints/sft/tiny-mixed --config_path config/sft_tiny.json --use_lora --do_gen_test",
+    "sft_small": "accelerate launch --mixed_precision bf16 scripts/03_sft.py --model_path checkpoints/small/final --tokenizer_path data/tokenizer/spm32k.model --dataset_paths data/sft/dolly15k.jsonl data/sft/oasst1_en.jsonl data/sft/alpaca.jsonl --dataset_weights 0.4 0.4 0.2 --prompt_template chatml --output_dir checkpoints/sft/small-mixed --config_path config/sft_small.json --use_lora --merge_adapters"
+  }
+}

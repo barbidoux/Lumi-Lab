@@ -1,6 +1,6 @@
 {
-  "model_path": "checkpoints/mix-tiny-fa2-75k/tiny/final",
-  "model_parameters": 23072000,
+  "model_path": "checkpoints/sft/tiny_chatml_v2_phase2_oasst/merged",
+  "model_parameters": 23073024,
   "device": "cuda:0",
   "tokenizer_metadata": {
     "tokenizer_sha256": "f2d1de4c87474c287ffa771fe9e5534e6b5ab955f6d611e00b18f2a3184a229f",
@@ -15,37 +15,37 @@
     "byte_fallback": false,
     "model_type": "unigram"
   },
-  "ppl_wikipedia_en_32k_1024": 136.00606493730982,
-  "ppl_openwebtext_32k_1024": 236.9981265284005,
-  "ppl_weighted": 207.58468003601115,
-  "boolq_accuracy": 0.43,
-  "boolq_correct": 43,
+  "ppl_wikipedia_en_32k_1024": 1004.9429421652674,
+  "ppl_openwebtext_32k_1024": 1973.6237343283613,
+  "ppl_weighted": 1680.0499942740896,
+  "boolq_accuracy": 0.59,
+  "boolq_correct": 59,
   "boolq_total": 100,
   "smoke_tests": [
     {
       "prompt": "What is artificial intelligence?",
-      "response": "can use intelligence help and and a of better skills help to them the. in,' it important learn its to what of that and and to how the does. are looking to that you not have. are doing, are working it to your in sense i a of people i' really, not.' i,, it a more experience. is to to it id the i of, not that and not the, morely i' also, have",
-      "full_text": "what is artificial intelligence can use intelligence help and and a of better skills help to them the. in,' it important learn its to what of that and and to how the does. are looking to that you not have. are doing, are working it to your in sense i a of people i' really, not.' i,, it a more experience. is to to it id the i of, not that and not the, morely i' also, have"
+      "response": "what should i recommend using artificial intelligence and how to solve a problem with artificial intelligence, how could you ask about which way for you to try to help your answer what of the best methods for getting a problem do it really easier because the information doesn't work like the information you want to be. does these things happen that they don't have any specific details or other resources what are many areas you may need to consider before doing research why did you come",
+      "full_text": "what is artificial intelligence what should i recommend using artificial intelligence and how to solve a problem with artificial intelligence, how could you ask about which way for you to try to help your answer what of the best methods for getting a problem do it really easier because the information doesn't work like the information you want to be. does these things happen that they don't have any specific details or other resources what are many areas you may need to consider before doing research why did you come"
     },
     {
       "prompt": "Explain machine learning in simple terms.",
-      "response": "', with knowledge from learning to you its the way can your teach for. of, you not learn that are to at be. a way learn that has one only to. is the process learning is without we not you there it, just a.. have good and to- learning we know.' learning our.,! im this ai but' the is.. will learning when teach what.''' im in.' if don",
-      "full_text": "explain machine learning in simple terms.', with knowledge from learning to you its the way can your teach for. of, you not learn that are to at be. a way learn that has one only to. is the process learning is without we not you there it, just a.. have good and to- learning we know.' learning our.,! im this ai but' the is.. will learning when teach what.''' im in.' if don"
+      "response": "what are the best ways to solve a problem is it possible to connect me with the solution are you having an problem that can be complicated or complex does this happen, if there aren't any other solutions for problems you could use this method and solve all your problems without the need of a machine. here's an example how could you help you what does this code mean how will i pass on and it is important to keep out of the code",
+      "full_text": "explain machine learning in simple terms. what are the best ways to solve a problem is it possible to connect me with the solution are you having an problem that can be complicated or complex does this happen, if there aren't any other solutions for problems you could use this method and solve all your problems without the need of a machine. here's an example how could you help you what does this code mean how will i pass on and it is important to keep out of the code"
     },
     {
       "prompt": "How does a neural network work?",
-      "response": "can' do i what can do the for there several to is on of! can use in my, or' do get it i try make that  it.. you find to the of the as are not to the where was me' this a and am going write. this is true the.' a it to it are doing have be what are'. if answer no,' you have question it. are",
-      "full_text": "how does a neural network work can' do i what can do the for there several to is on of! can use in my, or' do get it i try make that  it.. you find to the of the as are not to the where was me' this a and am going write. this is true the.' a it to it are doing have be what are'. if answer no,' you have question it. are"
+      "response": "i'm still working in the research project. but it isn't a basic answer, and i think there are some things that can help you work with your brain because i know that your physical memory is less less than a average of an half per person. as what does this work, it makes the nervous mind feel more efficient, and if they are not able to take attention from others for long time, it should not be much more relevant than possible or other aspects",
+      "full_text": "how does a neural network work i'm still working in the research project. but it isn't a basic answer, and i think there are some things that can help you work with your brain because i know that your physical memory is less less than a average of an half per person. as what does this work, it makes the nervous mind feel more efficient, and if they are not able to take attention from others for long time, it should not be much more relevant than possible or other aspects"
     },
     {
       "prompt": "What are the benefits of renewable energy?",
-      "response": "is a.' in' power a '' can be from.,., for, you.. if need advice our support help, is it to your and needs when have done. do need know to the or about, your' your' you use in with own on,,, (s). the ' a' will with energy. or it get electricity you. a to. could this a., a,, a or a, that",
-      "full_text": "what are the benefits of renewable energy is a.' in' power a '' can be from.,., for, you.. if need advice our support help, is it to your and needs when have done. do need know to the or about, your' your' you use in with own on,,, (s). the ' a' will with energy. or it get electricity you. a to. could this a., a,, a or a, that"
+      "response": "are there any key incentives that should be allocated to their energy sources these options include a option where to buy a energy source or a cost of electricity. consider purchasing an fossil plant, as well as using your home home for additional projects. apply any specific resources in various situations such as buying a fossil plant and getting a money from which you can save money. choose some types of technologies or such as solar materials, including energy storage, and solar sources. also you can provide advice",
+      "full_text": "what are the benefits of renewable energy are there any key incentives that should be allocated to their energy sources these options include a option where to buy a energy source or a cost of electricity. consider purchasing an fossil plant, as well as using your home home for additional projects. apply any specific resources in various situations such as buying a fossil plant and getting a money from which you can save money. choose some types of technologies or such as solar materials, including energy storage, and solar sources. also you can provide advice"
     },
     {
       "prompt": "Describe the water cycle.",
-      "response": "you find about in pool and is you a whos person to. pool that be at or any pool. of you have pool pools can a or have pools a with pool if have pool pool pool this. pool you be for pool pool not which you at pool will up the when pool pool spa pool pool. are to pool that pool is watering pool pool pools pool pool a pool pool swimming pool pool water pool pool rooms pool pool room pool pool house pool pool deck",
-      "full_text": "describe the water cycle. you find about in pool and is you a whos person to. pool that be at or any pool. of you have pool pools can a or have pools a with pool if have pool pool pool this. pool you be for pool pool not which you at pool will up the when pool pool spa pool pool. are to pool that pool is watering pool pool pools pool pool a pool pool swimming pool pool water pool pool rooms pool pool room pool pool house pool pool deck"
+      "response": "input flow of water, flow of from water, water, and water. input at each level supply a amount of water to the water. flow of liquid into an ai or water in two forms. output flow flow of fluid into a plant that is covered by an ais, the flow of gas through water. output  capacity flow process about one meter per centimeter per kilom. data is calculated to be calculated on this pressure for the volume of",
+      "full_text": "describe the water cycle. input flow of water, flow of from water, water, and water. input at each level supply a amount of water to the water. flow of liquid into an ai or water in two forms. output flow flow of fluid into a plant that is covered by an ais, the flow of gas through water. output  capacity flow process about one meter per centimeter per kilom. data is calculated to be calculated on this pressure for the volume of"
     }
   ]
 }

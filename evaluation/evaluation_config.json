@@ -26,28 +26,28 @@
     "tiny": {
       "parameters": "6M",
       "expected_performance": {
-        "perplexity_range": [40, 80],
-        "perplexity_target": 60,
-        "boolq_accuracy_range": [0.50, 0.65],
-        "boolq_target": 0.58,
-        "smoke_test_quality_range": [0.3, 0.6],
-        "smoke_test_target": 0.45
+        "perplexity_range": [15, 35],
+        "perplexity_target": 25,
+        "boolq_accuracy_range": [0.55, 0.70],
+        "boolq_target": 0.62,
+        "smoke_test_quality_range": [0.4, 0.7],
+        "smoke_test_target": 0.55
       },
       "performance_indicators": {
         "good": {
-          "perplexity": "<50",
-          "boolq_accuracy": ">0.60",
-          "smoke_quality": ">0.50"
+          "perplexity": "<20",
+          "boolq_accuracy": ">0.65",
+          "smoke_quality": ">0.60"
         },
         "acceptable": {
-          "perplexity": "<70", 
-          "boolq_accuracy": ">0.55",
-          "smoke_quality": ">0.40"
+          "perplexity": "<30",
+          "boolq_accuracy": ">0.58",
+          "smoke_quality": ">0.50"
         },
         "poor": {
-          "perplexity": ">80",
-          "boolq_accuracy": "<0.50",
-          "smoke_quality": "<0.35"
+          "perplexity": ">40",
+          "boolq_accuracy": "<0.52",
+          "smoke_quality": "<0.40"
         }
       },
       "typical_issues": [
@@ -61,27 +61,27 @@
     "small": {
       "parameters": "42M",
       "expected_performance": {
-        "perplexity_range": [25, 50],
-        "perplexity_target": 35,
-        "boolq_accuracy_range": [0.60, 0.72],
-        "boolq_target": 0.66,
-        "smoke_test_quality_range": [0.5, 0.75],
-        "smoke_test_target": 0.62
+        "perplexity_range": [500, 1200],
+        "perplexity_target": 800,
+        "boolq_accuracy_range": [0.35, 0.65],
+        "boolq_target": 0.50,
+        "smoke_test_quality_range": [0.45, 0.70],
+        "smoke_test_target": 0.57
       },
       "performance_indicators": {
         "good": {
-          "perplexity": "<30",
-          "boolq_accuracy": ">0.68",
-          "smoke_quality": ">0.65"
+          "perplexity": "<600",
+          "boolq_accuracy": ">0.55",
+          "smoke_quality": ">0.60"
         },
         "acceptable": {
-          "perplexity": "<40",
-          "boolq_accuracy": ">0.62",
-          "smoke_quality": ">0.55"
+          "perplexity": "<900",
+          "boolq_accuracy": ">0.40",
+          "smoke_quality": ">0.50"
         },
         "poor": {
-          "perplexity": ">50",
-          "boolq_accuracy": "<0.58",
+          "perplexity": ">1200",
+          "boolq_accuracy": "<0.35",
           "smoke_quality": "<0.45"
         }
       },

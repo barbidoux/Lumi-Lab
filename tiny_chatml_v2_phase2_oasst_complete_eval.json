@@ -1,0 +1,306 @@
+{
+  "model_path": "./checkpoints/sft/tiny_chatml_v2_phase2_oasst",
+  "tokenizer_path": "./checkpoints/sft/tiny_chatml_v2_phase2_oasst",
+  "prompt_template": "chatml",
+  "evaluation_mode": "thorough",
+  "model_parameters": 23073024,
+  "timestamp": "2025-09-19 15:28:32",
+  "evaluation_time_seconds": 92.70460176467896,
+  "perplexity_metrics": {
+    "perplexity": 883.0374669695897,
+    "avg_loss": 6.7833676311529105,
+    "total_tokens": 392675,
+    "processed_samples": 2819,
+    "dataset": "wikitext-2-raw-v1"
+  },
+  "boolq_metrics": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 500,
+    "samples": 500
+  },
+  "boolq_accuracy": 0.0,
+  "smoke_tests": {
+    "summary_stats": {
+      "avg_quality_score": 0.5524999999999999,
+      "total_prompts": 40,
+      "categories_tested": 8
+    },
+    "category_results": {
+      "basic_knowledge": {
+        "avg_score": 0.5799999999999998,
+        "samples": 5
+      },
+      "language_understanding": {
+        "avg_score": 0.64,
+        "samples": 5
+      },
+      "reasoning": {
+        "avg_score": 0.45999999999999996,
+        "samples": 5
+      },
+      "creativity": {
+        "avg_score": 0.5599999999999999,
+        "samples": 5
+      },
+      "instruction_following": {
+        "avg_score": 0.6,
+        "samples": 5
+      },
+      "wikipedia_style": {
+        "avg_score": 0.58,
+        "samples": 5
+      },
+      "conversation": {
+        "avg_score": 0.54,
+        "samples": 5
+      },
+      "multilingual": {
+        "avg_score": 0.4600000000000001,
+        "samples": 5
+      }
+    },
+    "individual_results": [
+      {
+        "category": "basic_knowledge",
+        "prompt": "What is the capital of France?",
+        "response": ", i'm sorry, but i am not sure what you would like. why could you suggest monterde was a major hit in the late 1930s when he played a role-off role in the british cricket cup. he played a role in the english cricket league and played a role in the cricket league. he played a important role in the cricket cup in the 1920s, including in the war of the succession. he was selected by the indian team to play for the series in 1909.",
+        "quality_score": 0.6
+      },
+      {
+        "category": "basic_knowledge",
+        "prompt": "How many days are in a year?",
+        "response": "10 is the most widely used word of music. it is often called \"ao\" by the singer, and it can be used to describe as a language and meaning that it is a language that is not associated with any other genre or history.",
+        "quality_score": 0.9
+      },
+      {
+        "category": "basic_knowledge",
+        "prompt": "What is 2+2?",
+        "response": ", i am trying to create a code that has the value of the code in the original file. it is a complex and complicated environment, with some tools which can be used to solve the problem. by adding the code into an code, it is important to note that code is not a project or is not a project or project. culminati.y.com - java.rn,  p.m, java.rn  p.",
+        "quality_score": 0.7999999999999999
+      },
+      {
+        "category": "basic_knowledge",
+        "prompt": "Name three primary colors.",
+        "response": "- white - blue - green - green - yellow - black - yellow - blue - orange - yellow - pink - blue - purple - red - red - green - green - green - yellow - white - orange - green - green - green - black - yellow - green - green - red - blue - yellow - green - red - green - orange - black -green - green - orange - green - can be added to the table but should not be used as a shade. another difference is that",
+        "quality_score": 0.3
+      },
+      {
+        "category": "basic_knowledge",
+        "prompt": "What is the largest planet in our solar system?",
+        "response": "a planet known as a planet, the planet is called \"rg\" and is called \"xt\".  a planet named god.  a planet named god, a planet named god is called \"rg\".  a planet named god was named by the sun.  a planet named god is named by the sun and called \"kg\".  a planet named god was named by the sun and name was described by the sun as \"kg",
+        "quality_score": 0.3
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "Complete this sentence: The quick brown fox",
+        "response": ", here is the answer \"i'm like a simple person. it is a way of self-conscious and caring, but i am sorry for my problem. you can use this word to help me understand your intentions and help you more. i would also recommend using an specific name for the subject. as you can do, i will need a lot of questions about the subject and the value of the process. i am not aware of any specific questions or problems. i'll be happy",
+        "quality_score": 0.7
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "What is the opposite of 'hot'?",
+        "response": "5 is an advanced science game that can be used to describe the evolution of a world. it is a game that has a strong base and has a distinct origin, with a unique style in the game. the game is a game that uses a new story, which is a game that plays on a larger screen and gives its new character. it's also a game that features different elements, such as an large and complex design. it's also a game that requires new development and development to",
+        "quality_score": 0.5
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "Rephrase: 'The cat sat on the mat'",
+        "response": "m.em.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.uck.",
+        "quality_score": 0.7999999999999999
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "What does 'artificial intelligence' mean?",
+        "response": ", \"the fact of how the intelligence is not actually being understood for a purpose is something a lot like to make a ani. it is impossible to say that one is being heard or is going to be considered as a source of information. there are many things you can do to avoid and let them know if they are not used in any way. however, there are some different ways which should be given to others 1. use a simple tool in the process to create a more efficient-",
+        "quality_score": 0.7
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "Explain what 'machine learning' is in one sentence.",
+        "response": "qs the game of ing is a puzzle and puzzle game that takes place on the side of the game, where players are shown through a map to view the game. it can be played by a player, or an game with the player's abilities, if it's used for a number of actions. this can also be seen by players, such as an boss or a person who can play a game on their game. however, there are many puzzles that could be played around",
+        "quality_score": 0.5
+      },
+      {
+        "category": "reasoning",
+        "prompt": "If it's raining, should you take an umbrella?",
+        "response": "is there any other alternative to the winter winter baronofsky's winter winter winter summer is a summer winter. it is not a coldest winter year, but it has been winter and winter summer in temperatures of 350 degrees fahrenheit. this winter will be when the winter spring and summer are up to 304 degrees celsius. it is sometimes like snow and snow, and it is usually often more common during winter. esus is the most common summer autumn winter spring in the united",
+        "quality_score": 0.5
+      },
+      {
+        "category": "reasoning",
+        "prompt": "Why do we need to sleep?",
+        "response": "ltt",
+        "quality_score": 0.2
+      },
+      {
+        "category": "reasoning",
+        "prompt": "What happens when water freezes?",
+        "response": "i want to use this method, so i can use a kind of water instead of water. if you are looking for water to clean, you should use the water solution (deit) in this way. if you have any other questions, let me know if you are ready to apply. toy.com - \"we're doing this. you would like to use this method and i will need to make it easier to do the same thing. - \"we'",
+        "quality_score": 0.6
+      },
+      {
+        "category": "reasoning",
+        "prompt": "List two advantages of renewable energy.",
+        "response": "- a energy energy is a energy energy that can be energy, energy or energy. it's important to use energy for energy. if you are not a planet, the energy energy is more than the power energy, but it's important to do all of this by ensuring that this is the best way to make a energy energy. however, there are many reasons that it's important to get out of your energy energy. however, the energy energy is only less than the energy energy and",
+        "quality_score": 0.5
+      },
+      {
+        "category": "reasoning",
+        "prompt": "Why is exercise important for health?",
+        "response": "4 exercise may be beneficial to others, especially in the case of chronic disease. it also provides adequate health benefits and helps to reduce risk of cancer and diabetes. your body can reduce risk of cancer, including blood levels, heart blood levels, and the levels of cancer. this is a part of your diet, with it's free nutrients and nutrients that can reduce risk of cancer. this is a way to maintain healthy health, as well as improve health fitness. if you are considering this you",
+        "quality_score": 0.5
+      },
+      {
+        "category": "creativity",
+        "prompt": "Write a short poem about winter.",
+        "response": ", this is a poem that reminds you the world of climate and it's all happening in the world. it is a story that ends with the feeling of change. it's an beautiful piece of snow that grows on the ground, but it's a nice way to celebrate the time you have the moment to do this. i hope you are able to discover what has you like. esm - a great way to see the world and see the world on your earth!2010-515 -",
+        "quality_score": 0.5
+      },
+      {
+        "category": "creativity",
+        "prompt": "Describe a perfect day in 3 sentences.",
+        "response": "vr is a science-based journal that discusses the concepts of a human human and human life. it is an part of the history of science, and is also a key source of knowledge for science, particularly in the world. it provides a insight on the importance of science and the nature of technology and the power of human, and how to help them with science. the topic of the book is a highly critical and interesting piece of science, including the book of things. it contains two parts of",
+        "quality_score": 0.5
+      },
+      {
+        "category": "creativity",
+        "prompt": "Create a name for a new planet.",
+        "response": ", in my time of life, i am only used as a internet provider for internet services. it's also possible to use internet services as a internet service provider for internet services to have a high quality internet services, including internet services, and the internet providers. another fact that i was looking for a internet provider is that you could make a decision on your internet service provider for internet services, such as internet services, and using internet services. the information provided is essential for your health, and if",
+        "quality_score": 0.5
+      },
+      {
+        "category": "creativity",
+        "prompt": "What would you do if you could fly?",
+        "response": "- a chinese flight to japan, an japanese flight to china - a chinese flight to the korea area in october 190 was first in a china area, and there was no way to see the flight. it was considered to be an large flight that had a range of flights and it was considered that it was the aircraft's most important aircraft, but the air was also considered to be a more more efficient airline than the other aircraft.",
+        "quality_score": 0.6
+      },
+      {
+        "category": "creativity",
+        "prompt": "Invent a simple recipe using apples.",
+        "response": "1 - in the few places i can find the recipe for apple, also as well as you think by the \"our kitchen\" and \"the pizza\" are the best dish for those who want to cook them, and they have their great taste. if you need your new grill or the delicious pizza we'll be able to serve a different dish, this is not the place you need to take. baronofskyes is an traditional recipe that has been produced since centuries, which is a popular",
+        "quality_score": 0.7
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "List exactly 3 animals that live in the ocean.",
+        "response": ". what are your best ways to live in the ocean culminati, g - g - g - g - g - g - g - g - g - g - g - g - g - g - g - g - g -",
+        "quality_score": 0.49999999999999994
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "Write 'Hello World' in uppercase.",
+        "response": "jdnllnlllllllllllllllllllllllllllllllllllllllllllll",
+        "quality_score": 0.6
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "Count from 1 to 5.",
+        "response": ", i am sorry for my problems but it's not only i'm sorry for your problem. however, i am happy to see the results here. seess.comcomcomcomcomcomcomcomcomcomcomcomcomcomcomcomcomcomcomcomcomcomcomcomcomcomcomcomcomcomcomcomcom",
+        "quality_score": 0.8
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "Name one benefit and one drawback of technology.",
+        "response": "was there a way to use the power of computers i think the technologies are the best way to use computer technology, but it's important to understand that that software is the best way to use computer technology. however, there are many ways to use software on the internet - make sure that computer technology is connected to the devices and can be used to provide more information about the systems, such as the device, and the internet. this could include some suggestions for how to use the data or",
+        "quality_score": 0.5
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "Describe the color blue without using the word 'blue'.",
+        "response": "t, a name for the blue white of the sky, is a name that has been used as a symbol for human and human. it is used in the manner of the person's name to describe how humans are like their animals. this was used as an symbol for the colors of human and human animals. i am not sure much about these colors or symbols. gutale \"a\" is a color with a background of color, the colors of humans, and the colors of animal animals.",
+        "quality_score": 0.6
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "Paris is the capital of",
+        "response": "aris was a capital province in the french and europe. he was an member of the scottish parliament (ndf), which served as the chairman of the council of the british union in 1938. he was elected of the european parliament in 193 and was appointed of the scottish on february april 2, 1939. he was elected as the president of the european parliament in 193. he was nominated for the eu in 1941 and awarded him the most-known title in the european assembly in 1942",
+        "quality_score": 0.5
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "The Earth orbits around",
+        "response": ". the moon is a orbit of the moon, which is the farthest point of the earth's orbit. the moon has an outer axis that is located at the side of the earth, and it is roughly approximately 35 degrees of the earth's surface. the moon is the largest orbit of the earth and has been named as one of the greatest earth's most known orbits in the world. it is located on the earth's surface and is a massive mass of about 5",
+        "quality_score": 0.5
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "Photosynthesis is the process by which",
+        "response": "'s time and time. i'm not sure if i can help you with your own thoughts or questions. in this mind, you can find answers that are helpful to you in your own way. here are some examples of things you can do to learn about 1. describe your experiences and questions. 2. explore the topics that are helpful to you 2. explore the topics that are helpful for you. 4. discuss the topics that are helpful for your own life. 3. discuss them a great",
+        "quality_score": 0.5
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "William Shakespeare was born in",
+        "response": ", hakessea is a small family of large children who are older and older. he has been the father of many and has been a prominent figure since his 19th century. he is a member of the united states of america and has served as a member of the u.s. military's military and military forces. his sons and sisters have played the roles of roles in warfare and war, including the battle of the red hills in the war of the war, the invasion of",
+        "quality_score": 0.5
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "The Great Wall of China was built to",
+        "response": ", and i am not a expert. i don't have any problems with any of these things. but you can also tell me how to use this",
+        "quality_score": 0.8999999999999999
+      },
+      {
+        "category": "conversation",
+        "prompt": "Hello, how are you today?",
+        "response": "- i want to help you with the latest steps to keep your mind running, and you can also help with your goals. it's important to note that you are working in a place for your personal goals and are going to be more effective than your goals. muveemg is an technology that has been developed to meet your needs and your goal is to make a positive impact on your life. it's a vital part of your life, and it's also a good choice to make",
+        "quality_score": 0.5
+      },
+      {
+        "category": "conversation",
+        "prompt": "What's your favorite hobby?",
+        "response": ", i'm just working on a new app that could help me get started with the app. , i don't have to have a much time to work with so i can help you get started with your project. , i will do some things that can help you make it easier for you to see in your app. , i am a real-time person who is the main partner for the app, and i am not interested in",
+        "quality_score": 0.5
+      },
+      {
+        "category": "conversation",
+        "prompt": "Can you help me with a problem?",
+        "response": "- \"it is a great way to make a deal with the company. i will give you a help solution, a solution that can be used to solve problems. here are some ways to reduce the risk of having a business with a team in a small area 1. change your business to a new place and keep your business working quickly. 2. manage your business in a long time. 4. do it more to maintain business   you'll need to create new business that is",
+        "quality_score": 0.5
+      },
+      {
+        "category": "conversation",
+        "prompt": "Tell me something interesting.",
+        "response": ", that's a lot of ideas to make this list. here's some examples - to find the best food in north mexico, you will need to select a diet that can be beneficial for a person and consider eating a foods that are beneficial for your body. - to choose a diet that is healthy to eat, to get right from the other side. - to try on a low-quality diet, you should have a diet that can help you achieve high quality. if you are",
+        "quality_score": 0.5
+      },
+      {
+        "category": "conversation",
+        "prompt": "What do you think about artificial intelligence?",
+        "response": "00 is a science-based human intelligence (t) organization that can provide and create an new system for people with their own abilities. it has been created by a number of scientists, who have been on the mission to understand the aspects of artificial intelligence and knowledge. these are some of the most popular tools in the world, including 1. intelligent intelligence it's important to understand how they use it, and this may be a problem between two people. 2. technology it's a",
+        "quality_score": 0.7
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Bonjour, comment allez-vous?",
+        "response": ") i'm sorry for this question. i think i can be helpful, but i can help me with any questions about this answer. how do i schedule my appointment2010-515e - what are the best things you should do to get out in your office - how does it come up - how did i start in the office - how does it work - what was the most important time year - what is the best time year - how does it take to make",
+        "quality_score": 0.5
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Hola, ¿cómo estás?",
+        "response": "00. can you help me lumenok, cmo ests, dipo, lai, lai, oa, c c e f, c c c f, c c c c c c c c c c c c c c c c c c c c c c c c c c c c",
+        "quality_score": 0.49999999999999994
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Guten Tag, wie geht es Ihnen?",
+        "response": "p.e f",
+        "quality_score": 0.6
+      },
+      {
+        "category": "multilingual",
+        "prompt": "こんにちは、元気ですか？",
+        "response": "- - - - - - - - - - - - - - - - - - - - - - - 1 - - - 10 - - 2. - - 4 - - ., -) - - -\"\" - - 0 - - -\" - - - -\" - -) - . - - - 3. - - - 2. - - 2. - 11 - - 0 - 5 - 2 - - 11 - 0 - -  - - 0 - - 0 - 10",
+        "quality_score": 0.49999999999999994
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Привет, как дела?",
+        "response": "r",
+        "quality_score": 0.2
+      }
+    ]
+  }
+}

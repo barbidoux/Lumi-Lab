@@ -26,19 +26,58 @@ def detect_model_size(num_parameters: int) -> str:
         return "base"
 
 
-def assess_metric(value: float, thresholds: Dict[str, str], metric_name: str) -> Tuple[str, str, str]:
+def assess_metric(value: float, thresholds: Dict, metric_name: str) -> Tuple[str, str, str]:
     """Assess a single metric against thresholds."""
-    
+
     # Parse threshold strings (handle < > operators)
     def parse_threshold(threshold_str: str) -> float:
         return float(threshold_str.replace('<', '').replace('>', ''))
-    
-    good_val = parse_threshold(thresholds['good'])
-    acceptable_val = parse_threshold(thresholds['acceptable'])
-    poor_val = parse_threshold(thresholds['poor'])
-    
+
+    # Handle nested structure in performance_indicators
+    if isinstance(thresholds['good'], dict):
+        # Find the matching metric key with better matching
+        metric_key = None
+
+        # Direct mapping for common metrics
+        metric_mapping = {
+            "perplexity": "perplexity",
+            "boolq": "boolq_accuracy",
+            "smoke": "smoke_quality",
+            "smoke_test": "smoke_quality",
+            "accuracy": "boolq_accuracy"
+        }
+
+        # Try direct mapping first
+        for pattern, key in metric_mapping.items():
+            if pattern in metric_name.lower() and key in thresholds['good']:
+                metric_key = key
+                break
+
+        # Fallback to partial matching
+        if not metric_key:
+            for key in thresholds['good'].keys():
+                if key.lower() in metric_name.lower() or metric_name.lower() in key.lower():
+                    metric_key = key
+                    break
+
+        if not metric_key:
+            # Error if no match found - don't use wrong thresholds!
+            raise ValueError(f"No matching threshold found for metric '{metric_name}'. Available: {list(thresholds['good'].keys())}")
+
+        good_threshold = thresholds['good'][metric_key]
+        acceptable_threshold = thresholds['acceptable'][metric_key]
+        poor_threshold = thresholds['poor'][metric_key]
+    else:
+        good_threshold = thresholds['good']
+        acceptable_threshold = thresholds['acceptable']
+        poor_threshold = thresholds['poor']
+
+    good_val = parse_threshold(good_threshold)
+    acceptable_val = parse_threshold(acceptable_threshold)
+    poor_val = parse_threshold(poor_threshold)
+
     # Determine if lower or higher is better based on threshold pattern
-    lower_is_better = '<' in thresholds['good']
+    lower_is_better = '<' in good_threshold
     
     if lower_is_better:
         if value <= good_val:
