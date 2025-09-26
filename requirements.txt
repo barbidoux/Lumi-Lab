@@ -19,4 +19,6 @@ ftfy>=6.1.0
 langdetect>=1.0.9
 datasketch>=1.6.0
 pyyaml>=6.0.0
+# Enhanced tokenizer training dependencies
+nltk>=3.8.0
 #flash-attn>=2.5.8  # Optional: Uncomment for FlashAttention-2 (requires CUDA), if used, please install serapately after having installed requirements above

@@ -1,5 +1,5 @@
 {
-  "_description": "Tiny model: 6M parameters, optimized for rapid experimentation and prototyping",
+  "_description": "Tiny model: 23M parameters, optimized for rapid experimentation and prototyping",
   "model_name": "tiny",
   
   "_architecture_comment": "LLaMA-like decoder-only transformer with modern optimizations",

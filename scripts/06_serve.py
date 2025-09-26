@@ -8,7 +8,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
@@ -17,85 +17,15 @@ sys.path.insert(0, str(project_root))
 import torch
 import uvicorn
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from transformers import AutoTokenizer
 import sentencepiece as spm
 
 from utils.model_utils import load_pretrained_model
+from utils.tokenizer_utils import SentencePieceTokenizerWrapper
 
 
-class SentencePieceTokenizerWrapper:
-    """Simple wrapper to make SentencePiece tokenizer compatible with HuggingFace interface."""
-    
-    def __init__(self, model_path: str):
-        self.sp = spm.SentencePieceProcessor()
-        self.sp.load(model_path)
-        self.eos_token = '</s>'
-        self.pad_token = '</s>'
-        self.eos_token_id = self.sp.piece_to_id('</s>')
-        self.pad_token_id = self.eos_token_id
-        self.vocab_size = self.sp.get_piece_size()
-    
-    def encode(self, text: str, add_special_tokens=True, **kwargs):
-        """Encode text to token IDs."""
-        return self.sp.encode_as_ids(text)
-    
-    def decode(self, ids, skip_special_tokens=False):
-        """Decode token IDs to text using proper SentencePiece API."""
-        if isinstance(ids, torch.Tensor):
-            ids = ids.tolist()
-        
-        # Filter out special tokens
-        if skip_special_tokens:
-            # Define special tokens to filter
-            special_tokens = {
-                0,  # PAD (usually)
-                1,  # UNK 
-                2,  # BOS (if exists)
-                self.pad_token_id,
-                self.eos_token_id
-            }
-            
-            # Remove special tokens and stop at EOS if present
-            filtered_ids = []
-            for token_id in ids:
-                if token_id in special_tokens:
-                    if token_id == self.eos_token_id:  # Stop at EOS
-                        break
-                    continue  # Skip other special tokens
-                filtered_ids.append(token_id)
-            ids = filtered_ids
-        else:
-            # Always filter UNK tokens (ID=1) as they produce garbage
-            ids = [token_id for token_id in ids if token_id != 1]
-        
-        # Use SentencePiece's decode method directly
-        try:
-            decoded = self.sp.decode(ids)
-            return decoded
-        except Exception:
-            # Fallback to decode_ids if decode fails
-            return self.sp.decode_ids(ids)
-    
-    def __call__(self, text, return_tensors=None, max_length=None, truncation=False, **kwargs):
-        """Tokenize text and return in requested format."""
-        # Simple encoding
-        input_ids = self.encode(text)
-        
-        # Truncate if needed
-        if truncation and max_length and len(input_ids) > max_length:
-            input_ids = input_ids[:max_length]
-        
-        # Return as tensors if requested
-        if return_tensors == "pt":
-            input_ids = torch.tensor([input_ids], dtype=torch.long)  # Add batch dimension
-            attention_mask = torch.ones_like(input_ids)
-            return {
-                'input_ids': input_ids,
-                'attention_mask': attention_mask
-            }
-        
-        return {'input_ids': input_ids}
 
 
 class GenerationRequest(BaseModel):
@@ -114,6 +44,25 @@ class GenerationResponse(BaseModel):
     """Response model for generation API."""
     response: str
     prompt: str
+    generation_config: Dict
+
+
+class BatchGenerationRequest(BaseModel):
+    """Request model for batch generation API."""
+    prompts: List[str]
+    max_new_tokens: Optional[int] = 96
+    temperature: Optional[float] = 0.8
+    top_p: Optional[float] = 0.9
+    top_k: Optional[int] = 50
+    repetition_penalty: Optional[float] = 1.1
+    do_sample: Optional[bool] = True
+    template: Optional[str] = "chatml"
+
+
+class BatchGenerationResponse(BaseModel):
+    """Response model for batch generation API."""
+    responses: List[str]
+    prompts: List[str]
     generation_config: Dict
 
 
@@ -148,7 +97,13 @@ class ModelServer:
         
         # Inference optimizations
         self.device = next(self.model.parameters()).device
-        
+
+        # Enable memory-efficient inference
+        if torch.cuda.is_available():
+            torch.backends.cudnn.benchmark = True
+            # Clear cache
+            torch.cuda.empty_cache()
+
         print(f"Model loaded on {self.device}")
         print(f"Parameters: {sum(p.numel() for p in self.model.parameters()):,}")
     
@@ -170,7 +125,7 @@ class ModelServer:
         elif template == "instruct":
             return f"### Instruction:\n{prompt}\n\n### Response:\n"
         else:
-            # Template raw - pas de formatage
+            # Raw template - no formatting
             return prompt
     
     def generate(
@@ -199,10 +154,10 @@ class ModelServer:
         Returns:
             Tuple (formatted_prompt, generated_response)
         """
-        # Formatage du prompt
+        # Format prompt
         formatted_prompt = self.format_prompt(prompt, template)
         
-        # Tokenisation
+        # Tokenization
         inputs = self.tokenizer(
             formatted_prompt,
             return_tensors="pt",
@@ -229,19 +184,27 @@ class ModelServer:
         if not do_sample:
             generation_config["early_stopping"] = True
         
-        # Generation
+        # Generation with memory optimization
         with torch.no_grad():
-            outputs = self.model.generate(
-                inputs['input_ids'],
-                attention_mask=inputs['attention_mask'],
-                **generation_config
-            )
+            try:
+                outputs = self.model.generate(
+                    inputs['input_ids'],
+                    attention_mask=inputs['attention_mask'],
+                    **generation_config
+                )
+            except torch.cuda.OutOfMemoryError:
+                # Clear cache and retry
+                torch.cuda.empty_cache()
+                outputs = self.model.generate(
+                    inputs['input_ids'],
+                    attention_mask=inputs['attention_mask'],
+                    **generation_config
+                )
         
-        # Decoding
-        full_response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        
-        # Extract generated response (remove prompt)
-        generated_response = full_response[len(formatted_prompt):].strip()
+        # ROBUST: Extract only newly generated tokens
+        input_length = inputs['input_ids'].shape[1]
+        generated_ids = outputs[0, input_length:]  # Only new tokens
+        generated_response = self.tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
         
         return formatted_prompt, generated_response
 
@@ -264,8 +227,10 @@ def create_app(model_server: ModelServer) -> FastAPI:
             "model_parameters": sum(p.numel() for p in model_server.model.parameters()),
             "available_templates": ["chatml", "chat", "instruct", "raw"],
             "endpoints": {
-                "generate": "/generate - Text generation",
-                "health": "/health - Status du serveur"
+                "generate": "/generate - Single text generation",
+                "batch_generate": "/generate/batch - Batch text generation",
+                "stream_generate": "/generate/stream - Streaming text generation",
+                "health": "/health - Server status"
             }
         }
     
@@ -312,19 +277,112 @@ def create_app(model_server: ModelServer) -> FastAPI:
         
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Generation error: {str(e)}")
-    
+
+    @app.post("/generate/batch", response_model=BatchGenerationResponse)
+    async def generate_batch(request: BatchGenerationRequest):
+        """
+        Batch text generation endpoint.
+
+        Args:
+            request: Batch generation request
+
+        Returns:
+            Batch generated responses
+        """
+        try:
+            responses = []
+            for prompt in request.prompts:
+                _, response = model_server.generate(
+                    prompt=prompt,
+                    max_new_tokens=request.max_new_tokens,
+                    temperature=request.temperature,
+                    top_p=request.top_p,
+                    top_k=request.top_k,
+                    repetition_penalty=request.repetition_penalty,
+                    do_sample=request.do_sample,
+                    template=request.template
+                )
+                responses.append(response)
+
+            return BatchGenerationResponse(
+                responses=responses,
+                prompts=request.prompts,
+                generation_config={
+                    "max_new_tokens": request.max_new_tokens,
+                    "temperature": request.temperature,
+                    "top_p": request.top_p,
+                    "top_k": request.top_k,
+                    "repetition_penalty": request.repetition_penalty,
+                    "template": request.template
+                }
+            )
+
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Batch generation error: {str(e)}")
+
+    @app.post("/generate/stream")
+    async def generate_stream(request: GenerationRequest):
+        """
+        Streaming text generation endpoint.
+        Returns tokens as they are generated.
+        """
+        def token_generator():
+            try:
+                formatted_prompt = model_server.format_prompt(request.prompt, request.template)
+                inputs = model_server.tokenizer(
+                    formatted_prompt,
+                    return_tensors="pt",
+                    truncation=True,
+                    max_length=2048
+                )
+                inputs = {k: v.to(model_server.device) for k, v in inputs.items()}
+                input_length = inputs['input_ids'].shape[1]
+
+                # Generate token by token
+                current_ids = inputs['input_ids']
+                for _ in range(request.max_new_tokens):
+                    with torch.no_grad():
+                        outputs = model_server.model(current_ids)
+                        logits = outputs.logits[0, -1, :]
+
+                        # Apply temperature and sampling
+                        if request.do_sample:
+                            logits = logits / request.temperature
+                            probs = torch.softmax(logits, dim=-1)
+                            next_token = torch.multinomial(probs, 1)
+                        else:
+                            next_token = torch.argmax(logits, dim=-1, keepdim=True)
+
+                        # Decode and yield token
+                        token_text = model_server.tokenizer.decode([next_token.item()], skip_special_tokens=True)
+                        yield f"data: {json.dumps({'token': token_text})}\n\n"
+
+                        # Update sequence
+                        current_ids = torch.cat([current_ids, next_token.unsqueeze(0)], dim=1)
+
+                        # Check for EOS
+                        if next_token.item() == model_server.tokenizer.eos_token_id:
+                            break
+
+                yield f"data: {json.dumps({'done': True})}\n\n"
+
+            except Exception as e:
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+        return StreamingResponse(token_generator(), media_type="text/plain")
+
     return app
 
 
 def interactive_mode(model_server: ModelServer, args):
     """Interactive CLI mode to chat with the model."""
     
-    print("🤖 Mode interactif Lumi")
+    print("🤖 Lumi Interactive Mode")
     print("=" * 50)
     print(f"Model: {args.model_path}")
     print(f"Template: {args.template}")
     print(f"Parameters: temp={args.temperature}, top_p={args.top_p}, top_k={getattr(args, 'top_k', 50)}")
-    print("Tapez 'exit', 'quit' ou Ctrl+C pour quitter")
+    print("Type 'exit', 'quit' or Ctrl+C to quit")
     print("=" * 50)
     
     try:
@@ -333,12 +391,12 @@ def interactive_mode(model_server: ModelServer, args):
             try:
                 user_input = input("\n👤 Vous: ").strip()
             except (EOFError, KeyboardInterrupt):
-                print("\n\nAu revoir! 👋")
+                print("\n\nGoodbye! 👋")
                 break
             
             # Special commands
             if user_input.lower() in ['exit', 'quit', 'q']:
-                print("Au revoir! 👋")
+                print("Goodbye! 👋")
                 break
             
             if not user_input:
@@ -365,7 +423,7 @@ def interactive_mode(model_server: ModelServer, args):
                 print(f"❌ Generation error: {e}")
     
     except KeyboardInterrupt:
-        print("\n\nAu revoir! 👋")
+        print("\n\nGoodbye! 👋")
 
 
 def main():
@@ -375,14 +433,14 @@ def main():
     parser.add_argument("--model_path", type=str, required=True,
                        help="Path to trained model")
     parser.add_argument("--tokenizer_path", type=str, default="data/tokenizer/spm32k.model",
-                       help="Chemin vers le tokenizer SentencePiece (par défaut: data/tokenizer/spm32k.model)")
+                       help="Path to SentencePiece tokenizer (default: data/tokenizer/spm32k.model)")
     parser.add_argument("--mode", type=str, default="interactive", 
                        choices=["interactive", "api"],
                        help="Execution mode: interactive or api")
     
     # Generation parameters with improved defaults
     parser.add_argument("--max_new_tokens", type=int, default=96,
-                       help="Nombre maximum de nouveaux tokens")
+                       help="Maximum number of new tokens")
     parser.add_argument("--temperature", type=float, default=0.8,
                        help="Generation temperature")
     parser.add_argument("--top_p", type=float, default=0.9,
@@ -395,13 +453,13 @@ def main():
                        help="Use sampling")
     parser.add_argument("--template", type=str, default="chatml",
                        choices=["chatml", "chat", "instruct", "raw"],
-                       help="Template de formatage des prompts")
+                       help="Prompt formatting template")
     
     # API parameters
     parser.add_argument("--host", type=str, default="127.0.0.1",
-                       help="Adresse IP pour le serveur API")
+                       help="IP address for API server")
     parser.add_argument("--port", type=int, default=8000,
-                       help="Port pour le serveur API")
+                       help="Port for API server")
     
     args = parser.parse_args()
     
@@ -417,10 +475,10 @@ def main():
         print(f"❌ Error loading model: {e}")
         sys.exit(1)
     
-    # Lancement selon le mode
+    # Launch according to mode
     if args.mode == "interactive":
         interactive_mode(model_server, args)
-    
+
     elif args.mode == "api":
         print(f"🚀 Starting API server on {args.host}:{args.port}")
         app = create_app(model_server)

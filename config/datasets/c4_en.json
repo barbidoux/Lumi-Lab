@@ -1,0 +1,19 @@
+{
+  "input_path": "allenai/c4",
+  "input_config": "en",
+  "output_dir": "data/processed/c4_en_32k_1024",
+  "tokenizer_path": "data/tokenizer/spm32k",
+  "vocab_size": 32768,
+  "sequence_length": 1024,
+  "min_length": 50,
+  "max_length": 10000,
+  "use_minhash": true,
+  "minhash_threshold": 0.8,
+  "train_ratio": 0.98,
+  "shard_tokens": 5000000,
+  "train_tokenizer": false,
+  "use_streaming": true,
+  "max_stream_samples": 10000000,
+  "max_samples": 5000000,
+  "_comment": "C4 English dataset with streaming. max_samples: Optional limit on number of documents to process. Set based on target model size and Chinchilla scaling laws."
+}

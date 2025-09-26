@@ -5,6 +5,7 @@ Uses accelerate for training management and checkpoints.
 """
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -30,7 +31,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from utils.dataset_utils import TokenizedDataset, WeightedMultiDatasetSampler
+from utils.dataset_utils import TokenizedDataset, WeightedMultiDatasetSampler, PackedDataset, ShardedTokenizedDataset
 from utils.model_utils import create_model, save_checkpoint, load_checkpoint
 
 
@@ -146,85 +147,140 @@ def find_latest_checkpoint(output_dir: str, model_name: str) -> Optional[str]:
     return None
 
 
-def validate_tokenizer_consistency(data_dirs: List[str], accelerator: Accelerator) -> Dict:
-    """Validate that all datasets use the same tokenizer and return metadata."""
+def validate_tokenizer_consistency(data_dirs: List[str], tokenizer_dir: str, accelerator: Accelerator) -> Dict:
+    """Validate that all datasets are compatible with the given tokenizer using SHA256 hashes."""
     if not data_dirs:
         return {}
-    
+
     accelerator.print("🔍 Validating tokenizer consistency across datasets...")
-    
+
+    # Load tokenizer config and compute its hash for comparison
+    tokenizer_dir = Path(tokenizer_dir)
+    tokenizer_config_path = tokenizer_dir / "tokenizer_config.json"
+
+    if not tokenizer_config_path.exists():
+        raise FileNotFoundError(f"❌ Tokenizer config not found: {tokenizer_config_path}")
+
+    # Load and hash tokenizer config
+    with open(tokenizer_config_path, 'r', encoding='utf-8') as f:
+        tokenizer_config = json.load(f)
+
+    tokenizer_config_str = json.dumps(tokenizer_config, sort_keys=True, ensure_ascii=False)
+    tokenizer_hash = hashlib.sha256(tokenizer_config_str.encode('utf-8')).hexdigest()
+
+    accelerator.print(f"📊 Reference tokenizer hash: {tokenizer_hash[:16]}...")
+
+    # Check if datasets use new PackedDataset format vs legacy format
+    packed_datasets = []
+    legacy_datasets = []
+
+    for data_dir in data_dirs:
+        final_manifest_path = Path(data_dir) / 'final_manifest.json'
+        old_manifest_path = Path(data_dir) / 'manifest.json'
+
+        if final_manifest_path.exists():
+            packed_datasets.append(data_dir)
+        elif old_manifest_path.exists():
+            legacy_datasets.append(data_dir)
+        else:
+            raise FileNotFoundError(
+                f"❌ No manifest file found in {data_dir}\n"
+                f"Please ensure this dataset has been processed correctly."
+            )
+
+    if legacy_datasets:
+        accelerator.print(f"⚠️  Warning: {len(legacy_datasets)} datasets use legacy format")
+        accelerator.print("   Legacy datasets will use old validation method")
+        # Fall back to legacy validation for old format datasets
+        return validate_tokenizer_consistency_legacy(legacy_datasets, accelerator)
+
+    # All datasets use new PackedDataset format - use robust SHA256 validation
+    accelerator.print(f"✅ All {len(packed_datasets)} datasets use modern PackedDataset format")
+
+    reference_metadata = None
+
+    for data_dir in packed_datasets:
+        try:
+            # Load final_manifest.json directly for hash comparison
+            final_manifest_path = Path(data_dir) / 'final_manifest.json'
+            with open(final_manifest_path, 'r', encoding='utf-8') as f:
+                manifest = json.load(f)
+
+            # Get the tokenizer hash from manifest
+            dataset_tokenizer_hash = manifest.get('tokenizer_config_hash')
+
+            if not dataset_tokenizer_hash:
+                raise ValueError(
+                    f"❌ No tokenizer_config_hash found in {final_manifest_path}\n"
+                    f"This dataset was processed with an older version.\n"
+                    f"Please re-process this dataset."
+                )
+
+            # Compare hashes
+            if dataset_tokenizer_hash != tokenizer_hash:
+                raise ValueError(
+                    f"❌ Tokenizer mismatch for dataset {data_dir}\n"
+                    f"   Dataset hash:   {dataset_tokenizer_hash[:16]}...\n"
+                    f"   Tokenizer hash: {tokenizer_hash[:16]}...\n"
+                    f"Please re-process this dataset with the current tokenizer."
+                )
+
+            # Extract metadata for logging
+            if reference_metadata is None:
+                reference_metadata = {
+                    'vocab_size': manifest.get('statistics', {}).get('vocab_size', 'N/A'),
+                    'tokenizer_config_hash': dataset_tokenizer_hash
+                }
+                accelerator.print(f"   Vocab size: {reference_metadata['vocab_size']:,}" if isinstance(reference_metadata['vocab_size'], int) else f"   Vocab size: {reference_metadata['vocab_size']}")
+
+            accelerator.print(f"✅ {data_dir}: tokenizer compatibility verified (hash match)")
+
+        except Exception as e:
+            raise RuntimeError(f"❌ Failed to validate dataset {data_dir}: {e}")
+
+    accelerator.print(f"✅ All {len(packed_datasets)} datasets are compatible with tokenizer")
+    return reference_metadata
+
+
+def validate_tokenizer_consistency_legacy(data_dirs: List[str], accelerator: Accelerator) -> Dict:
+    """Legacy validation for old format datasets (backward compatibility)."""
     reference_metadata = None
     reference_dir = None
-    
+
     for data_dir in data_dirs:
         manifest_path = Path(data_dir) / 'manifest.json'
-        
-        if not manifest_path.exists():
-            raise FileNotFoundError(
-                f"❌ Manifest file not found: {manifest_path}\n"
-                f"This dataset may not have been processed with the new tokenizer system.\n"
-                f"Please re-process using: make reencode-dataset DIR={data_dir}"
-            )
-        
+
         try:
             with open(manifest_path, 'r') as f:
                 manifest = json.load(f)
         except Exception as e:
             raise RuntimeError(f"❌ Failed to load manifest {manifest_path}: {e}")
-        
+
         if 'tokenizer_metadata' not in manifest:
             raise ValueError(
                 f"❌ No tokenizer metadata in manifest: {manifest_path}\n"
                 f"This dataset was processed with an older version.\n"
-                f"Please re-process using: make reencode-dataset DIR={data_dir}"
+                f"Please re-process this dataset."
             )
-        
+
         tokenizer_metadata = manifest['tokenizer_metadata']
-        
-        # Validate required fields
-        required_fields = ['tokenizer_sha256', 'tokenizer_vocab_size', 'special_tokens', 'normalizer', 'byte_fallback']
-        for field in required_fields:
-            if field not in tokenizer_metadata:
-                raise ValueError(f"❌ Missing tokenizer metadata field '{field}' in {manifest_path}")
-        
+
         if reference_metadata is None:
             reference_metadata = tokenizer_metadata
             reference_dir = data_dir
             accelerator.print(f"📊 Reference tokenizer (from {data_dir}):")
-            accelerator.print(f"   SHA256: {reference_metadata['tokenizer_sha256'][:16]}...")
-            accelerator.print(f"   Vocab size: {reference_metadata['tokenizer_vocab_size']:,}")
-            accelerator.print(f"   Special tokens: {reference_metadata['special_tokens']}")
+            accelerator.print(f"   SHA256: {reference_metadata.get('tokenizer_sha256', 'N/A')[:16]}...")
+            accelerator.print(f"   Vocab size: {reference_metadata.get('tokenizer_vocab_size', 'N/A'):,}")
         else:
-            # Compare with reference
-            mismatches = []
-            
-            if tokenizer_metadata['tokenizer_sha256'] != reference_metadata['tokenizer_sha256']:
-                mismatches.append(f"SHA256: {tokenizer_metadata['tokenizer_sha256'][:16]}... != {reference_metadata['tokenizer_sha256'][:16]}...")
-            
-            if tokenizer_metadata['tokenizer_vocab_size'] != reference_metadata['tokenizer_vocab_size']:
-                mismatches.append(f"Vocab size: {tokenizer_metadata['tokenizer_vocab_size']} != {reference_metadata['tokenizer_vocab_size']}")
-            
-            if tokenizer_metadata['special_tokens'] != reference_metadata['special_tokens']:
-                mismatches.append(f"Special tokens: {tokenizer_metadata['special_tokens']} != {reference_metadata['special_tokens']}")
-            
-            if tokenizer_metadata['normalizer'] != reference_metadata['normalizer']:
-                mismatches.append(f"Normalizer: {tokenizer_metadata['normalizer']} != {reference_metadata['normalizer']}")
-            
-            if tokenizer_metadata['byte_fallback'] != reference_metadata['byte_fallback']:
-                mismatches.append(f"Byte fallback: {tokenizer_metadata['byte_fallback']} != {reference_metadata['byte_fallback']}")
-            
-            if mismatches:
+            # Basic comparison for legacy format
+            if (tokenizer_metadata.get('tokenizer_sha256') != reference_metadata.get('tokenizer_sha256')):
                 raise ValueError(
-                    f"❌ Tokenizer mismatch between {reference_dir} and {data_dir}:\\n" +
-                    "\\n".join(f"   {mismatch}" for mismatch in mismatches) +
-                    f"\\n\\nAll datasets must use the same tokenizer. Solutions:\\n"
-                    f"1. Re-process inconsistent dataset: make reencode-dataset DIR={data_dir}\\n"
-                    f"2. Use tokenizer-reset + data-rebuild-all to restart with consistent tokenizer"
+                    f"❌ Tokenizer mismatch between {reference_dir} and {data_dir}\n"
+                    f"Please ensure all datasets use the same tokenizer."
                 )
-            
+
             accelerator.print(f"✅ {data_dir}: tokenizer matches reference")
-    
-    accelerator.print(f"✅ All {len(data_dirs)} datasets use consistent tokenizer")
+
     return reference_metadata
 
 
@@ -507,7 +563,8 @@ def train_multi_dataset(
     config: PretrainConfig,
     global_step: int,
     max_steps: int,
-    log_dataset_mix_steps: int = 500
+    log_dataset_mix_steps: int = 500,
+    val_dataloader: DataLoader = None
 ) -> tuple[int, float]:
     """Train the model using multi-dataset sampler (step-based training)."""
     model.train()
@@ -558,6 +615,13 @@ def train_multi_dataset(
                 accelerator.print(f"Step {global_step}: mix_observed: {mix_str}")
                 multi_dataset_sampler.reset_mix_tracking()  # Reset for next interval
             
+            # Evaluation
+            if global_step % config.eval_steps == 0 and val_dataloader is not None:
+                if accelerator.is_main_process:
+                    accelerator.print("Evaluation...")
+                    perplexity = calculate_perplexity(model, val_dataloader, accelerator.device, accelerator)
+                    accelerator.print(f"Step {global_step}: Validation perplexity: {perplexity:.2f}")
+
             # Save checkpoints
             if global_step % config.save_steps == 0:
                 if accelerator.is_main_process:
@@ -571,7 +635,7 @@ def train_multi_dataset(
                         accelerator, extra_state={"multi_dataset_sampler": sampler_state}
                     )
                     accelerator.print(f"💾 Multi-dataset checkpoint saved at step {global_step} -> {checkpoint_dir}")
-            
+
             # Stop if max steps reached
             if global_step >= max_steps:
                 break
@@ -584,11 +648,13 @@ def main():
     parser = argparse.ArgumentParser(description="Pre-training of a mini-LLM")
     parser.add_argument("--config", type=str, required=True,
                        help="Path to the model configuration file")
-    parser.add_argument("--data_path", type=str, 
+    parser.add_argument("--data_path", type=str,
                        help="Path to tokenized data file (legacy format)")
     parser.add_argument("--data_dir", type=str,
-                       help="Path to directory with sharded data and manifest")
-    
+                       help="Path to directory with packed data (.bin + .idx files)")
+    parser.add_argument("--tokenizer_dir", type=str,
+                       help="Path to directory containing tokenizer for validation")
+
     # Multi-dataset training arguments
     parser.add_argument("--data_dirs", nargs='+', type=str,
                        help="Multiple data directories for weighted multi-dataset training")
@@ -685,7 +751,9 @@ def main():
             raise ValueError(f"Number of weights ({len(args.data_weights)}) must match number of data_dirs ({len(args.data_dirs)})")
         
         # CRITICAL: Validate tokenizer consistency across all datasets
-        tokenizer_metadata = validate_tokenizer_consistency(args.data_dirs, accelerator)
+        if not args.tokenizer_dir:
+            raise ValueError("--tokenizer_dir is required for multi-dataset training")
+        tokenizer_metadata = validate_tokenizer_consistency(args.data_dirs, args.tokenizer_dir, accelerator)
         
         # Initialize multi-dataset sampler
         multi_dataset_sampler = WeightedMultiDatasetSampler(
@@ -699,10 +767,29 @@ def main():
         train_dataset = None  # Not used in multi-dataset mode
         
     elif args.data_dir:
-        accelerator.print(f"📁 Using single sharded data directory: {args.data_dir}")
-        # Validate single dataset tokenizer
-        tokenizer_metadata = validate_tokenizer_consistency([args.data_dir], accelerator)
-        train_dataset = TokenizedDataset(args.data_dir, config.sequence_length)
+        accelerator.print(f"📁 Using single packed data directory: {args.data_dir}")
+
+        # Check if it's new PackedDataset format or legacy format
+        final_manifest_path = Path(args.data_dir) / 'final_manifest.json'
+        if final_manifest_path.exists():
+            # New PackedDataset format
+            accelerator.print("✅ Detected PackedDataset format (.bin + .idx files)")
+
+            if args.tokenizer_dir:
+                tokenizer_metadata = validate_tokenizer_consistency([args.data_dir], args.tokenizer_dir, accelerator)
+            else:
+                accelerator.print("⚠️  Warning: No tokenizer validation (--tokenizer_dir not provided)")
+                tokenizer_metadata = {}
+
+            train_dataset = PackedDataset(args.data_dir, split="train")
+        else:
+            # Legacy format
+            accelerator.print("ℹ️  Using legacy TokenizedDataset format")
+            if args.tokenizer_dir:
+                tokenizer_metadata = validate_tokenizer_consistency([args.data_dir], args.tokenizer_dir, accelerator)
+            else:
+                tokenizer_metadata = {}
+            train_dataset = TokenizedDataset(args.data_dir, config.sequence_length)
     elif args.data_path:
         accelerator.print(f"📄 Using legacy data file: {args.data_path}")
         train_dataset = TokenizedDataset(args.data_path, config.sequence_length)
@@ -711,21 +798,76 @@ def main():
     
     # Setup data loaders based on mode
     if use_multi_dataset:
-        # Multi-dataset mode: no traditional DataLoader needed
+        # Multi-dataset mode: no traditional DataLoader needed for training
         train_dataloader = None
+
+        # Try to create validation dataloader from the first high-quality dataset
         val_dataloader = None
+        try:
+            # Use the first dataset for validation (assuming it's high quality)
+            first_data_dir = args.data_dirs[0]
+            final_manifest_path = Path(first_data_dir) / 'final_manifest.json'
+
+            if final_manifest_path.exists():
+                # Try PackedDataset validation split
+                try:
+                    val_dataset = PackedDataset(first_data_dir, split="val")
+                    val_dataloader = DataLoader(
+                        val_dataset,
+                        batch_size=config.batch_size,
+                        shuffle=False,
+                        num_workers=2,
+                        pin_memory=True,
+                        generator=dataloader_generator
+                    )
+                    accelerator.print(f"📊 Multi-dataset validation: using {len(val_dataset)} samples from {Path(first_data_dir).name}")
+                except (FileNotFoundError, Exception) as e:
+                    accelerator.print(f"ℹ️  No validation data found in {first_data_dir}: {e}")
+            else:
+                # Legacy format - try to create validation from ShardedTokenizedDataset
+                try:
+                    val_dataset = ShardedTokenizedDataset(first_data_dir, split="val")
+                    val_dataloader = DataLoader(
+                        val_dataset,
+                        batch_size=config.batch_size,
+                        shuffle=False,
+                        num_workers=2,
+                        pin_memory=True,
+                        generator=dataloader_generator
+                    )
+                    accelerator.print(f"📊 Multi-dataset validation: using {len(val_dataset)} samples from {Path(first_data_dir).name} (legacy)")
+                except Exception as e:
+                    accelerator.print(f"ℹ️  No validation data found in legacy format: {e}")
+
+        except Exception as e:
+            accelerator.print(f"⚠️  Could not create validation dataloader for multi-dataset mode: {e}")
+            accelerator.print("   Training will continue without validation")
+
         total_samples = multi_dataset_sampler.get_total_samples()
         accelerator.print(f"📊 Multi-dataset total samples: {total_samples:,}")
-        
+
     else:
         # Single dataset mode (backward compatibility)
-        # Division train/validation (90/10)
-        train_size = int(0.9 * len(train_dataset))
-        val_size = len(train_dataset) - train_size
-        train_dataset, val_dataset = torch.utils.data.random_split(
-            train_dataset, [train_size, val_size]
-        )
-        
+        # Check if we have separate validation data or need to split
+        val_dataset = None
+
+        if isinstance(train_dataset, PackedDataset):
+            # Try to load validation split for PackedDataset
+            try:
+                val_dataset = PackedDataset(args.data_dir, split="val")
+                accelerator.print(f"📊 Using separate validation data: {len(val_dataset)} samples")
+            except (FileNotFoundError, Exception):
+                accelerator.print("ℹ️  No separate validation data found, will split training data")
+
+        if val_dataset is None:
+            # Split the training dataset (90/10)
+            train_size = int(0.9 * len(train_dataset))
+            val_size = len(train_dataset) - train_size
+            train_dataset, val_dataset = torch.utils.data.random_split(
+                train_dataset, [train_size, val_size]
+            )
+            accelerator.print(f"📊 Split dataset: {train_size} train, {val_size} val")
+
         train_dataloader = DataLoader(
             train_dataset,
             batch_size=config.batch_size,
@@ -734,7 +876,7 @@ def main():
             pin_memory=True,
             generator=dataloader_generator
         )
-        
+
         val_dataloader = DataLoader(
             val_dataset,
             batch_size=config.batch_size,
@@ -820,14 +962,12 @@ def main():
             global_step = 0
             start_epoch = 0
     
-    # Log tokenizer information before training starts  
+    # Log tokenizer information before training starts
     if tokenizer_metadata:
-        accelerator.print("\\n🔒 Tokenizer Information:")
-        accelerator.print(f"   SHA256: {tokenizer_metadata.get('tokenizer_sha256', 'N/A')}")
-        accelerator.print(f"   Vocab Size: {tokenizer_metadata.get('tokenizer_vocab_size', 'N/A'):,}")
-        accelerator.print(f"   Special Tokens: {tokenizer_metadata.get('special_tokens', 'N/A')}")
-        accelerator.print(f"   Normalizer: {tokenizer_metadata.get('normalizer', 'N/A')}")
-        
+        accelerator.print("\n🔒 Tokenizer Information:")
+        accelerator.print(f"   SHA256: {tokenizer_metadata.get('tokenizer_config_hash', tokenizer_metadata.get('tokenizer_sha256', 'N/A'))}")
+        accelerator.print(f"   Vocab Size: {tokenizer_metadata.get('vocab_size', tokenizer_metadata.get('tokenizer_vocab_size', 'N/A'))}")
+
         if use_multi_dataset and args.data_dirs:
             accelerator.print(f"   Datasets using this tokenizer:")
             for i, data_dir in enumerate(args.data_dirs):
@@ -835,7 +975,7 @@ def main():
                 accelerator.print(f"     - {data_dir} (weight: {weight})")
     
     # Training loop
-    accelerator.print("\\nStarting training...")
+    accelerator.print("\nStarting training...")
     
     if use_multi_dataset:
         # Multi-dataset training (step-based)
@@ -843,7 +983,8 @@ def main():
         
         global_step, _ = train_multi_dataset(
             model, multi_dataset_sampler, optimizer, scheduler,
-            accelerator, config, global_step, config.max_steps, args.log_dataset_mix_steps
+            accelerator, config, global_step, config.max_steps, args.log_dataset_mix_steps,
+            val_dataloader
         )
         
     else:

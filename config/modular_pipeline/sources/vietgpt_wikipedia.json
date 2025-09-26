@@ -1,0 +1,31 @@
+{
+  "name": "vietgpt_wikipedia",
+  "description": "VietGPT Wikipedia EN - comprehensive Wikipedia with enhanced preprocessing",
+  "type": "huggingface",
+  "dataset_name": "vietgpt/wikipedia_en",
+  "subset": null,
+  "split": "train",
+  "text_keys": "text",
+  "trust_remote_code": false,
+
+  "quality_filters": {
+    "min_length": 100,
+    "max_length": 8000,
+    "require_english": true
+  },
+
+  "processing_params": {
+    "chars_per_token": 4.0,
+    "margin_ratio": 0.02,
+    "use_streaming": true,
+    "max_stream_samples": 8000000
+  },
+
+  "source_metadata": {
+    "category": "encyclopedia",
+    "language": "en",
+    "license": "CC-BY-SA",
+    "size_estimate": "large",
+    "quality": "very_high"
+  }
+}

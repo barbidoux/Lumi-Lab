@@ -3,49 +3,38 @@
   "model_parameters": 23072000,
   "device": "cuda:0",
   "tokenizer_metadata": {
-    "tokenizer_sha256": "f2d1de4c87474c287ffa771fe9e5534e6b5ab955f6d611e00b18f2a3184a229f",
-    "tokenizer_vocab_size": 32768,
-    "special_tokens": {
-      "pad": 0,
-      "unk": 1,
-      "bos": 2,
-      "eos": 3
-    },
-    "normalizer": "nmt_nfkc_cf",
-    "byte_fallback": false,
-    "model_type": "unigram"
+    "tokenizer_config_hash": "3a3bc6df186122bf9faeead31deeef017eb784941f37b4a82fbe7212a2ad5e72"
   },
-  "ppl_wikipedia_en_32k_1024": 173.47574715276875,
-  "ppl_openwebtext_32k_1024": 289.9242795185974,
-  "ppl_weighted": 256.4859372851196,
-  "boolq_accuracy": 0.39,
-  "boolq_correct": 39,
+  "ppl_tiny_Chinchilla_23M_Corpus_packed": 179.74932241536627,
+  "ppl_weighted": 179.74932241536627,
+  "boolq_accuracy": 0.31,
+  "boolq_correct": 31,
   "boolq_total": 100,
   "smoke_tests": [
     {
       "prompt": "What is artificial intelligence?",
-      "response": "is a and organization to a,-. the has the tos science science to to a where the ofs ( ) not be by or a of. the of' it the ' and you be all. a that are as a. science have there no what is \"\". the does do want change a science is possible we the. i been the and for now have. i no need the to to world",
-      "full_text": "what is artificial intelligence. is a and organization to a,-. the has the tos science science to to a where the ofs ( ) not be by or a of. the of' it the ' and you be all. a that are as a. science have there no what is \"\". the does do want change a science is possible we the. i been the and for now have. i no need the to to world"
+      "response": ", not. is the which are on own of, as by, a that be of same to and a one be, the which in is as as the of. theres a, a-,---the is in hands a,, a,-a; is with as it not a thing is the,-it to. is not that or which if all things the, in nature is, all in sames others in same. does be man and",
+      "full_text": "What is artificial intelligence?, not. is the which are on own of, as by, a that be of same to and a one be, the which in is as as the of. theres a, a-,---the is in hands a,, a,-a; is with as it not a thing is the,-it to. is not that or which if all things the, in nature is, all in sames others in same. does be man and"
     },
     {
       "prompt": "Explain machine learning in simple terms.",
-      "response": "is a where is, that not is the th-s. is the of, you' thinking yours be that,'. can tell where are and it about is possible ask how a is or you, you', what that what if were are other are and, im a is to ia and have time learn what is to an () am theim i",
-      "full_text": "explain machine learning in simple terms. is a where is, that not is the th-s. is the of, you' thinking yours be that,'. can tell where are and it about is possible ask how a is or you, you', what that what if were are other are and, im a is to ia and have time learn what is to an () am theim i"
+      "response": "is possible the of and in. use computer in to the', it to and other ins. and with time This a to, ing,. that it the will be the. in case a-ing. not. you your have , . in game but you need be, you a or. you a of you just out to a.. that' the.s are for. the that that to,. you  be. your. your",
+      "full_text": "Explain machine learning in simple terms. is possible the of and in. use computer in to the', it to and other ins. and with time This a to, ing,. that it the will be the. in case a-ing. not. you your have , . in game but you need be, you a or. you a of you just out to a.. that' the.s are for. the that that to,. you  be. your. your"
     },
     {
       "prompt": "How does a neural network work?",
-      "response": "can find more on- ' your systems the-'' and-' is to to and the-. youll need have of resources a,, or that be. is anything than that are looking a new for, to what do want for, should have own it not a thing but in future can a be task of this i' been. have ever had great this to a level' as people at level,",
-      "full_text": "how does a neural network work can find more on- ' your systems the-'' and-' is to to and the-. youll need have of resources a,, or that be. is anything than that are looking a new for, to what do want for, should have own it not a thing but in future can a be task of this i' been. have ever had great this to a level' as people at level,"
+      "response": "example  -' a cant me. my was to a,, a or that the of may me the can I? so do.2 What you when do like!3 is it? you to whats? you' just youre. would to about your. is you? is to and do? me my is..1 if want. dont the to me or me Ill my? this is I you go do in world? are? do",
+      "full_text": "How does a neural network work? example  -' a cant me. my was to a,, a or that the of may me the can I? so do.2 What you when do like!3 is it? you to whats? you' just youre. would to about your. is you? is to and do? me my is..1 if want. dont the to me or me Ill my? this is I you go do in world? are? do"
     },
     {
       "prompt": "What are the benefits of renewable energy?",
-      "response": "will use energy and electricity to a. a renewable should  gas water be from gas so gas have beed water to and. the that not will, carbon gas, oil or would be by power is from. is to the that for emissions a energy to more than carbon gas tos and waste. carbon can the water, as gas. the in and solar the and water energy be. could carbon in greenhouse emissions energy a must the need solar for the",
-      "full_text": "what are the benefits of renewable energy, will use energy and electricity to a. a renewable should  gas water be from gas so gas have beed water to and. the that not will, carbon gas, oil or would be by power is from. is to the that for emissions a energy to more than carbon gas tos and waste. carbon can the water, as gas. the in and solar the and water energy be. could carbon in greenhouse emissions energy a must the need solar for the"
+      "response": "are for purposes as, not they be,. there no is need takes any to it or. what it like be energy is to it - that, does do a job. that is the that is of. to it The you the will to the -, in own the, - is the. can be from, the, so it not. you not know how use power energy in energy It also more a of () \"\" \"\"\" \" and\"",
+      "full_text": "What are the benefits of renewable energy? are for purposes as, not they be,. there no is need takes any to it or. what it like be energy is to it - that, does do a job. that is the that is of. to it The you the will to the -, in own the, - is the. can be from, the, so it not. you not know how use power energy in energy It also more a of () \"\" \"\"\" \" and\""
     },
     {
       "prompt": "Describe the water cycle.",
-      "response": ", was a for it to out. that is im. you a. the of!. you to a.,... are not in same, or s  so no what you to and.' can be and. its to.. there other in. to.' your,' to' on \"\", am not..\" ''' to. ' in the..' '' 's my..",
-      "full_text": "describe the water cycle., was a for it to out. that is im. you a. the of!. you to a.,... are not in same, or s  so no what you to and.' can be and. its to.. there other in. to.' your,' to' on \"\", am not..\" ''' to. ' in the..' '' 's my.."
+      "response": "thesing in1 of2 the system beed of, is with 06 the peration the of () to the of and, 3,53 m, is () the of. 8 theation . the can the 9ion or  2. the3  of4 as,35 =1 which be for and 4 = =0 This that all are to3 is, which  is same .  the",
+      "full_text": "Describe the water cycle. thesing in1 of2 the system beed of, is with 06 the peration the of () to the of and, 3,53 m, is () the of. 8 theation . the can the 9ion or  2. the3  of4 as,35 =1 which be for and 4 = =0 This that all are to3 is, which  is same .  the"
     }
   ]
 }

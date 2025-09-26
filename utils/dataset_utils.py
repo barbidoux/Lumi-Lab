@@ -5,12 +5,198 @@ Utilities for dataset management and data loading.
 import json
 import torch
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Callable, Any
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import glob
 import random
 import math
+import logging
+import re
+import hashlib
+from collections import defaultdict
+
+
+class PackedDataset(Dataset):
+    """
+    Modern dataset class for reading packed binary data (.bin + .idx files).
+    Uses memory mapping for scalability with large datasets.
+    """
+
+    def __init__(self, data_dir: str, split: str = "train"):
+        """
+        Args:
+            data_dir: Path to directory containing packed data (train.bin/val.bin + .idx)
+            split: Dataset split ('train' or 'val')
+        """
+        self.data_dir = Path(data_dir)
+        self.split = split
+
+        # File paths
+        self.data_path = self.data_dir / f"{split}.bin"
+        self.index_path = self.data_dir / f"{split}.idx"
+        self.manifest_path = self.data_dir / "final_manifest.json"
+
+        # Validate files exist
+        if not self.data_path.exists():
+            raise FileNotFoundError(f"Data file not found: {self.data_path}")
+        if not self.index_path.exists():
+            raise FileNotFoundError(f"Index file not found: {self.index_path}")
+        if not self.manifest_path.exists():
+            raise FileNotFoundError(f"Manifest file not found: {self.manifest_path}")
+
+        # Load index metadata
+        with open(self.index_path, 'r') as f:
+            self.index_info = json.load(f)
+
+        # Load manifest for additional info
+        with open(self.manifest_path, 'r') as f:
+            self.manifest = json.load(f)
+
+        # Extract shape and dtype
+        self.shape = tuple(self.index_info['shape'])
+        self.dtype = getattr(np, self.index_info['dtype'])
+        self.sequence_length = self.index_info['sequence_length']
+        self.num_sequences = self.index_info['num_sequences']
+
+        # Create memory-mapped array (doesn't load data into RAM)
+        self.data = np.memmap(
+            str(self.data_path),
+            dtype=self.dtype,
+            mode='r',
+            shape=self.shape
+        )
+
+        logging.info(f"📊 PackedDataset loaded: {split} split")
+        logging.info(f"   - Shape: {self.shape}")
+        logging.info(f"   - Dtype: {self.dtype}")
+        logging.info(f"   - Sequence length: {self.sequence_length}")
+        logging.info(f"   - Memory mapped: {self.data_path}")
+
+    def __len__(self):
+        return self.num_sequences
+
+    def __getitem__(self, idx):
+        """
+        Get a sequence by index.
+        Returns dict with input_ids, labels, and attention_mask.
+        """
+        if idx >= self.num_sequences:
+            raise IndexError(f"Index {idx} out of range for dataset of size {self.num_sequences}")
+
+        # Get the full sequence from memory map
+        sequence = torch.tensor(self.data[idx], dtype=torch.long)
+
+        # For training, input_ids and labels are shifted by one token
+        input_ids = sequence[:-1]
+        labels = sequence[1:]
+
+        return {
+            'input_ids': input_ids,
+            'labels': labels,
+            'attention_mask': torch.ones_like(input_ids)
+        }
+
+    def get_manifest(self) -> Dict:
+        """Return the dataset manifest for metadata access."""
+        return self.manifest.copy()
+
+    def validate_tokenizer_compatibility(self, tokenizer_dir: str) -> bool:
+        """
+        Validate that this dataset is compatible with the given tokenizer.
+        Uses SHA256 hash comparison for robustness.
+        """
+        tokenizer_dir = Path(tokenizer_dir)
+        tokenizer_config_path = tokenizer_dir / "tokenizer_config.json"
+
+        if not tokenizer_config_path.exists():
+            logging.warning(f"Tokenizer config not found: {tokenizer_config_path}")
+            return False
+
+        # Load tokenizer config
+        with open(tokenizer_config_path, 'r', encoding='utf-8') as f:
+            tokenizer_config = json.load(f)
+
+        # Calculate SHA256 hash of tokenizer config
+        tokenizer_config_str = json.dumps(tokenizer_config, sort_keys=True, ensure_ascii=False)
+        tokenizer_hash = hashlib.sha256(tokenizer_config_str.encode('utf-8')).hexdigest()
+
+        # Compare with hash stored in manifest
+        expected_hash = self.manifest.get('tokenizer_config_hash')
+
+        if tokenizer_hash == expected_hash:
+            logging.info("✅ Tokenizer compatibility validated via SHA256 hash")
+            return True
+        else:
+            logging.error(f"❌ Tokenizer incompatibility detected!")
+            logging.error(f"   Expected hash: {expected_hash}")
+            logging.error(f"   Actual hash:   {tokenizer_hash}")
+            return False
+
+
+class SmartTokenEstimator:
+    """
+    Smart token estimator that simulates tokenizer behavior without actual tokenizer.
+    Uses linguistic heuristics to provide realistic token counts.
+    """
+
+    def __init__(self, vocab_size: int = 32768, base_chars_per_token: float = 4.0):
+        self.vocab_size = vocab_size
+        self.base_chars_per_token = base_chars_per_token
+
+        # Common patterns that affect tokenization
+        self.word_pattern = re.compile(r'\b\w+\b')
+        self.punct_pattern = re.compile(r'[.!?;:,]')
+        self.number_pattern = re.compile(r'\b\d+\b')
+        self.whitespace_pattern = re.compile(r'\s+')
+
+    def estimate_tokens(self, text: str) -> int:
+        """
+        Estimate token count using linguistic heuristics.
+        Simulates how a real tokenizer would behave.
+        """
+        if not text.strip():
+            return 0
+
+        # Base estimation
+        base_tokens = len(text) / self.base_chars_per_token
+
+        # Adjustments based on text characteristics
+
+        # 1. Word boundaries (tokenizers often respect word boundaries)
+        words = self.word_pattern.findall(text)
+        avg_word_length = sum(len(w) for w in words) / len(words) if words else 5
+
+        # Longer words = more subwords = more tokens
+        word_factor = 1.0 + (max(0, avg_word_length - 5) * 0.02)
+
+        # 2. Punctuation usually gets separate tokens
+        punct_count = len(self.punct_pattern.findall(text))
+        punct_adjustment = punct_count * 0.5  # Each punct adds ~0.5 tokens
+
+        # 3. Numbers often get tokenized as separate units
+        numbers = self.number_pattern.findall(text)
+        number_adjustment = len(numbers) * 0.3
+
+        # 4. Excessive whitespace
+        whitespaces = self.whitespace_pattern.findall(text)
+        whitespace_penalty = max(0, len(whitespaces) - len(text.split())) * 0.1
+
+        # 5. Text quality affects tokenization efficiency
+        char_variety = len(set(text.lower()))
+        variety_factor = min(1.2, 0.8 + (char_variety / 100))
+
+        # Final calculation
+        estimated_tokens = (base_tokens * word_factor * variety_factor +
+                          punct_adjustment + number_adjustment - whitespace_penalty)
+
+        return max(1, int(estimated_tokens))  # At least 1 token
+
+    def encode(self, text: str) -> List[int]:
+        """Simulate tokenizer.encode() - returns fake token IDs."""
+        token_count = self.estimate_tokens(text)
+        # Return fake token IDs (not used, just for compatibility)
+        return list(range(token_count))
 
 
 class ShardedTokenizedDataset(Dataset):
@@ -416,10 +602,20 @@ class WeightedMultiDatasetSampler:
         
         for i, data_dir in enumerate(self.data_dirs):
             try:
-                dataset = ShardedTokenizedDataset(str(data_dir), split=split)
+                # Try PackedDataset first (new format), fallback to legacy
+                final_manifest_path = data_dir / 'final_manifest.json'
+                if final_manifest_path.exists():
+                    # New PackedDataset format
+                    dataset = PackedDataset(str(data_dir), split=split)
+                    print(f"📊 Dataset {i}: {data_dir.name} (PackedDataset, {len(dataset)} samples, weight: {self.weights[i]:.3f})")
+                else:
+                    # Legacy ShardedTokenizedDataset format
+                    dataset = ShardedTokenizedDataset(str(data_dir), split=split)
+                    print(f"📊 Dataset {i}: {data_dir.name} (Legacy, {len(dataset)} samples, weight: {self.weights[i]:.3f})")
+
                 self.datasets.append(dataset)
                 self.dataset_names.append(data_dir.name)
-                print(f"📊 Dataset {i}: {data_dir.name} ({len(dataset)} samples, weight: {self.weights[i]:.3f})")
+
             except Exception as e:
                 raise RuntimeError(f"Failed to load dataset from {data_dir}: {e}")
         
@@ -552,3 +748,212 @@ class WeightedMultiDatasetSampler:
     def __len__(self) -> int:
         """Return virtual length for compatibility (infinite sampling)."""
         return sum(len(dataset) for dataset in self.datasets)
+
+
+def estimate_avg_tokens_per_sample(
+    stream_factory: Callable,
+    sample_size: int = 100,
+    tokenizer: Optional[Any] = None,
+    text_keys: Union[str, List[str]] = "text",
+    chars_per_token: float = 4.0,
+    tokenizer_path: Optional[str] = None
+) -> Dict:
+    """
+    Estimate average tokens per sample from a streaming dataset.
+
+    Args:
+        stream_factory: Function that returns a fresh dataset iterator when called
+        sample_size: Number of samples to analyze
+        tokenizer: Optional tokenizer for precise token counting
+        text_keys: Key(s) containing text data (str or list of str)
+        chars_per_token: Character-to-token ratio for heuristic estimation
+        tokenizer_path: Path to tokenizer for loading if needed
+
+    Returns:
+        Dictionary with statistics:
+        {
+            "avg_tokens": float,
+            "std_tokens": float,
+            "p50_tokens": float,  # Median
+            "p90_tokens": float,  # 90th percentile
+            "n_samples_analyzed": int,
+            "method": "tokenizer" | "chars_heuristic"
+        }
+    """
+    logging.info(f"Analyzing {sample_size} samples to estimate token counts...")
+
+    # Ensure text_keys is a list
+    if isinstance(text_keys, str):
+        text_keys = [text_keys]
+
+    # Load tokenizer if path provided and no tokenizer given
+    if tokenizer is None and tokenizer_path:
+        try:
+            import sentencepiece as smp
+            from pathlib import Path
+            logging.info(f"Loading tokenizer from {tokenizer_path} for accurate token counting...")
+            tokenizer = smp.SentencePieceProcessor()
+            model_path = tokenizer_path if tokenizer_path.endswith('.model') else f"{tokenizer_path}/spm.model"
+            if Path(model_path).exists():
+                tokenizer.load(model_path)
+                logging.info(f"✅ Tokenizer loaded: vocab_size={tokenizer.vocab_size()}")
+            else:
+                logging.warning(f"Tokenizer not found at {model_path}. Will use SMART simulation.")
+                tokenizer = None
+        except Exception as e:
+            logging.warning(f"Failed to load tokenizer from {tokenizer_path}: {e}. Using smart simulation.")
+            tokenizer = None
+
+    # Create smart token estimator if no real tokenizer
+    smart_estimator = None
+    if tokenizer is None:
+        # Get vocab size from config if available
+        vocab_size = 32768  # Default
+        if tokenizer_path and 'training_params' in str(tokenizer_path):
+            vocab_size = 32768  # Will be overridden by actual config parsing
+
+        smart_estimator = SmartTokenEstimator(
+            vocab_size=vocab_size,
+            base_chars_per_token=chars_per_token
+        )
+
+    token_lengths = []
+    method = "real_tokenizer" if tokenizer is not None else "smart_simulation"
+
+    if method == "real_tokenizer":
+        logging.info("🎯 Using REAL TOKENIZER for accurate token counting")
+    else:
+        logging.info(f"🧠 Using SMART TOKEN SIMULATION (linguistic heuristics, {chars_per_token} base chars/token)")
+
+    try:
+        # Get fresh stream
+        stream = stream_factory()
+        samples_processed = 0
+
+        for sample in stream:
+            if samples_processed >= sample_size:
+                break
+
+            try:
+                # Extract and concatenate text from specified keys
+                text_parts = []
+                for key in text_keys:
+                    if key in sample and sample[key] is not None:
+                        text_parts.append(str(sample[key]))
+
+                if not text_parts:
+                    logging.warning(f"No text found in sample with keys {text_keys}")
+                    continue
+
+                concatenated_text = " ".join(text_parts)
+
+                # Calculate token count
+                if tokenizer is not None:
+                    # Use actual tokenizer
+                    try:
+                        if hasattr(tokenizer, 'encode'):
+                            # SentencePiece tokenizer
+                            tokens = tokenizer.encode(concatenated_text)
+                            token_count = len(tokens)
+                        elif hasattr(tokenizer, 'encode_as_ids'):
+                            # SentencePiece tokenizer alternative
+                            tokens = tokenizer.encode_as_ids(concatenated_text)
+                            token_count = len(tokens)
+                        elif hasattr(tokenizer, '__call__'):
+                            # HuggingFace tokenizer
+                            tokens = tokenizer(concatenated_text)['input_ids']
+                            token_count = len(tokens)
+                        else:
+                            raise AttributeError("Tokenizer must have 'encode' method or be callable")
+                    except Exception as e:
+                        logging.warning(f"Tokenizer failed on sample {samples_processed}: {e}")
+                        continue
+                elif smart_estimator is not None:
+                    # Use smart token estimation
+                    token_count = smart_estimator.estimate_tokens(concatenated_text)
+                else:
+                    # Fallback to simple character-based heuristic
+                    token_count = len(concatenated_text) / chars_per_token
+
+                # Filter outliers: ignore samples with >10x current median
+                if len(token_lengths) > 10:  # Only filter after we have some data
+                    current_median = np.median(token_lengths)
+                    if token_count > 10 * current_median:
+                        logging.debug(f"Filtering outlier sample with {token_count} tokens (median: {current_median})")
+                        continue
+
+                token_lengths.append(token_count)
+                samples_processed += 1
+
+                if samples_processed % 50 == 0:
+                    logging.debug(f"Processed {samples_processed}/{sample_size} samples...")
+
+            except Exception as e:
+                logging.warning(f"Error processing sample {samples_processed}: {e}")
+                continue
+
+    except Exception as e:
+        logging.error(f"Error during stream processing: {e}")
+        raise
+
+    if not token_lengths:
+        raise ValueError("No valid samples found for token estimation")
+
+    # Calculate statistics
+    token_array = np.array(token_lengths)
+    stats = {
+        "avg_tokens": float(np.mean(token_array)),
+        "std_tokens": float(np.std(token_array)),
+        "p50_tokens": float(np.median(token_array)),
+        "p90_tokens": float(np.percentile(token_array, 90)),
+        "n_samples_analyzed": len(token_lengths),
+        "method": method
+    }
+
+    logging.info(
+        f"Token estimation complete: avg={stats['avg_tokens']:.1f}, "
+        f"std={stats['std_tokens']:.1f}, p50={stats['p50_tokens']:.1f}, "
+        f"p90={stats['p90_tokens']:.1f} (method: {method})"
+    )
+
+    return stats
+
+
+def plan_samples_for_token_budget(
+    token_budget: int,
+    estimation_stats: Dict,
+    margin_ratio: float = 0.02
+) -> int:
+    """
+    Calculate number of samples needed to reach a token budget.
+
+    Args:
+        token_budget: Target number of tokens
+        estimation_stats: Statistics from estimate_avg_tokens_per_sample
+        margin_ratio: Safety margin (default: 2%)
+
+    Returns:
+        Number of samples to download (integer)
+    """
+    # Use realistic estimation: avg + 0.5*std for reasonable safety
+    conservative_tokens_per_sample = (
+        estimation_stats['avg_tokens'] + 0.5 * estimation_stats['std_tokens']
+    )
+
+    # Calculate base number of samples needed
+    base_samples_needed = token_budget / conservative_tokens_per_sample
+
+    # Add safety margin
+    samples_with_margin = base_samples_needed * (1 + margin_ratio)
+
+    # Round up to integer
+    final_samples = int(math.ceil(samples_with_margin))
+
+    logging.info(
+        f"Token budget planning: {token_budget:,} tokens target, "
+        f"conservative estimate: {conservative_tokens_per_sample:.1f} tokens/sample, "
+        f"base need: {base_samples_needed:.0f} samples, "
+        f"with {margin_ratio:.1%} margin: {final_samples:,} samples"
+    )
+
+    return final_samples
