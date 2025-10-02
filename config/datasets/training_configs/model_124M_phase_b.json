@@ -20,7 +20,7 @@
     "shard_tokens": 5000000,
     "sequence_length": 1024,
     "vocab_size": 32768,
-    "tokenizer_path": "models/tokenizers/spm_32k"
+    "tokenizer_path": "data/models/tokenizers/spm_32k"
   },
 
   "sources": {

@@ -803,9 +803,9 @@ def main():
         except Exception as e:
             logging.debug(f"Cleanup warning: {e}")
 
-        # Clean exit without forcing
+        # Clean exit with safe cleanup to prevent thread state crashes
         logging.info("Analysis completed successfully.")
-        return
+        _safe_cleanup_and_exit()
 
     # Check if we should use the caching system
     if args.use_cache:

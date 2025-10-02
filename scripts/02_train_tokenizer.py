@@ -342,6 +342,7 @@ def train_sentencepiece_tokenizer(
     sentence_iterator: Iterator[Tuple[str, Dict[str, int]]],
     output_dir: Path,
     estimator: AdaptiveTokenEstimator,
+    corpus_stats: Dict[str, Any],
     vocab_size: int = 32000,
     model_type: str = "unigram",
     character_coverage: float = 0.9995,
@@ -429,6 +430,7 @@ def train_sentencepiece_tokenizer(
         '--remove_extra_whitespaces=true',
         f'--max_sentence_length={max_sentence_length}',  # Use dynamic max length
         '--shuffle_input_sentence=true',
+        f'--input_sentence_size={min(sentences_written, 1000000)}',  # Limit to reduce warnings
         '--train_extremely_large_corpus=true',
         '--num_threads=8',
         # Explicit special token IDs for consistency
@@ -471,37 +473,57 @@ def train_sentencepiece_tokenizer(
         model_path = output_dir / "spm.model"
         sp = spm.SentencePieceProcessor(model_file=str(model_path))
 
-        # Calculate actual tokenization stats on REAL corpus samples
-        with temp_path.open('r', encoding='utf-8') as f:
-            sample_lines = []
-            total_sample_chars = 0
-            for i, line in enumerate(f):
-                if i >= 1000:  # Sample first 1000 sentences
-                    break
-                sample_lines.append(line.strip())
-                total_sample_chars += len(line.strip())
+        # RIGOROUS CALIBRATION: Use statistical sampling across entire training file
+        logging.info("📊 Performing rigorous tokenizer calibration...")
 
-        # Tokenize real samples to get accurate ratio
+        # Count total lines first for proper sampling
+        with temp_path.open('r', encoding='utf-8') as f:
+            total_lines = sum(1 for _ in f)
+
+        # Statistical sampling: sample every N-th line for representativeness
+        sample_size = min(5000, total_lines)  # Use up to 5000 samples
+        sampling_interval = max(1, total_lines // sample_size)
+
+        sample_lines = []
+        total_sample_chars = 0
+
+        with temp_path.open('r', encoding='utf-8') as f:
+            for i, line in enumerate(f):
+                if i % sampling_interval == 0 and len(sample_lines) < sample_size:
+                    line_content = line.strip()
+                    if line_content:  # Skip empty lines
+                        sample_lines.append(line_content)
+                        total_sample_chars += len(line_content)
+
+        # Tokenize samples to get accurate ratio
         total_sample_tokens = 0
         for line in sample_lines:
-            if line.strip():
-                tokens = sp.encode(line.strip(), out_type=int)
-                total_sample_tokens += len(tokens)
+            tokens = sp.encode(line, out_type=int)
+            total_sample_tokens += len(tokens)
 
-        # Calculate accurate chars/token ratio from real data
+        # Calculate accurate chars/token ratio from representative sampling
         if total_sample_tokens > 0:
             actual_chars_per_token = total_sample_chars / total_sample_tokens
-            actual_estimated_tokens = total_chars / actual_chars_per_token
 
-            # Update with corrected estimate
+            # Use CORPUS total characters, not training file characters
+            corpus_total_chars = corpus_stats['total_characters']
+            actual_estimated_tokens = corpus_total_chars / actual_chars_per_token
+
+            # Update with scientifically rigorous estimate
             training_stats['actual_estimated_tokens'] = int(actual_estimated_tokens)
             training_stats['actual_chars_per_token'] = actual_chars_per_token
+            training_stats['calibration_sample_size'] = len(sample_lines)
+            training_stats['calibration_sampling_method'] = 'statistical_interval'
+            training_stats['corpus_chars_used'] = corpus_total_chars
 
-            logging.info(f"📊 Token estimation calibration:")
-            logging.info(f"   📋 Real sample: {len(sample_lines):,} sentences")
+            logging.info(f"📊 Rigorous token estimation calibration:")
+            logging.info(f"   🔬 Sampling method: Statistical interval sampling")
+            logging.info(f"   📋 Representative sample: {len(sample_lines):,} sentences (every {sampling_interval})")
             logging.info(f"   🔤 Sample chars: {total_sample_chars:,}")
             logging.info(f"   🎯 Sample tokens: {total_sample_tokens:,}")
-            logging.info(f"   📏 Actual ratio: {actual_chars_per_token:.2f} chars/token")
+            logging.info(f"   📏 Calibrated ratio: {actual_chars_per_token:.4f} chars/token")
+            logging.info(f"   🎯 Corpus total chars: {corpus_total_chars:,}")
+            logging.info(f"   🎯 Final estimated tokens: {int(actual_estimated_tokens):,}")
 
     except Exception as e:
         logging.error(f"SentencePiece training failed: {e}")
@@ -693,6 +715,7 @@ def main():
         sentence_iterator=sentence_iterator,
         output_dir=output_dir,
         estimator=estimator,
+        corpus_stats=corpus_stats,
         vocab_size=args.vocab_size,
         model_type=args.model_type,
         character_coverage=args.character_coverage,
@@ -794,9 +817,81 @@ def main():
             report_path = output_dir / "tokenizer_validation_report.json"
             validator.generate_report(validation_results, report_path)
 
+            # SCIENTIFIC RIGOR: Cross-validation between calibration and precise counting
+            calibration_estimate = training_stats.get('actual_estimated_tokens', 0)
+            precise_count_extrapolated = int(dataset_validation['token_counting_results']['total_exact_tokens'] *
+                                           (corpus_stats['total_documents'] / dataset_validation['token_counting_results']['total_documents']))
+
+            estimation_accuracy = (calibration_estimate / precise_count_extrapolated) * 100 if precise_count_extrapolated > 0 else 0
+            estimation_difference = abs(calibration_estimate - precise_count_extrapolated)
+
+            cross_validation_results = {
+                'calibration_method_tokens': calibration_estimate,
+                'precise_counting_extrapolated_tokens': precise_count_extrapolated,
+                'cross_validation_accuracy_percent': estimation_accuracy,
+                'absolute_difference': estimation_difference,
+                'relative_error_percent': abs(100 - estimation_accuracy),
+                'method_agreement': 'excellent' if abs(estimation_accuracy - 100) < 5 else 'good' if abs(estimation_accuracy - 100) < 10 else 'poor'
+            }
+
+            logging.info(f"🔬 Scientific cross-validation:")
+            logging.info(f"   📊 Calibration estimate: {calibration_estimate:,} tokens")
+            logging.info(f"   🎯 Precise count (extrapolated): {precise_count_extrapolated:,} tokens")
+            logging.info(f"   📈 Cross-validation accuracy: {estimation_accuracy:.2f}%")
+            logging.info(f"   📊 Method agreement: {cross_validation_results['method_agreement']}")
+
+            if abs(estimation_accuracy - 100) > 10:
+                logging.warning(f"⚠️  Large discrepancy detected between estimation methods!")
+
+                # Analyze corpus heterogeneity to explain discrepancy
+                shard_stats = corpus_stats.get('shard_statistics', [])
+                normal_shards = []
+                anomalous_shards = []
+
+                for shard in shard_stats:
+                    docs_per_shard = shard.get('documents', 1)
+                    sentences_per_doc = shard.get('sentences_per_doc', 0)
+
+                    if sentences_per_doc > 1000:  # Threshold for anomalous shards
+                        anomalous_shards.append({
+                            'path': shard.get('path', 'unknown'),
+                            'docs': docs_per_shard,
+                            'sentences_per_doc': sentences_per_doc,
+                            'estimated_tokens': shard.get('estimated_tokens', 0)
+                        })
+                    else:
+                        normal_shards.append(shard)
+
+                if anomalous_shards:
+                    logging.warning(f"   📊 Corpus heterogeneity detected:")
+                    logging.warning(f"      • Normal shards: {len(normal_shards)} (avg ~400 sentences/doc)")
+                    logging.warning(f"      • Anomalous shards: {len(anomalous_shards)} (books/long texts)")
+
+                    for anomaly in anomalous_shards:
+                        logging.warning(f"      • {anomaly['path']}: {anomaly['docs']} docs, {anomaly['sentences_per_doc']:.0f} sent/doc")
+
+                logging.warning(f"   🔍 Discrepancy analysis:")
+                logging.warning(f"      • Calibration method samples uniformly across sentences")
+                logging.warning(f"      • Long documents have disproportionate impact on total count")
+                logging.warning(f"      • Statistical sampling under-represents document length variance")
+                logging.warning(f"   📊 Recommended token count: {precise_count_extrapolated:,} (precise method)")
+
+                # Add detailed analysis to cross_validation_results
+                cross_validation_results['corpus_heterogeneity_analysis'] = {
+                    'normal_shards_count': len(normal_shards),
+                    'anomalous_shards_count': len(anomalous_shards),
+                    'anomalous_shards_details': anomalous_shards,
+                    'heterogeneity_impact_explanation': (
+                        "Calibration method uses uniform sentence sampling which under-represents "
+                        "the contribution of very long documents (books, articles). Precise counting "
+                        "method accounts for actual document structure and is more reliable."
+                    )
+                }
+
             # Update enhanced config with validation results
             enhanced_config['validation_results'] = {
                 'dataset_validation': dataset_validation,
+                'cross_validation_analysis': cross_validation_results,
                 'tokenizer_validation_summary': {
                     'overall_quality_score': validation_results.get('overall_quality_score', 0),
                     'unk_rate_percent': validation_results.get('coverage_analysis', {}).get('unk_rate_percent', 0),

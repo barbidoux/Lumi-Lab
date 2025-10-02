@@ -1,0 +1,150 @@
+{
+  "name": "lora_optimal_tiny_23m",
+  "description": "Configuration SFT optimale pour modèle tiny 23M - Performances maximales",
+  "version": "1.0",
+  "model_target": "23M parameters (6 layers, 256 d_model, 4 heads)",
+  "optimization_focus": "Maximum performance with chinchilla-optimal SFT",
+
+  "training_params": {
+    "learning_rate": 6e-5,
+    "num_train_epochs": -1,
+    "max_steps": 2000,
+    "per_device_train_batch_size": 8,
+    "per_device_eval_batch_size": 8,
+    "gradient_accumulation_steps": 2,
+    "warmup_ratio": 0.03,
+    "weight_decay": 0.1,
+    "logging_steps": 25,
+    "save_steps": 200,
+    "eval_steps": 100,
+    "evaluation_strategy": "steps",
+    "save_strategy": "steps",
+    "load_best_model_at_end": true,
+    "metric_for_best_model": "eval_loss",
+    "greater_is_better": false,
+    "save_total_limit": 10,
+    "seed": 42,
+    "data_seed": 42,
+    "dataloader_num_workers": 8,
+    "remove_unused_columns": false,
+    "optim": "adamw_torch",
+    "lr_scheduler_type": "cosine",
+    "fp16": false,
+    "bf16": true,
+    "gradient_checkpointing": false,
+    "ddp_find_unused_parameters": false,
+    "group_by_length": false,
+    "report_to": ["tensorboard"],
+    "max_grad_norm": 1.0,
+    "adam_beta1": 0.9,
+    "adam_beta2": 0.95,
+    "adam_epsilon": 1e-8
+  },
+
+  "lora_config": {
+    "r": 32,
+    "lora_alpha": 64,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "lora_dropout": 0.05,
+    "bias": "none",
+    "task_type": "CAUSAL_LM",
+    "fan_in_fan_out": false,
+    "init_lora_weights": true,
+    "use_rslora": false,
+    "use_dora": false,
+    "modules_to_save": null
+  },
+
+  "dataset_config": {
+    "max_seq_length": 1024,
+    "packing": true,
+    "dataset_text_field": "text",
+    "formatting_func": null,
+    "chars_per_token": 4.0,
+    "response_template": "<|im_start|>assistant",
+    "dataset_num_proc": 8,
+    "dataset_batch_size": 1000,
+    "max_shard_size": "500MB"
+  },
+
+  "evaluation_config": {
+    "eval_dataset_size": 500,
+    "eval_accumulation_steps": 1,
+    "generation_config": {
+      "max_new_tokens": 128,
+      "temperature": 0.7,
+      "top_p": 0.9,
+      "top_k": 50,
+      "do_sample": true,
+      "pad_token_id": 0,
+      "eos_token_id": 2,
+      "repetition_penalty": 1.1,
+      "no_repeat_ngram_size": 3
+    },
+    "eval_prompts": [
+      "What is artificial intelligence and how does it work?",
+      "Explain the concept of machine learning in simple terms.",
+      "How do neural networks learn patterns from data?",
+      "What are the main applications of AI in everyday life?",
+      "Describe the difference between AI, machine learning, and deep learning.",
+      "How can AI help solve real-world problems?",
+      "What is natural language processing and how is it used?",
+      "Explain how computers can understand human language.",
+      "What makes a good AI assistant?",
+      "How do chatbots work and what makes them effective?"
+    ]
+  },
+
+  "checkpointing": {
+    "save_safetensors": true,
+    "save_on_each_node": false,
+    "resume_from_checkpoint": null,
+    "ignore_data_skip": false,
+    "checkpoint_dtype": "auto"
+  },
+
+  "hardware_optimization": {
+    "auto_find_batch_size": false,
+    "dataloader_pin_memory": true,
+    "max_memory_mb": 8000,
+    "low_cpu_mem_usage": true,
+    "torch_compile": false,
+    "trust_remote_code": false
+  },
+
+  "advanced_optimization": {
+    "label_smoothing_factor": 0.0,
+    "optim_target_modules": null,
+    "neftune_noise_alpha": null,
+    "disable_tqdm": false,
+    "prediction_loss_only": false,
+    "include_inputs_for_metrics": false
+  },
+
+  "_performance_rationale": {
+    "learning_rate": "8e-5 optimal pour 23M avec LoRA r=32",
+    "batch_size": "32 pour équilibrer vitesse/stabilité avec 23M params",
+    "lora_rank": "r=32 avec alpha=64 pour capacité d'adaptation optimale",
+    "warmup": "3% warmup pour stabilité initiale",
+    "scheduler": "Cosine pour convergence douce",
+    "weight_decay": "0.1 pour régularisation sans sur-contrainte",
+    "eval_frequency": "Évaluation fréquente (100 steps) pour monitoring fin",
+    "packing": "Activé pour efficacité maximale des séquences courtes"
+  },
+
+  "_training_estimates": {
+    "optimal_steps": "1500-2000 steps pour convergence",
+    "training_time": "30-45 minutes sur GPU moderne",
+    "memory_usage": "~6-8GB VRAM avec batch_size=32",
+    "convergence_step": "~800-1000 steps",
+    "best_eval_loss_target": "<2.0"
+  }
+}

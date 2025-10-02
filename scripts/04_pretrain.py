@@ -505,51 +505,103 @@ def train_epoch(
     """Train the model for one epoch (single dataset mode)."""
     model.train()
     total_loss = 0.0
-    progress_bar = tqdm(dataloader, desc=f"Epoch {epoch}")
-    
-    for step, batch in enumerate(progress_bar):
-        with accelerator.accumulate(model):
-            input_ids = batch['input_ids']
-            attention_mask = batch['attention_mask']
-            labels = batch['labels']
-            
-            # Let Accelerate handle mixed precision automatically
-            outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
-            loss = outputs.loss
-            
-            accelerator.backward(loss)
-            
+
+    # For step-based training with max_steps, use step progress like multi-dataset training
+    if config.max_steps > 0:
+        progress_bar = tqdm(total=config.max_steps, desc=f"Epoch {epoch} Training", initial=global_step)
+        # Create infinite iterator from dataloader to avoid epoch boundaries
+        import itertools
+        infinite_dataloader = itertools.cycle(dataloader)
+
+        while global_step < config.max_steps:
+            batch = next(infinite_dataloader)
+
+            with accelerator.accumulate(model):
+                input_ids = batch['input_ids']
+                attention_mask = batch['attention_mask']
+                labels = batch['labels']
+
+                # Let Accelerate handle mixed precision automatically
+                outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+                loss = outputs.loss
+
+                accelerator.backward(loss)
+
+                if accelerator.sync_gradients:
+                    # Use accelerator's gradient clipping (handles mixed precision correctly)
+                    accelerator.clip_grad_norm_(model.parameters(), config.max_grad_norm)
+
+                optimizer.step()
+                scheduler.step()
+                optimizer.zero_grad()
+
             if accelerator.sync_gradients:
-                # Use accelerator's gradient clipping (handles mixed precision correctly)
-                accelerator.clip_grad_norm_(model.parameters(), config.max_grad_norm)
-            
-            optimizer.step()
-            scheduler.step()
-            optimizer.zero_grad()
-        
-        if accelerator.sync_gradients:
-            global_step += 1
-            total_loss += loss.item()
-            
-            # Logging
-            if global_step % config.logging_steps == 0:
-                avg_loss = total_loss / config.logging_steps
-                current_lr = scheduler.get_last_lr()[0]
-                accelerator.print(f"Step {global_step}: loss={avg_loss:.4f}, lr={current_lr:.2e}")
-                total_loss = 0.0
-            
-            # Save checkpoints
-            if global_step % config.save_steps == 0:
-                if accelerator.is_main_process:
-                    checkpoint_dir = f"{config.output_dir}/{config.model_name}/step_{global_step}"
-                    save_checkpoint(model, optimizer, scheduler, global_step, checkpoint_dir, accelerator)
-                    accelerator.print(f"💾 Checkpoint saved at step {global_step} -> {checkpoint_dir}")
-        
-        progress_bar.set_postfix({"loss": loss.item(), "lr": scheduler.get_last_lr()[0]})
-        
-        # Early stopping if max_steps reached
-        if config.max_steps > 0 and global_step >= config.max_steps:
-            break
+                global_step += 1
+                progress_bar.update(1)
+                total_loss += loss.item()
+
+                # Logging
+                if global_step % config.logging_steps == 0:
+                    avg_loss = total_loss / config.logging_steps
+                    current_lr = scheduler.get_last_lr()[0]
+                    accelerator.print(f"Step {global_step}: loss={avg_loss:.4f}, lr={current_lr:.2e}")
+                    total_loss = 0.0
+
+                # Save checkpoints
+                if global_step % config.save_steps == 0:
+                    if accelerator.is_main_process:
+                        checkpoint_dir = f"{config.output_dir}/{config.model_name}/step_{global_step}"
+                        save_checkpoint(model, optimizer, scheduler, global_step, checkpoint_dir, accelerator)
+                        accelerator.print(f"💾 Checkpoint saved at step {global_step} -> {checkpoint_dir}")
+
+            progress_bar.set_postfix({"loss": loss.item(), "lr": scheduler.get_last_lr()[0]})
+
+        progress_bar.close()
+    else:
+        progress_bar = tqdm(dataloader, desc=f"Epoch {epoch}")
+        for step, batch in enumerate(progress_bar):
+            with accelerator.accumulate(model):
+                input_ids = batch['input_ids']
+                attention_mask = batch['attention_mask']
+                labels = batch['labels']
+
+                # Let Accelerate handle mixed precision automatically
+                outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+                loss = outputs.loss
+
+                accelerator.backward(loss)
+
+                if accelerator.sync_gradients:
+                    # Use accelerator's gradient clipping (handles mixed precision correctly)
+                    accelerator.clip_grad_norm_(model.parameters(), config.max_grad_norm)
+
+                optimizer.step()
+                scheduler.step()
+                optimizer.zero_grad()
+
+            if accelerator.sync_gradients:
+                global_step += 1
+                total_loss += loss.item()
+
+                # Logging
+                if global_step % config.logging_steps == 0:
+                    avg_loss = total_loss / config.logging_steps
+                    current_lr = scheduler.get_last_lr()[0]
+                    accelerator.print(f"Step {global_step}: loss={avg_loss:.4f}, lr={current_lr:.2e}")
+                    total_loss = 0.0
+
+                # Save checkpoints
+                if global_step % config.save_steps == 0:
+                    if accelerator.is_main_process:
+                        checkpoint_dir = f"{config.output_dir}/{config.model_name}/step_{global_step}"
+                        save_checkpoint(model, optimizer, scheduler, global_step, checkpoint_dir, accelerator)
+                        accelerator.print(f"💾 Checkpoint saved at step {global_step} -> {checkpoint_dir}")
+
+                # Early stopping if max_steps reached
+                if config.max_steps > 0 and global_step >= config.max_steps:
+                    break
+
+            progress_bar.set_postfix({"loss": loss.item(), "lr": scheduler.get_last_lr()[0]})
     
     return global_step, total_loss
 
@@ -816,7 +868,7 @@ def main():
                         val_dataset,
                         batch_size=config.batch_size,
                         shuffle=False,
-                        num_workers=2,
+                        num_workers=args.num_workers,
                         pin_memory=True,
                         generator=dataloader_generator
                     )
@@ -831,7 +883,7 @@ def main():
                         val_dataset,
                         batch_size=config.batch_size,
                         shuffle=False,
-                        num_workers=2,
+                        num_workers=args.num_workers,
                         pin_memory=True,
                         generator=dataloader_generator
                     )
@@ -872,7 +924,7 @@ def main():
             train_dataset,
             batch_size=config.batch_size,
             shuffle=True,
-            num_workers=4,
+            num_workers=args.num_workers,
             pin_memory=True,
             generator=dataloader_generator
         )
@@ -881,7 +933,7 @@ def main():
             val_dataset,
             batch_size=config.batch_size,
             shuffle=False,
-            num_workers=4,
+            num_workers=args.num_workers,
             pin_memory=True,
             generator=dataloader_generator
         )

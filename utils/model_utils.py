@@ -516,30 +516,38 @@ def load_pretrained_model(model_path: str, device: str = "auto") -> PreTrainedMo
             
     except Exception as e:
         print(f"Error loading with AutoModel: {e}")
-        
+        print("Attempting fallback: manual loading with create_model()...")
+
         # Fallback: manual loading
         config_path = model_path / "config.json"
-        if config_path.exists():
-            with open(config_path, 'r') as f:
-                config_dict = json.load(f)
-            
-            model = create_model(config_dict)
-            
-            # Loading weights if available
-            weights_path = model_path / "pytorch_model.bin"
-            if weights_path.exists():
-                state_dict = torch.load(weights_path, map_location=device)
-                model.load_state_dict(state_dict)
-            
-            model = model.to(device)
-        else:
-            raise ValueError(f"Unable to load model from {model_path}")
-    
+        if not config_path.exists():
+            raise ValueError(f"Unable to load model from {model_path}: config.json not found")
+
+        with open(config_path, 'r') as f:
+            config_dict = json.load(f)
+
+        print(f"Creating model from config: {config_dict.get('n_layer', '?')} layers, "
+              f"{config_dict.get('d_model', '?')} dims")
+        model = create_model(config_dict)
+
+        # Loading weights if available
+        weights_path = model_path / "pytorch_model.bin"
+        if not weights_path.exists():
+            print(f"Warning: No weights file found at {weights_path}")
+            raise ValueError(f"Unable to load model weights from {model_path}")
+
+        print(f"Loading weights from {weights_path}...")
+        state_dict = torch.load(weights_path, map_location=device)
+        model.load_state_dict(state_dict)
+        print("✓ Weights loaded successfully")
+
+        model = model.to(device)
+
     # Activate evaluation mode by default
     model.eval()
-    
+
     print(f"Model loaded: {sum(p.numel() for p in model.parameters()):,} parameters on {device}")
-    
+
     return model
 
 

@@ -1,0 +1,211 @@
+{
+  "model_path": "checkpoints/sft/multi_dataset_tiny_optimal_v3/merged",
+  "tokenizer_path": "data/models/tokenizers/spm_32k/spm.model",
+  "prompt_template": "chatml",
+  "evaluation_mode": "standard",
+  "model_parameters": 23072000,
+  "timestamp": "2025-10-02 09:33:42",
+  "evaluation_time_seconds": 33.62059783935547,
+  "perplexity_metrics": {
+    "perplexity": 210.38846909555775,
+    "avg_loss": 5.3489556746828155,
+    "total_tokens": 7236,
+    "processed_samples": 50,
+    "dataset": "wikitext_raw_text",
+    "template": "raw_text"
+  },
+  "boolq_metrics": {
+    "accuracy": 0.31,
+    "correct": 31,
+    "total": 100,
+    "samples": 100
+  },
+  "boolq_accuracy": 0.31,
+  "smoke_tests": {
+    "summary_stats": {
+      "avg_quality_score": 0.5125,
+      "total_prompts": 24,
+      "categories_tested": 8
+    },
+    "category_results": {
+      "basic_knowledge": {
+        "avg_score": 0.39999999999999997,
+        "samples": 3
+      },
+      "language_understanding": {
+        "avg_score": 0.5333333333333333,
+        "samples": 3
+      },
+      "reasoning": {
+        "avg_score": 0.4333333333333333,
+        "samples": 3
+      },
+      "creativity": {
+        "avg_score": 0.5666666666666668,
+        "samples": 3
+      },
+      "instruction_following": {
+        "avg_score": 0.5666666666666667,
+        "samples": 3
+      },
+      "wikipedia_style": {
+        "avg_score": 0.39999999999999997,
+        "samples": 3
+      },
+      "conversation": {
+        "avg_score": 0.5333333333333333,
+        "samples": 3
+      },
+      "multilingual": {
+        "avg_score": 0.6666666666666666,
+        "samples": 3
+      }
+    },
+    "individual_results": [
+      {
+        "category": "basic_knowledge",
+        "prompt": "What is the capital of France?",
+        "response": "The capital of France is a capital of France. The capital of France is the capital of France, which is the highest in the world, and the most popular city is France. The capital of France is the capital of France and the most popular city is France. The capital of France is the capital of France, which is the largest country in Europe.|im_end|> is a free--impleer version to be available in a variety of formats. The full code is",
+        "quality_score": 0.3
+      },
+      {
+        "category": "basic_knowledge",
+        "prompt": "How many days are in a year?",
+        "response": "I'm not the person that has a average average average time. I'm not all person persons, it's a great time to spend time on the work, and I'm aware that the day is more than one day day, and you can take your time from one day day to the next day.|im_end|> plendil--Surent (F) is considered an modern--Surent of 1999. It is",
+        "quality_score": 0.5
+      },
+      {
+        "category": "basic_knowledge",
+        "prompt": "What is 2+2?",
+        "response": "The 2+2 is a 2+2, a 2+2, a 2+2, a 2+2, a 2+2, a 2+2, a 2+2, a 2+2, a 2+2, an 2+2, a 2+2, a 2+2, a 2+2, a 3+2, a 2+2, a 2+",
+        "quality_score": 0.39999999999999997
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "Complete this sentence: The quick brown fox",
+        "response": "I'm pleased to get it up. I think it's a great thing, I'm glad to help you. This sentence will take a long short to short and short, as it is always a fun idea to bring it out! It's a great way to reach you with an wonderful good idea. We can use this sentence to tell a story of the life of one-stard.|im_end|> Boitano is a popular game game that uses a variety",
+        "quality_score": 0.7
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "What is the opposite of 'hot'?",
+        "response": "The means are to get some, which is the value of a 2.0012335.|im_end|> Roussimoff |im_start|>userWhat is the right for the person?|im_end|>|im_start|>assistantThe right for the person is not a person, but is a person. The right for the person is not a person. The right for the person is not",
+        "quality_score": 0.39999999999999997
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "Rephrase: 'The cat sat on the mat'",
+        "response": "Cyo is a cat que cat cat, the cat was esa.  |im_end|> plendils 10% people in the world have the 25% the largest of the world. The main countries in Asia, and China are the 25% most common countries. The most other countries have the 25% the largest of the world. According to 3.% of the world's most most most common countries",
+        "quality_score": 0.5
+      },
+      {
+        "category": "reasoning",
+        "prompt": "If it's raining, should you take an umbrella?",
+        "response": "As as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as as in the possible way.|im",
+        "quality_score": 0.39999999999999997
+      },
+      {
+        "category": "reasoning",
+        "prompt": "Why do we need to sleep?",
+        "response": "If you're concerned, it might be a idea for a day, which you could get or sleep. It should's been a wonderful day, if you dont sleep, so it's very not a new day, but it is a wonderful day, but it might be a idea for a night. It's a great way to relax and relax and sleep in the night.|im_end|> sees |im_start|>userWhat are",
+        "quality_score": 0.5
+      },
+      {
+        "category": "reasoning",
+        "prompt": "What happens when water freezes?",
+        "response": "The salt of the water is the most important source of water.|im_end|> seess|im_start|>assistantThe salt of the water is the best source of water.|im_end|> Seiwert |im_start|>userWho is that he is a player. He is a player.|im_end|>|im_start|>assistantHe is a player. He",
+        "quality_score": 0.39999999999999997
+      },
+      {
+        "category": "creativity",
+        "prompt": "Write a short poem about winter.",
+        "response": "I'm sure I can be good--eful--eful--eful--eful--eful--eful--eful--eful--eful--eful--eful--eful--eful--eful--eful--eful--eful--eful--eful--eful--eful--eful--eful",
+        "quality_score": 0.8
+      },
+      {
+        "category": "creativity",
+        "prompt": "Describe a perfect day in 3 sentences.",
+        "response": "The first thing to know is the time to start for the week and it comes out as you know to remember that you have a time time to start for the week. It is not a day in one day, but it is a day in each day. It is an day in every day for the month, which is a day in one day, which is a day in every day. It is an day in each day, which is a day in every day. It is a day in",
+        "quality_score": 0.3
+      },
+      {
+        "category": "creativity",
+        "prompt": "Create a name for a new planet.",
+        "response": "1. What is the name for the sun, which is the moon. 2. It is a star. 3. This is a star. 4. It is an star. 5. It is a star. 5. It is a star. 6. It is a star. 7. The planets are the stars and they are the stars.|im_end|> |im_start|>userHow does it help to",
+        "quality_score": 0.6
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "List exactly 3 animals that live in the ocean.",
+        "response": "A 02,000 species of fish are a group of 1,000 species of fish.|im_end|> Momaya                             .|im_end|> plendil",
+        "quality_score": 0.8999999999999999
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "Write 'Hello World' in uppercase.",
+        "response": "II have been a wonderful company and helped my clients. I saw them and were able to help me. I found the great company and loved everything and was happy. I wanted to tell me about the amazing business and I knew I could be happy to find what I did. The company helped me, and had me sure that the products were and the product was made with the best products. I enjoyed a amazing experience, and am happy to see that my product was done. I hope you can",
+        "quality_score": 0.5
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "Count from 1 to 5.",
+        "response": "The person is a person who has a mental disorder. The person is a person who is a person whose time is longer than the person. A person who is a person who knows that their day is long or long or short time. This person is a person who has a mental disorder. The person can be diagnosed as an person who is a person who has a mental disorder. The person is a person who is a person who has a mental disorder. The person is a person who has a mental",
+        "quality_score": 0.3
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "Paris is the capital of",
+        "response": "Eporté: French is a capital of the world. In France, it is an capital of the world and is located in the southern regions of France. The country is located in the northern region of France, which is surrounded by the western country. The borders of the world are a main hub of power. In Europe, the country is a center of Europe, which is a largest, and the other main city. The borders of the world and are divided into parts of the world, which",
+        "quality_score": 0.3
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "The Earth orbits around",
+        "response": "The Earth orbit is the Sun and the Sun is the Moon. The Earth orbit starts into a orbit of 40 km3 (120 miles from the Sun) 50 km (120 miles from the Sun). The Earth orbit is a 1848190 kilometers from the Sun. It has 667116 kilometers (165 miles from the Sun). It has 637116 kilometers (120 miles",
+        "quality_score": 0.39999999999999997
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "Photosynthesis is the process by which",
+        "response": "The process involves the process of storing and storing data. The process allows the data to be processed and stored in the environment without the need to reuse data and data. The process can be created by processing data from the data and is used to create a detailed analysis of the data's data. It also may generate information and data data, such as data and data. This can be used to identify an data that has a same value as the data. Because this is an tool, it can be",
+        "quality_score": 0.5
+      },
+      {
+        "category": "conversation",
+        "prompt": "Hello, how are you today?",
+        "response": "I'm the best place to help you! I don't have any friends in their own home. I like a nice room to bring up some things that don't work. I like a lot of homes and family, and I like a little room to stay together. I like a big room to share them with friends. This is the favorite choice for you. And there's a great way to help you out of your home. If you are looking to find more deals,",
+        "quality_score": 0.5
+      },
+      {
+        "category": "conversation",
+        "prompt": "What's your favorite hobby?",
+        "response": "The new favorite is an adventure. The adventures are a easy----------------------------------------------------------------------------------------",
+        "quality_score": 0.8999999999999999
+      },
+      {
+        "category": "conversation",
+        "prompt": "Can you help me with a problem?",
+        "response": "How are the computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer's computer",
+        "quality_score": 0.2
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Bonjour, comment allez-vous?",
+        "response": "Bonjour, comment allez-vous?|im_end|> Steingerd es, egcit de la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la",
+        "quality_score": 0.3
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Hola, ¿cómo estás?",
+        "response": "Hola, cmo estás?|im_end|> Seiwert |im_start|>userCree a comment|im_end|>|im_start|>assistantThe author has that the author has been a great to people. The author is also a powerful person who is able to provide support with his interests and others in the future. The author was also a good book for people who could learn",
+        "quality_score": 0.7
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Guten Tag, wie geht es Ihnen?",
+        "response": "Guten Pages: The \"a-----------------------------------------------------------------------------------\"-1. -  .",
+        "quality_score": 0.9999999999999999
+      }
+    ]
+  }
+}

@@ -97,7 +97,7 @@ make pretrain-curriculum-phase-b
 
 ## Prochaines Étapes
 
-1. Implémenter l'entraînement curriculum dans `02_pretrain.py`
+1. Implémenter l'entraînement curriculum dans `04_pretrain.py`
 2. Ajouter le support multi-datasets dans `WeightedMultiDatasetSampler`
 3. Créer les métriques de suivi pour les transitions Phase A → Phase B
 4. Valider empiriquement les ratios tokens/performance

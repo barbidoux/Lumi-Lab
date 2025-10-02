@@ -28,6 +28,14 @@ SMALL_CONFIG := $(CONFIG_DIR)/small.json
 BASE_CONFIG := $(CONFIG_DIR)/base.json
 SFT_CONFIG := $(CONFIG_DIR)/sft.json
 
+# Industrial SFT configurations
+SFT_DATASET_CONFIG ?= $(CONFIG_DIR)/sft_datasets/alpaca_chatml.json
+SFT_TRAINING_CONFIG ?= $(CONFIG_DIR)/sft_training/lora_tiny.json
+SFT_MODEL_PATH ?= $(CHECKPOINTS_DIR)/pretrain/tiny/final
+SFT_OUTPUT_DIR ?= $(CHECKPOINTS_DIR)/sft_industrial
+SFT_DATA_DIRS ?= data/sft_processed/alpaca_chatml_32k_1024
+TOKENIZER_PATH ?= data/tokenizer/spm32k.model
+
 # Help
 .PHONY: help
 help:
@@ -63,8 +71,17 @@ help:
 	@echo "  pretrain-tiny        - Launch tiny model pre-training"
 	@echo "  pretrain-small       - Launch small model pre-training"
 	@echo "  pretrain-base        - Launch base model pre-training"
-	@echo "  sft                  - Launch supervised fine-tuning"
+	@echo "  sft                  - Launch supervised fine-tuning (legacy)"
+	@echo "  sft-industrial       - Launch industrial SFT training"
 	@echo "  dpo                  - Launch DPO alignment"
+	@echo ""
+	@echo "🎓 INDUSTRIAL SFT PIPELINE:"
+	@echo "  prepare-sft-corpus         - Prepare SFT corpus (format v2.0 - raw text)"
+	@echo "  prepare-sft-corpus-packed  - Prepare pre-packed SFT corpus (format v3.0 - optimal)"
+	@echo "  sft-train-tiny             - Train tiny model with industrial SFT"
+	@echo "  sft-train-small            - Train small model with industrial SFT"
+	@echo "  sft-train-base             - Train base model with industrial SFT"
+	@echo "  sft-eval                   - Evaluate SFT model with generation tests"
 	@echo ""
 	@echo "📊 EVALUATION AND ANALYSIS:"
 	@echo "  evaluate             - Complete evaluation"
@@ -181,7 +198,7 @@ prepare-legacy:
 pretrain-tiny:
 	@echo "Launching tiny model pre-training..."
 	@mkdir -p $(CHECKPOINTS_DIR)/pretrain/tiny
-	$(ACCELERATE) $(SCRIPTS_DIR)/02_pretrain.py \
+	$(ACCELERATE) $(SCRIPTS_DIR)/04_pretrain.py \
 		--config $(TINY_CONFIG) \
 		--data_dir $(DATA_DIR)/processed \
 		--output_dir $(CHECKPOINTS_DIR)/pretrain/tiny \
@@ -199,7 +216,7 @@ pretrain-tiny:
 pretrain-small:
 	@echo "Launching small model pre-training..."
 	@mkdir -p $(CHECKPOINTS_DIR)/pretrain/small
-	$(ACCELERATE) $(SCRIPTS_DIR)/02_pretrain.py \
+	$(ACCELERATE) $(SCRIPTS_DIR)/04_pretrain.py \
 		--config $(SMALL_CONFIG) \
 		--data_dir $(DATA_DIR)/processed \
 		--output_dir $(CHECKPOINTS_DIR)/pretrain/small \
@@ -217,7 +234,7 @@ pretrain-small:
 pretrain-base:
 	@echo "Launching base model pre-training..."
 	@mkdir -p $(CHECKPOINTS_DIR)/pretrain/base
-	$(ACCELERATE) $(SCRIPTS_DIR)/02_pretrain.py \
+	$(ACCELERATE) $(SCRIPTS_DIR)/04_pretrain.py \
 		--config $(BASE_CONFIG) \
 		--data_dir $(DATA_DIR)/processed \
 		--output_dir $(CHECKPOINTS_DIR)/pretrain/base \
@@ -305,7 +322,7 @@ pipeline-full: prepare pretrain-tiny sft dpo evaluate serve
 .PHONY: resume-pretrain-tiny
 resume-pretrain-tiny:
 	@echo "Resuming tiny pre-training from last checkpoint..."
-	$(ACCELERATE) $(SCRIPTS_DIR)/02_pretrain.py \
+	$(ACCELERATE) $(SCRIPTS_DIR)/04_pretrain.py \
 		--config $(TINY_CONFIG) \
 		--data_dir $(DATA_DIR)/processed \
 		--output_dir $(CHECKPOINTS_DIR)/pretrain/tiny \
@@ -320,7 +337,7 @@ test-pipeline:
 	@echo "Testing pipeline with synthetic data (standard attention)..."
 	@mkdir -p $(DATA_DIR)/test
 	@[ ! -f $(DATA_DIR)/test/tokenized_data.json ] && python -c "import json; tokens1 = list(range(1, 1251)); tokens2 = list(range(1251, 2501)); tokens3 = list(range(2501, 3751)); json.dump([tokens1, tokens2, tokens3], open('$(DATA_DIR)/test/tokenized_data.json', 'w'))" || true
-	$(PYTHON) $(SCRIPTS_DIR)/02_pretrain.py \
+	$(PYTHON) $(SCRIPTS_DIR)/04_pretrain.py \
 		--config $(TINY_CONFIG) \
 		--data_path $(DATA_DIR)/test/tokenized_data.json \
 		--output_dir $(CHECKPOINTS_DIR)/test \
@@ -335,7 +352,7 @@ test-pipeline-flash:
 	@echo "Testing pipeline with synthetic data (FlashAttention-2)..."
 	@mkdir -p $(DATA_DIR)/test
 	@[ ! -f $(DATA_DIR)/test/tokenized_data.json ] && python -c "import json; tokens1 = list(range(1, 1251)); tokens2 = list(range(1251, 2501)); tokens3 = list(range(2501, 3751)); json.dump([tokens1, tokens2, tokens3], open('$(DATA_DIR)/test/tokenized_data.json', 'w'))" || true
-	$(PYTHON) $(SCRIPTS_DIR)/02_pretrain.py \
+	$(PYTHON) $(SCRIPTS_DIR)/04_pretrain.py \
 		--config $(TINY_CONFIG) \
 		--data_path $(DATA_DIR)/test/tokenized_data.json \
 		--output_dir $(CHECKPOINTS_DIR)/test-flash \
@@ -653,7 +670,7 @@ prepare-quick:
 pretrain-tiny-quick:
 	@echo "Quick tiny pre-training (short version)..."
 	@mkdir -p $(CHECKPOINTS_DIR)/pretrain/tiny
-	$(ACCELERATE) $(SCRIPTS_DIR)/02_pretrain.py \
+	$(ACCELERATE) $(SCRIPTS_DIR)/04_pretrain.py \
 		--config $(TINY_CONFIG) \
 		--data_dir $(DATA_DIR)/processed \
 		--output_dir $(CHECKPOINTS_DIR)/pretrain/tiny \
@@ -829,7 +846,7 @@ data-rebuild-all:
 	@echo "🎉 Full data pipeline completed!"
 	@echo "✅ All datasets now use consistent tokenizer"
 	@echo "🚀 Ready for multi-dataset training with:"
-	@echo "   accelerate launch scripts/02_pretrain.py --data_dirs data/processed/wikipedia_en_32k_1024 data/processed/openwebtext_32k_1024"
+	@echo "   accelerate launch scripts/04_pretrain.py --data_dirs data/processed/wikipedia_en_32k_1024 data/processed/openwebtext_32k_1024"
 
 # Reset tokenizer (with confirmation to prevent accidents)
 .PHONY: tokenizer-reset
@@ -889,3 +906,153 @@ reencode-dataset:
 		--config_path "$$config_file" \
 		--reuse_tokenizer
 	@echo "✅ Dataset re-encoded with current tokenizer"
+
+# ========================================
+# INDUSTRIAL SFT PIPELINE COMMANDS
+# ========================================
+
+# Prepare SFT corpus from conversational datasets (format v2.0 - raw text)
+.PHONY: prepare-sft-corpus
+prepare-sft-corpus:
+	@echo "🎓 Preparing SFT corpus (format v2.0 - raw text)..."
+	@if [ ! -f "$(TOKENIZER_PATH)" ]; then \
+		echo "❌ Tokenizer not found: $(TOKENIZER_PATH)"; \
+		echo "Please train tokenizer first with: make tokenizer-train-mix"; \
+		exit 1; \
+	fi
+	@mkdir -p data/sft_processed
+	$(PYTHON) $(SCRIPTS_DIR)/02_prepare_sft_corpus.py \
+		--config $(SFT_DATASET_CONFIG) \
+		--output_dir data/sft_processed/$$(basename $(SFT_DATASET_CONFIG) .json)_32k_1024_v2 \
+		--tokenizer_path $(TOKENIZER_PATH)
+	@echo "✅ SFT corpus preparation completed!"
+
+# Prepare SFT corpus with pre-packing (format v3.0 - optimal for training)
+.PHONY: prepare-sft-corpus-packed
+prepare-sft-corpus-packed:
+	@echo "📦 Preparing pre-packed SFT corpus (format v3.0)..."
+	@if [ ! -f "$(TOKENIZER_PATH)" ]; then \
+		echo "❌ Tokenizer not found: $(TOKENIZER_PATH)"; \
+		echo "Please train tokenizer first with: make tokenizer-train-mix"; \
+		exit 1; \
+	fi
+	@mkdir -p data/sft_processed
+	$(PYTHON) $(SCRIPTS_DIR)/02_prepare_sft_corpus.py \
+		--config $(SFT_DATASET_CONFIG) \
+		--output_dir data/sft_processed/$$(basename $(SFT_DATASET_CONFIG) .json)_32k_1024_v3 \
+		--tokenizer_path $(TOKENIZER_PATH) \
+		--enable_packing
+	@echo "✅ Pre-packed SFT corpus preparation completed!"
+
+# Train tiny model with industrial SFT
+.PHONY: sft-train-tiny
+sft-train-tiny:
+	@echo "🎓 Training tiny model with industrial SFT..."
+	@if [ ! -d "$(SFT_DATA_DIRS)" ]; then \
+		echo "❌ SFT data not found: $(SFT_DATA_DIRS)"; \
+		echo "Please prepare SFT corpus first with: make prepare-sft-corpus"; \
+		exit 1; \
+	fi
+	@mkdir -p $(SFT_OUTPUT_DIR)/tiny
+	$(ACCELERATE) $(SCRIPTS_DIR)/03_sft_industrial.py \
+		--config $(CONFIG_DIR)/sft_training/lora_tiny.json \
+		--model_path $(CHECKPOINTS_DIR)/pretrain/tiny/final \
+		--data_dirs $(SFT_DATA_DIRS) \
+		--tokenizer_path $(TOKENIZER_PATH) \
+		--output_dir $(SFT_OUTPUT_DIR)/tiny
+	@echo "✅ Tiny SFT training completed!"
+
+# Train small model with industrial SFT
+.PHONY: sft-train-small
+sft-train-small:
+	@echo "🎓 Training small model with industrial SFT..."
+	@if [ ! -d "$(SFT_DATA_DIRS)" ]; then \
+		echo "❌ SFT data not found: $(SFT_DATA_DIRS)"; \
+		echo "Please prepare SFT corpus first with: make prepare-sft-corpus"; \
+		exit 1; \
+	fi
+	@mkdir -p $(SFT_OUTPUT_DIR)/small
+	$(ACCELERATE) $(SCRIPTS_DIR)/03_sft_industrial.py \
+		--config $(CONFIG_DIR)/sft_training/lora_small.json \
+		--model_path $(CHECKPOINTS_DIR)/pretrain/small/final \
+		--data_dirs $(SFT_DATA_DIRS) \
+		--tokenizer_path $(TOKENIZER_PATH) \
+		--output_dir $(SFT_OUTPUT_DIR)/small
+	@echo "✅ Small SFT training completed!"
+
+# Train base model with industrial SFT
+.PHONY: sft-train-base
+sft-train-base:
+	@echo "🎓 Training base model with industrial SFT..."
+	@if [ ! -d "$(SFT_DATA_DIRS)" ]; then \
+		echo "❌ SFT data not found: $(SFT_DATA_DIRS)"; \
+		echo "Please prepare SFT corpus first with: make prepare-sft-corpus"; \
+		exit 1; \
+	fi
+	@mkdir -p $(SFT_OUTPUT_DIR)/base
+	$(ACCELERATE) $(SCRIPTS_DIR)/03_sft_industrial.py \
+		--config $(CONFIG_DIR)/sft_training/lora_base.json \
+		--model_path $(CHECKPOINTS_DIR)/pretrain/base/final \
+		--data_dirs $(SFT_DATA_DIRS) \
+		--tokenizer_path $(TOKENIZER_PATH) \
+		--output_dir $(SFT_OUTPUT_DIR)/base
+	@echo "✅ Base SFT training completed!"
+
+# Multi-dataset SFT training example
+.PHONY: sft-train-multi-dataset
+sft-train-multi-dataset:
+	@echo "🎓 Training with multiple SFT datasets..."
+	@mkdir -p $(SFT_OUTPUT_DIR)/multi
+	$(ACCELERATE) $(SCRIPTS_DIR)/03_sft_industrial.py \
+		--config $(SFT_TRAINING_CONFIG) \
+		--model_path $(SFT_MODEL_PATH) \
+		--data_dirs data/sft_processed/alpaca_chatml_32k_1024 data/sft_processed/openassistant_instruct_32k_1024 \
+		--data_weights 0.7 0.3 \
+		--tokenizer_path $(TOKENIZER_PATH) \
+		--output_dir $(SFT_OUTPUT_DIR)/multi
+	@echo "✅ Multi-dataset SFT training completed!"
+
+# Evaluate SFT model with generation tests
+.PHONY: sft-eval
+sft-eval:
+	@echo "🎓 Evaluating SFT model..."
+	@if [ ! -d "$(SFT_OUTPUT_DIR)" ]; then \
+		echo "❌ SFT model not found. Please train a model first."; \
+		exit 1; \
+	fi
+	@mkdir -p evaluation_results/sft
+	$(PYTHON) $(SCRIPTS_DIR)/05_evaluate.py \
+		--model_path $(SFT_OUTPUT_DIR)/final_model \
+		--tokenizer_path $(TOKENIZER_PATH) \
+		--output_dir evaluation_results/sft \
+		--custom_prompts evaluation/sft_evaluation_prompts.json \
+		--generation_evaluation
+	@echo "✅ SFT evaluation completed!"
+
+# Complete SFT pipeline from scratch
+.PHONY: sft-pipeline-complete
+sft-pipeline-complete:
+	@echo "🚀 Running complete industrial SFT pipeline..."
+	@echo "Step 1: Preparing SFT corpus..."
+	$(MAKE) prepare-sft-corpus
+	@echo "Step 2: Training SFT model..."
+	$(MAKE) sft-train-tiny
+	@echo "Step 3: Evaluating SFT model..."
+	$(MAKE) sft-eval
+	@echo "✅ Complete SFT pipeline finished!"
+
+# Customizable SFT training (use variables to override)
+.PHONY: sft-custom
+sft-custom:
+	@echo "🎓 Custom SFT training..."
+	@echo "Dataset config: $(SFT_DATASET_CONFIG)"
+	@echo "Training config: $(SFT_TRAINING_CONFIG)"
+	@echo "Model path: $(SFT_MODEL_PATH)"
+	@echo "Data dirs: $(SFT_DATA_DIRS)"
+	$(ACCELERATE) $(SCRIPTS_DIR)/03_sft_industrial.py \
+		--config $(SFT_TRAINING_CONFIG) \
+		--model_path $(SFT_MODEL_PATH) \
+		--data_dirs $(SFT_DATA_DIRS) \
+		--tokenizer_path $(TOKENIZER_PATH) \
+		--output_dir $(SFT_OUTPUT_DIR)
+	@echo "✅ Custom SFT training completed!"

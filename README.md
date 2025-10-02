@@ -139,7 +139,7 @@ make prepare-wiki-with-tokenizer
 make prepare-owt-with-tokenizer  
 
 # 3. Train with guaranteed consistency
-accelerate launch scripts/02_pretrain.py \\
+accelerate launch scripts/04_pretrain.py \\
     --data_dirs data/processed/wikipedia_en_32k_1024 data/processed/openwebtext_32k_1024 \\
     --config config/tiny.json
 ```
@@ -246,7 +246,7 @@ Lumi/
 │   └── (created automatically)
 ├── scripts/                # Training scripts
 │   ├── 01_prepare_data.py  # Data preparation and cleaning
-│   ├── 02_pretrain.py      # Pre-training from scratch
+│   ├── 04_pretrain.py      # Pre-training from scratch
 │   ├── 03_sft.py          # Supervised fine-tuning with LoRA
 │   ├── 04_dpo.py          # DPO alignment
 │   ├── 05_evaluate.py     # Evaluation and benchmarks
@@ -500,13 +500,13 @@ Train on multiple datasets simultaneously with weighted sampling for better mode
 
 ```bash
 # Basic multi-dataset training with equal weights
-python scripts/02_pretrain.py \
+python scripts/04_pretrain.py \
     --config config/tiny.json \
     --data_dirs data/processed/wiki_32k data/processed/owt_32k \
     --max_steps 20000
 
 # Advanced: Custom weights and monitoring
-python scripts/02_pretrain.py \
+python scripts/04_pretrain.py \
     --config config/small.json \
     --data_dirs data/processed/wiki_32k data/processed/owt_32k data/processed/c4_32k \
     --data_weights 0.3 0.4 0.3 \
@@ -538,7 +538,7 @@ python scripts/02_pretrain.py \
 make pretrain-tiny
 
 # Or manually with more control
-accelerate launch scripts/02_pretrain.py \
+accelerate launch scripts/04_pretrain.py \
     --config config/tiny.json \
     --data_path ./data/processed/tokenized_data.json \
     --learning_rate 3e-4 \
@@ -552,7 +552,7 @@ accelerate launch scripts/02_pretrain.py \
 #### Resume from Checkpoint
 
 ```bash
-accelerate launch scripts/02_pretrain.py \
+accelerate launch scripts/04_pretrain.py \
     --config config/tiny.json \
     --data_path ./data/processed/tokenized_data.json \
     --resume_from_checkpoint ./checkpoints/pretrain/tiny/step_10000
@@ -562,13 +562,13 @@ accelerate launch scripts/02_pretrain.py \
 
 ```bash
 # Enable deterministic training (default)
-accelerate launch scripts/02_pretrain.py \
+accelerate launch scripts/04_pretrain.py \
     --config config/tiny.json \
     --data_path ./data/processed/tokenized_data.json \
     --seed 42
 
 # Disable deterministic training (faster but non-reproducible)
-accelerate launch scripts/02_pretrain.py \
+accelerate launch scripts/04_pretrain.py \
     --config config/tiny.json \
     --data_path ./data/processed/tokenized_data.json \
     --no_deterministic
@@ -807,10 +807,10 @@ export BATCH_SIZE=4
 make pretrain-tiny
 
 # Solution 2: Enable gradient checkpointing
-python scripts/02_pretrain.py --gradient_checkpointing
+python scripts/04_pretrain.py --gradient_checkpointing
 
 # Solution 3: Reduce sequence length
-python scripts/02_pretrain.py --max_length 512
+python scripts/04_pretrain.py --max_length 512
 ```
 
 #### 🚨 Tokenizer Issues (Multi-Dataset Training)
@@ -958,7 +958,7 @@ Test that training is fully reproducible:
 
 ```bash
 # 1. Start training with specific seed
-accelerate launch scripts/02_pretrain.py \
+accelerate launch scripts/04_pretrain.py \
     --config config/tiny.json \
     --data_path ./data/processed/tokenized_data.json \
     --seed 1337 \
@@ -966,7 +966,7 @@ accelerate launch scripts/02_pretrain.py \
     --save_steps 50
 
 # 2. Note the loss/LR at step 100, then restart from step 50
-accelerate launch scripts/02_pretrain.py \
+accelerate launch scripts/04_pretrain.py \
     --config config/tiny.json \
     --data_path ./data/processed/tokenized_data.json \
     --resume_from_checkpoint ./checkpoints/pretrain/tiny/step_50 \
@@ -1079,14 +1079,14 @@ make pretrain-tiny BATCH_SIZE=8 LEARNING_RATE=1e-4
 
 ```bash
 # Train on Wikipedia + OpenWebText with equal weights  
-python scripts/02_pretrain.py \
+python scripts/04_pretrain.py \
     --config config/tiny.json \
     --data_dirs data/processed/wiki_32k data/processed/owt_32k \
     --max_steps 10000 \
     --output_dir checkpoints/multi_wiki_owt
 
 # Custom weights: 30% Wikipedia, 70% OpenWebText
-python scripts/02_pretrain.py \
+python scripts/04_pretrain.py \
     --config config/small.json \
     --data_dirs data/processed/wiki_32k data/processed/owt_32k \
     --data_weights 0.3 0.7 \
@@ -1098,7 +1098,7 @@ python scripts/02_pretrain.py \
 
 ```bash
 # Three datasets with different mixing ratios
-python scripts/02_pretrain.py \
+python scripts/04_pretrain.py \
     --config config/base.json \
     --data_dirs data/processed/wiki_32k data/processed/owt_32k data/processed/c4_32k \
     --data_weights 0.2 0.5 0.3 \
@@ -1111,7 +1111,7 @@ python scripts/02_pretrain.py \
 
 ```bash
 # Resume training maintains exact dataset mixing ratios and RNG state
-python scripts/02_pretrain.py \
+python scripts/04_pretrain.py \
     --config config/small.json \
     --data_dirs data/processed/wiki_32k data/processed/owt_32k \
     --data_weights 0.4 0.6 \

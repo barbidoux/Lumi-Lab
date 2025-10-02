@@ -6,7 +6,7 @@ import json
 import torch
 from pathlib import Path
 from typing import Dict, List, Optional, Union, Callable, Any
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, IterableDataset
 import numpy as np
 import glob
 import random
@@ -15,6 +15,411 @@ import logging
 import re
 import hashlib
 from collections import defaultdict
+import gzip
+
+
+class StreamingSFTDataset(IterableDataset):
+    """
+    Iterable/streaming dataset for SFT training.
+    Loads conversations from sharded JSONL files one by one, avoiding high memory usage.
+    """
+
+    def __init__(self, data_dir: str, split: str = "train", use_pretokenized: bool = True):
+        """
+        Args:
+            data_dir: Path to directory containing SFT shards and manifest.json
+            split: Dataset split ('train' or 'val')
+            use_pretokenized: If True and data is pre-tokenized, yield input_ids instead of text
+        """
+        super().__init__()
+        self.data_dir = Path(data_dir)
+        self.split = split
+        self.use_pretokenized = use_pretokenized
+
+        # Load manifest to get shard file list
+        self.manifest_path = self.data_dir / "manifest.json"
+        if not self.manifest_path.exists():
+            raise FileNotFoundError(f"Manifest not found: {self.manifest_path}")
+
+        with open(self.manifest_path, 'r', encoding='utf-8') as f:
+            manifest = json.load(f)
+
+        if split not in manifest['splits']:
+            available_splits = list(manifest['splits'].keys())
+            raise ValueError(f"Split '{split}' not found. Available: {available_splits}")
+
+        self.split_info = manifest['splits'][split]
+        self.shard_files = [shard['filename'] for shard in self.split_info['shards']]
+
+        # Store tokenizer and dataset metadata
+        self.tokenizer_metadata = manifest.get('tokenizer_metadata', {})
+        self.total_conversations = self.split_info.get('conversations', 0)
+
+        # Detect dataset format version
+        format_version = manifest.get('format_version', '1.0')
+        self.format_version = format_version
+
+        # Version 3.0 = pre-packed sequences (input_ids, attention_mask, labels)
+        # Version 2.0 = raw text only, no tokenization
+        # Version 1.0 = pre-tokenized with tokens field
+        self.is_prepacked = (format_version == '3.0')
+        self.is_pretokenized = (format_version == '1.0' and 'tokenizer_metadata' in manifest and use_pretokenized)
+
+        logging.info(f"StreamingSFTDataset initialized for '{split}' split:")
+        logging.info(f"  - Format version: {format_version}")
+        logging.info(f"  - {self.split_info.get('num_shards', 0)} shards")
+
+        if self.is_prepacked:
+            total_items = self.split_info.get('sequences', 0)
+            logging.info(f"  - {total_items:,} pre-packed sequences")
+            logging.info(f"  - Using pre-packed data (input_ids, attention_mask, labels)")
+            packing_stats = manifest.get('packing_metadata', {})
+            if packing_stats:
+                logging.info(f"  - Packing efficiency: {packing_stats.get('packing_efficiency', 0):.2f}%")
+        else:
+            total_items = self.total_conversations
+            logging.info(f"  - {total_items:,} total conversations")
+            if self.is_pretokenized:
+                logging.info(f"  - Using pre-tokenized data (input_ids)")
+            else:
+                logging.info(f"  - Using raw text (TRL will tokenize)")
+
+    def __len__(self):
+        # Length is required by TRL for progress bars and step calculation
+        if self.is_prepacked:
+            return self.split_info.get('sequences', 0)
+        else:
+            return self.total_conversations
+
+    def __iter__(self):
+        """Yields conversations or pre-packed sequences from shards one by one."""
+        worker_info = torch.utils.data.get_worker_info()
+        shard_files_to_process = self.shard_files
+
+        if worker_info is not None:
+            # Multi-worker data loading: each worker gets a subset of shards
+            num_workers = worker_info.num_workers
+            worker_id = worker_info.id
+            shard_files_to_process = [shard for i, shard in enumerate(self.shard_files) if i % num_workers == worker_id]
+
+        # Shuffle shards for each iteration (epoch)
+        random.shuffle(shard_files_to_process)
+
+        for shard_filename in shard_files_to_process:
+            shard_path = self.data_dir / shard_filename
+
+            # Support compressed or uncompressed shards
+            open_fn = gzip.open if shard_path.name.endswith('.gz') else open
+
+            try:
+                with open_fn(shard_path, 'rt', encoding='utf-8') as f:
+                    for line in f:
+                        if line.strip():
+                            try:
+                                item = json.loads(line)
+
+                                # Format v3.0: Pre-packed sequences with input_ids, attention_mask, labels
+                                if self.is_prepacked and 'input_ids' in item:
+                                    yield {
+                                        "input_ids": item['input_ids'],
+                                        "attention_mask": item['attention_mask'],
+                                        "labels": item['labels']
+                                    }
+                                # Format v1.0: Pre-tokenized with tokens field
+                                elif self.is_pretokenized and 'tokens' in item:
+                                    yield {"input_ids": item['tokens']}
+                                # Format v2.0: Raw text (TRL will tokenize)
+                                elif 'text' in item:
+                                    yield {"text": item['text']}
+                            except json.JSONDecodeError:
+                                logging.warning(f"Skipping malformed JSON line in {shard_filename}")
+                                continue
+            except FileNotFoundError:
+                logging.warning(f"Shard file not found: {shard_path}, skipping.")
+                continue
+    
+    def get_tokenizer_metadata(self) -> Dict[str, Any]:
+        """Get tokenizer metadata from manifest."""
+        return self.tokenizer_metadata
+
+    @property
+    def column_names(self) -> List[str]:
+        """Return column names for TRL compatibility."""
+        if self.is_prepacked:
+            return ["input_ids", "attention_mask", "labels"]
+        elif self.is_pretokenized:
+            return ["input_ids"]
+        else:
+            return ["text"]
+
+
+class SFTDataset(Dataset):
+    """
+    Dataset class for SFT training data.
+    Loads pre-processed and sharded SFT conversations.
+    """
+
+    def __init__(self, data_dir: str, split: str = "train", use_cache: bool = True):
+        """
+        Args:
+            data_dir: Path to directory containing SFT shards
+            split: Dataset split ('train' or 'val')
+            use_cache: Use cached conversations if available
+        """
+        self.data_dir = Path(data_dir)
+        self.split = split
+        self.use_cache = use_cache
+
+        # Load manifest
+        self.manifest_path = self.data_dir / "manifest.json"
+        if not self.manifest_path.exists():
+            raise FileNotFoundError(f"Manifest not found: {self.manifest_path}")
+
+        with open(self.manifest_path, 'r', encoding='utf-8') as f:
+            self.manifest = json.load(f)
+
+        # Verify split exists
+        if split not in self.manifest['splits']:
+            available_splits = list(self.manifest['splits'].keys())
+            raise ValueError(f"Split '{split}' not found. Available: {available_splits}")
+
+        self.split_info = self.manifest['splits'][split]
+
+        # Load conversations (with optional caching)
+        self.conversations = self._load_conversations_cached() if use_cache else self._load_conversations()
+
+        logging.info(f"SFTDataset loaded: {len(self.conversations):,} conversations "
+                    f"from {self.split_info['num_shards']} shards")
+
+    def _load_conversations(self) -> List[Dict[str, Any]]:
+        """Load all conversations from shard files with optimized loading."""
+        conversations = []
+        total_shards = len(self.split_info['shards'])
+
+        for i, shard_info in enumerate(self.split_info['shards']):
+            shard_path = self.data_dir / shard_info['filename']
+
+            if not shard_path.exists():
+                raise FileNotFoundError(f"Shard file not found: {shard_path}")
+
+            # Read entire file at once (faster than line by line)
+            with open(shard_path, 'r', encoding='utf-8') as f:
+                content = f.read().strip()
+
+            # Split lines and parse JSON in batch
+            if content:
+                lines = content.split('\n')
+                shard_conversations = [json.loads(line) for line in lines if line.strip()]
+                conversations.extend(shard_conversations)
+
+            # Progress indicator for large datasets
+            if i % 10 == 0 or i == total_shards - 1:
+                logging.info(f"Loaded {i+1}/{total_shards} shards ({len(conversations):,} conversations so far)")
+
+        return conversations
+
+    def _load_conversations_cached(self) -> List[Dict[str, Any]]:
+        """Load conversations with caching for faster subsequent loads."""
+        cache_file = self.data_dir / f".cache_{self.split}_conversations.json"
+
+        # Check if cache exists and is newer than manifest
+        if cache_file.exists():
+            try:
+                cache_mtime = cache_file.stat().st_mtime
+                manifest_mtime = self.manifest_path.stat().st_mtime
+
+                if cache_mtime > manifest_mtime:
+                    logging.info(f"Loading conversations from cache: {cache_file}")
+                    with open(cache_file, 'r', encoding='utf-8') as f:
+                        return json.load(f)
+                else:
+                    logging.info("Cache outdated, reloading conversations...")
+            except Exception as e:
+                logging.warning(f"Cache read failed: {e}, reloading conversations...")
+
+        # Load conversations and save to cache
+        conversations = self._load_conversations()
+
+        try:
+            with open(cache_file, 'w', encoding='utf-8') as f:
+                json.dump(conversations, f, ensure_ascii=False, separators=(',', ':'))
+            logging.info(f"Conversations cached to: {cache_file}")
+        except Exception as e:
+            logging.warning(f"Failed to save cache: {e}")
+
+        return conversations
+
+    def __len__(self) -> int:
+        """Return number of conversations."""
+        return len(self.conversations)
+
+    def __getitem__(self, idx: int) -> Dict[str, Any]:
+        """Get conversation by index."""
+        if idx >= len(self.conversations):
+            raise IndexError(f"Index {idx} out of range for dataset of size {len(self.conversations)}")
+
+        return self.conversations[idx]
+
+    def get_tokenizer_metadata(self) -> Dict[str, Any]:
+        """Get tokenizer metadata from manifest."""
+        return self.manifest['tokenizer_metadata']
+
+    def get_dataset_stats(self) -> Dict[str, Any]:
+        """Get dataset statistics."""
+        return {
+            'total_conversations': len(self.conversations),
+            'total_tokens': sum(conv['token_count'] for conv in self.conversations),
+            'avg_tokens_per_conversation': sum(conv['token_count'] for conv in self.conversations) / len(self.conversations),
+            'template': self.manifest['config']['template']
+        }
+
+
+class WeightedSFTSampler:
+    """
+    Weighted sampler for multiple SFT datasets.
+    Similar to WeightedMultiDatasetSampler but for SFT conversations.
+    """
+
+    def __init__(self, datasets: List[SFTDataset], weights: List[float],
+                 total_samples: int, seed: int = 42):
+        """
+        Args:
+            datasets: List of SFTDataset instances
+            weights: Sampling weights for each dataset
+            total_samples: Total number of samples to generate
+            seed: Random seed for reproducibility
+        """
+        self.datasets = datasets
+        self.weights = np.array(weights)
+        self.total_samples = total_samples
+        self.seed = seed
+
+        # Normalize weights
+        self.weights = self.weights / self.weights.sum()
+
+        # Validate inputs
+        if len(datasets) != len(weights):
+            raise ValueError("Number of datasets must match number of weights")
+
+        if any(len(ds) == 0 for ds in datasets):
+            raise ValueError("All datasets must contain at least one conversation")
+
+        # Setup random state
+        self.rng = np.random.RandomState(seed)
+
+        logging.info(f"WeightedSFTSampler initialized with {len(datasets)} datasets")
+        for i, (ds, weight) in enumerate(zip(datasets, self.weights)):
+            logging.info(f"  Dataset {i}: {len(ds):,} conversations, weight: {weight:.3f}")
+
+    def __iter__(self):
+        """Generate weighted samples."""
+        for _ in range(self.total_samples):
+            # Choose dataset based on weights
+            dataset_idx = self.rng.choice(len(self.datasets), p=self.weights)
+            dataset = self.datasets[dataset_idx]
+
+            # Choose random conversation from selected dataset
+            conv_idx = self.rng.randint(0, len(dataset))
+            conversation = dataset[conv_idx]
+
+            # Add metadata
+            conversation['_dataset_idx'] = dataset_idx
+            conversation['_original_idx'] = conv_idx
+
+            yield conversation
+
+    def __len__(self):
+        """Return total number of samples."""
+        return self.total_samples
+
+
+class SFTCollator:
+    """
+    Collator for SFT training data.
+    Handles tokenization and batching of conversations.
+    """
+
+    def __init__(self, tokenizer_path: str, max_length: int = 1024,
+                 padding: bool = True, truncation: bool = True):
+        """
+        Args:
+            tokenizer_path: Path to SentencePiece tokenizer
+            max_length: Maximum sequence length
+            padding: Whether to pad sequences
+            truncation: Whether to truncate long sequences
+        """
+        import sentencepiece as spm
+
+        self.tokenizer = spm.SentencePieceProcessor()
+        self.tokenizer.load(tokenizer_path)
+        self.max_length = max_length
+        self.padding = padding
+        self.truncation = truncation
+
+        # Get special tokens
+        self.pad_token_id = self.tokenizer.pad_id() if hasattr(self.tokenizer, 'pad_id') else 0
+        self.eos_token_id = self.tokenizer.eos_id()
+
+    def __call__(self, batch: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
+        """
+        Collate batch of conversations.
+
+        Args:
+            batch: List of conversation dictionaries
+
+        Returns:
+            Batch dictionary with tensors
+        """
+        texts = []
+        labels = []
+
+        for conversation in batch:
+            # Use pre-tokenized tokens if available
+            if 'tokens' in conversation:
+                tokens = conversation['tokens']
+            else:
+                # Tokenize on the fly (fallback)
+                tokens = self.tokenizer.encode(conversation['text'])
+
+            # Truncate if necessary
+            if self.truncation and len(tokens) > self.max_length:
+                tokens = tokens[:self.max_length]
+
+            # Add EOS token if not present
+            if tokens[-1] != self.eos_token_id:
+                tokens.append(self.eos_token_id)
+
+            texts.append(tokens)
+            labels.append(tokens.copy())  # For causal LM, labels = input_ids
+
+        # Pad sequences
+        if self.padding:
+            max_len = min(max(len(t) for t in texts), self.max_length)
+
+            padded_texts = []
+            padded_labels = []
+
+            for text, label in zip(texts, labels):
+                # Pad sequences
+                padding_length = max_len - len(text)
+                if padding_length > 0:
+                    text = text + [self.pad_token_id] * padding_length
+                    label = label + [-100] * padding_length  # -100 is ignored by loss
+
+                padded_texts.append(text)
+                padded_labels.append(label)
+
+            texts = padded_texts
+            labels = padded_labels
+
+        return {
+            'input_ids': torch.tensor(texts, dtype=torch.long),
+            'labels': torch.tensor(labels, dtype=torch.long),
+            'attention_mask': torch.tensor(
+                [[1 if token != self.pad_token_id else 0 for token in text] for text in texts],
+                dtype=torch.long
+            )
+        }
 
 
 class PackedDataset(Dataset):

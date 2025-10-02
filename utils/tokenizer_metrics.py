@@ -297,6 +297,45 @@ class TokenizerTrainingMetrics:
 
         print(f"   ⛔ Sentences skipped: {Colors.colorize(f'{sentences_skipped:,}', Colors.WARNING)}")
 
+        # Scientific Cross-Validation Section
+        if validation_results:
+            cross_validation = validation_results.get('cross_validation_analysis', {})
+            if cross_validation:
+                print(f"\n🔬 {Colors.colorize('Scientific Cross-Validation:', Colors.BOLD)}")
+
+                calibration_estimate = cross_validation.get('calibration_method_tokens', 0)
+                precise_estimate = cross_validation.get('precise_counting_extrapolated_tokens', 0)
+                accuracy = cross_validation.get('cross_validation_accuracy_percent', 0)
+                agreement = cross_validation.get('method_agreement', 'unknown')
+
+                agreement_color = Colors.GREEN if agreement == 'excellent' else Colors.WARNING if agreement == 'good' else Colors.FAIL
+
+                print(f"   📊 Calibration estimate: {Colors.colorize(f'{calibration_estimate:,} tokens', Colors.WARNING)}")
+                print(f"   🎯 Precise count estimate: {Colors.colorize(f'{precise_estimate:,} tokens', Colors.BOLD + Colors.GREEN)}")
+                print(f"   📈 Method agreement: {Colors.colorize(f'{agreement} ({accuracy:.1f}%)', agreement_color)}")
+
+                # Display heterogeneity analysis if available
+                heterogeneity = cross_validation.get('corpus_heterogeneity_analysis', {})
+                if heterogeneity:
+                    normal_count = heterogeneity.get('normal_shards_count', 0)
+                    anomalous_count = heterogeneity.get('anomalous_shards_count', 0)
+                    anomalous_details = heterogeneity.get('anomalous_shards_details', [])
+
+                    if anomalous_count > 0:
+                        print(f"   📊 Corpus structure: {Colors.colorize(f'{normal_count} normal', Colors.GREEN)} + {Colors.colorize(f'{anomalous_count} long-form shards', Colors.WARNING)}")
+                        print(f"   🔍 {Colors.colorize('Discrepancy cause:', Colors.BOLD)} Long documents under-represented in calibration sampling")
+
+                        if anomalous_details:
+                            print(f"   📚 Long-form content detected:")
+                            for detail in anomalous_details[:3]:  # Show first 3
+                                path_short = detail['path'].replace('.jsonl.gz', '')
+                                print(f"      • {Colors.colorize(path_short, Colors.CYAN)}: {detail['docs']} docs, {detail['sentences_per_doc']:.0f} sent/doc")
+                            if len(anomalous_details) > 3:
+                                print(f"      • ... and {len(anomalous_details) - 3} more")
+
+                if agreement in ['poor', 'bad']:
+                    print(f"   📊 {Colors.colorize('RECOMMENDED TOKEN COUNT:', Colors.BOLD + Colors.GREEN)} {Colors.colorize(f'{precise_estimate:,}', Colors.BOLD + Colors.GREEN)} (precise method)")
+
         # Mathematical consistency validation
         self._validate_mathematical_consistency(training_stats, validation_results)
 

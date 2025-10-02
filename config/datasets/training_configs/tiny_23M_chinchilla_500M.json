@@ -3,7 +3,7 @@
   "description": "Dataset complet pour modèle 23M paramètres - 500M tokens Chinchilla-optimal",
   "version": "1.0.0",
   "model_target": "23M parameters",
-  "target_total_tokens": 500000000,
+  "target_total_tokens": 600000000,
   "datasets_count": 4,
   "chinchilla_ratio": "22:1 tokens per parameter",
   "sequence_length": 1024,
@@ -20,7 +20,7 @@
     "shard_tokens": 2000000,
     "sequence_length": 1024,
     "vocab_size": 32768,
-    "tokenizer_path": "models/tokenizers/spm_32k"
+    "tokenizer_path": "data/models/tokenizers/spm_32k"
   },
 
   "sources": {
@@ -30,7 +30,7 @@
       "subset": "en",
       "split": "train",
       "text_keys": "text",
-      "token_budget": 125000000,
+      "token_budget": 150000000,
       "weight": 0.25,
       "description": "C4 English - diverse web content for generalization",
       "analysis_sample_size": 2000,
@@ -48,7 +48,7 @@
       "subset": null,
       "split": "train",
       "text_keys": "TEXT",
-      "token_budget": 125000000,
+      "token_budget": 150000000,
       "weight": 0.25,
       "description": "Project Gutenberg - classic literature and narrative structures",
       "analysis_sample_size": 1000,
@@ -66,7 +66,7 @@
       "subset": "sample-10BT",
       "split": "train",
       "text_keys": "text",
-      "token_budget": 125000000,
+      "token_budget": 150000000,
       "weight": 0.25,
       "description": "FineWeb-Edu - educational content for structured learning",
       "analysis_sample_size": 1500,
@@ -84,7 +84,7 @@
       "subset": null,
       "split": "train",
       "text_keys": "text",
-      "token_budget": 125000000,
+      "token_budget": 150000000,
       "weight": 0.25,
       "description": "VietGPT Wikipedia - encyclopedic foundation with enhanced preprocessing",
       "analysis_sample_size": 1500,

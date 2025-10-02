@@ -1,0 +1,211 @@
+{
+  "model_path": "checkpoints/sft/tiny_instruct_v1/merged",
+  "tokenizer_path": "data/models/tokenizers/spm_32k/spm.model",
+  "prompt_template": "instruct",
+  "evaluation_mode": "standard",
+  "model_parameters": 23072000,
+  "timestamp": "2025-10-02 10:19:45",
+  "evaluation_time_seconds": 33.32546377182007,
+  "perplexity_metrics": {
+    "perplexity": 204.48213305850442,
+    "avg_loss": 5.320480602758902,
+    "total_tokens": 7236,
+    "processed_samples": 50,
+    "dataset": "wikitext_raw_text",
+    "template": "raw_text"
+  },
+  "boolq_metrics": {
+    "accuracy": 0.43,
+    "correct": 43,
+    "total": 100,
+    "samples": 100
+  },
+  "boolq_accuracy": 0.43,
+  "smoke_tests": {
+    "summary_stats": {
+      "avg_quality_score": 0.4749999999999999,
+      "total_prompts": 24,
+      "categories_tested": 8
+    },
+    "category_results": {
+      "basic_knowledge": {
+        "avg_score": 0.4666666666666666,
+        "samples": 3
+      },
+      "language_understanding": {
+        "avg_score": 0.46666666666666673,
+        "samples": 3
+      },
+      "reasoning": {
+        "avg_score": 0.39999999999999997,
+        "samples": 3
+      },
+      "creativity": {
+        "avg_score": 0.4666666666666666,
+        "samples": 3
+      },
+      "instruction_following": {
+        "avg_score": 0.46666666666666673,
+        "samples": 3
+      },
+      "wikipedia_style": {
+        "avg_score": 0.43333333333333335,
+        "samples": 3
+      },
+      "conversation": {
+        "avg_score": 0.6999999999999998,
+        "samples": 3
+      },
+      "multilingual": {
+        "avg_score": 0.39999999999999997,
+        "samples": 3
+      }
+    },
+    "individual_results": [
+      {
+        "category": "basic_knowledge",
+        "prompt": "What is the capital of France?",
+        "response": "How is the capital of France is the capital of France? zyloprim ### Response:What is the capital of France? Seiwert : The capital of France is the capital of France. plendil  Diprotodon  Tatho ### Response:Where are the capital of France? ClearType  Accessed 20100.rokinole  Steingerd",
+        "quality_score": 0.6
+      },
+      {
+        "category": "basic_knowledge",
+        "prompt": "How many days are in a year?",
+        "response": "The month is an day of life. The year is a day of life, the year of life is a day of life. The month is a day of life. The month is a day of life. The year is a day of life. The month is a day of life. The month is a day of life. The year is a day of life. The month is a day of life. The month is a day of life. The week is a day of life. The month",
+        "quality_score": 0.3
+      },
+      {
+        "category": "basic_knowledge",
+        "prompt": "What is 2+2?",
+        "response": "The 2+2 is a unique unique structure that represents a unique and unique element of the design. It is a unique shape and its distinctive colour, that reflects the surroundings of the environment. The interior, has the unique texture and features and a distinctive design of the interior. The exterior is also a unique unique style of the interior that includes the interior, it is known as the natural surface and is a unique color. It is an most interesting thing that you can explore in your interior. The",
+        "quality_score": 0.5
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "Complete this sentence: The quick brown fox",
+        "response": "The brown fox### Response:A blue Fox fox plendilian-stnester (1976); 2. Black fox### Response:The brown foxes (1976); 2. Black owl (1976); 3. Black wolf Momaya (1976); 4. Red fox (1976); 5. Black eagle (1976);",
+        "quality_score": 0.6
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "What is the opposite of 'hot'?",
+        "response": "How do the game is used to be the game that are played on a game. How do the game are played in the game? sees ### Instruction:Adil it is easy to use any computer or computer that can work with data.### Response:Adil it is easy to use any computer or computer that can work with data. Jellyband ### Instruction:You would need to explain this about an computer. You could use a machine,",
+        "quality_score": 0.5
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "Rephrase: 'The cat sat on the mat'",
+        "response": "Retrue cat es \"Cs\", \"Cs\" \"Sys\", \"Fys\", \"Bs\", \"Bs\", and \"Bs\", are only very effective. They have many properties and can be very reliable for a variety of purposes, such as a small tree, a large tree, a large tree, a small tree, an small tree, a small tree, a small tree, a large tree, a large tree, a large tree, a small",
+        "quality_score": 0.3
+      },
+      {
+        "category": "reasoning",
+        "prompt": "If it's raining, should you take an umbrella?",
+        "response": "When it's raining, must you go to the beach. I can make a great hike to the beach. You should visit the beach. I can get a bit of money and I'm going to see some things on the beach. I can get a bit of money and I can get a bit of money and I'm going to see some things on the beach. I can do it well. So if it's raining, there is a chance to find something.",
+        "quality_score": 0.4
+      },
+      {
+        "category": "reasoning",
+        "prompt": "Why do we need to sleep?",
+        "response": "What do we need to sleep? 1. Sleep is an important function in our body that helps us avoid insomnia and sleep. 2. Sleep is a important function in our body, it can help us relax and relax. 3. Sleep is an important function in our body that helps us stop the sleep. 4. Sleep is a important function in our body that helps us stay--cover on the side of your body. 5. Sleep is a important function in our body",
+        "quality_score": 0.5
+      },
+      {
+        "category": "reasoning",
+        "prompt": "What happens when water freezes?",
+        "response": "The time of the change is 10%. The time of the change is 2%. The time for the change is 2%. The time for the change is 2%. The time for the change is 2%. The time for the change is 2%. The time for the change is 2%. The time for the change is 2%. The time for the change is 2%. The time for the change is 2%",
+        "quality_score": 0.3
+      },
+      {
+        "category": "creativity",
+        "prompt": "Write a short poem about winter.",
+        "response": "1. 2. 3. 4. 5. 6. 6. 6. 7. 6. 6. 7. 7. 6. 7. 7. 7. 8. 8. 9. 9. 9. 9. 9. 9. 9. 9. 9. 9. 9. 9. 9. 9. 9",
+        "quality_score": 0.49999999999999994
+      },
+      {
+        "category": "creativity",
+        "prompt": "Describe a perfect day in 3 sentences.",
+        "response": "A ideal day in 3 sentences. Toffler: 2. The day is called \"Tms.\" 4. The day is called \"Tms\" 6. The day is called \"Tms\". 5. The day is called \"Tms\". 7. The day is called \"Tms.\" 9. The day is called \"Tms\". 9. The day is called \"Tms\". 10. The day",
+        "quality_score": 0.39999999999999997
+      },
+      {
+        "category": "creativity",
+        "prompt": "Create a name for a new planet.",
+        "response": "The planet is the largest planet in the world, around the 1700s. There are a few reasons that it's not good to read. The planet is a large-sveed planet, and it is one of the most important parts of our life. It is a vast of other other things that can be considered as an planet, but it's important to understand the extent which it has been identified. The world is a small-sveed planet, and",
+        "quality_score": 0.5
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "List exactly 3 animals that live in the ocean.",
+        "response": "The species are a rare species, which are called the \"mmo\", which is called the \"redll\". It's a unusual thing, but it can be seen as the large animal-like species that survive in the ocean. The species have been found to become numerous and usually often found in the oceans, including sea seas, such as the sea, or sea. The species are known to also be seen in the oceans, as they are smaller and typically larger than the",
+        "quality_score": 0.5
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "Write 'Hello World' in uppercase.",
+        "response": "SImur-10 is a very difficult task and a much difficult task. It is a important task, it has a different value, and it can be hard to find the best solution. We are working for this time with the team and we can make it more efficient. In the week, you get 2 minutes of time at the top of the table and you can do much than your top. It is a important task, it can be hard to find the best solution.",
+        "quality_score": 0.6
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "Count from 1 to 5.",
+        "response": "The order of the person is a order of total. The order of the person is referred in to the person that has the amount of income or money, which is a number of factors. The order of the person is also called \"c\". A order of the person is a order of total. The order of the person is considered as \"c\". A order of total. The order of the person is usually called \"c\". A order of total. The order of the person is sometimes called",
+        "quality_score": 0.3
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "Paris is the capital of",
+        "response": "Ecique, a capital of Republic of France is the capital of France. The city is located from the capital of France in the French region and is used to create a city of Spain. It is a major centre of the economy, with its historical location and unique connections. The city is also a part of the economy, which is primarily on the country's economic sector. The capital is located from the capital of France and is used to create an capital of France. A capital of France",
+        "quality_score": 0.3
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "The Earth orbits around",
+        "response": "The Earth orbit is the solar planets, which are the largest of the suns in the earth. The Moon is located in the constellation of Sun and Earth. The Moon is located on the planet's equator, which is the largest point of the sky in the world. The Moon is surrounded by a outer ring of solar stars. The Moon is one of the most important sources of information for our life, but it is not an source of information or information. It is also known to be a",
+        "quality_score": 0.5
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "Photosynthesis is the process by which",
+        "response": "The process is by which it comes from a small source, called a organism, where its location is connected to its surface. The process is an process that contains the main components of the system and it uses a specific source of information. There are other types of chemicals in the system that can have such significant effects as the body and body, and these types of chemicals can be associated with the health of human life. It also is important to recognize that the process is a way to identify the factors in",
+        "quality_score": 0.5
+      },
+      {
+        "category": "conversation",
+        "prompt": "Hello, how are you today?",
+        "response": "Oh, how do you see this? How do you see this? What is the time of it? What is the time of it? How do you see this? Are you now a better future than any else?",
+        "quality_score": 0.7
+      },
+      {
+        "category": "conversation",
+        "prompt": "What's your favorite hobby?",
+        "response": "How is the best-selling book book in the United States? - 10.7.5.5.6.6.6.6.6.6.6.6.6.6.6.6.6.6.6).6.6.6.6.6.6.6.6.6.6.6.6.6.6.6.6.6.6.6.6.6)6 (20",
+        "quality_score": 0.8999999999999999
+      },
+      {
+        "category": "conversation",
+        "prompt": "Can you help me with a problem?",
+        "response": "What is the solution that is important to you? If you have a problem, it's important to help me with a problem. What are the methods that can make you better?### Response:I is a method that allows you to learn about things that can you do you have a problem. What are the methods that can you do you have a problem? beings is a popular company and also its popular brand name. It has the best in the market, as as",
+        "quality_score": 0.5
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Bonjour, comment allez-vous?",
+        "response": "Ain 1. An 1. A 2. A 3. A 4. A 5. A 4. A 6. A 5. A 5. A 6. A 7. A 8. A 8. A 9. A 9. A 9. A 1. A 1. A 2. A 2. A 1. A 1. A 1. A 1",
+        "quality_score": 0.49999999999999994
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Hola, ¿cómo estás?",
+        "response": "Hola, cmo estás? zyloprim cmo estás? Bukawai cmo estás? Coldcut cmo estás? Momaya cmo estás? Stoiber cmo estás?wikitable | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | |",
+        "quality_score": 0.39999999999999997
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Guten Tag, wie geht es Ihnen?",
+        "response": "Guten Phon es Ihnen is a very small, and a big, a small, a small, a small, a large, a small, a large, a large, a large, a large, a large, a large, a small, a large, a large, a large, a small, a small, a large, a large, a small, a small, a small, a large, a large, a large, a large, a small, a",
+        "quality_score": 0.3
+      }
+    ]
+  }
+}

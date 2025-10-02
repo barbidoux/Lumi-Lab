@@ -256,7 +256,9 @@ class PreciseTokenCounter:
                     for i, line in enumerate(f):
                         if len(sample_texts) >= max_samples:
                             break
-                        if i % (shard_info['num_documents'] // max(1, samples_per_shard)) == 0:
+                        # Fix modulo by zero error by ensuring sampling_interval is at least 1
+                        sampling_interval = max(1, shard_info['num_documents'] // max(1, samples_per_shard))
+                        if i % sampling_interval == 0:
                             try:
                                 doc = json.loads(line.strip())
                                 sample_texts.append(doc['text'])
