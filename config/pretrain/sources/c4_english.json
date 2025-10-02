@@ -1,0 +1,32 @@
+{
+  "name": "c4_english",
+  "description": "C4 English dataset - large-scale crawled web content",
+  "type": "huggingface",
+  "dataset_name": "allenai/c4",
+  "subset": "en",
+  "split": "train",
+  "text_keys": "text",
+  "trust_remote_code": false,
+
+  "quality_filters": {
+    "min_length": 50,
+    "max_length": 10000,
+    "require_english": true
+  },
+
+  "processing_params": {
+    "chars_per_token": 4.0,
+    "margin_ratio": 0.02,
+    "use_streaming": true,
+    "max_stream_samples": 10000000,
+    "shard_size": 50000
+  },
+
+  "source_metadata": {
+    "category": "web_crawl",
+    "language": "en",
+    "license": "ODC-BY",
+    "size_estimate": "massive",
+    "quality": "medium_high"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "default_packing",
+  "description": "Standard packing configuration for pre-training",
+  "version": "1.0",
+
+  "packing_params": {
+    "sequence_length": 1024,
+    "train_val_split": 0.95,
+    "packing_strategy": "greedy",
+    "shuffle": true,
+    "seed": 42
+  },
+
+  "optimization": {
+    "shard_size": 100000,
+    "num_workers": 4,
+    "buffer_size": 10000
+  }
+}

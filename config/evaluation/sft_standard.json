@@ -1,0 +1,65 @@
+{
+  "name": "sft_standard_evaluation",
+  "description": "Standard SFT evaluation suite",
+  "version": "1.0",
+
+  "model_params": {
+    "prompt_template": "instruct",
+    "use_lora": true,
+    "device": "auto"
+  },
+
+  "mode": "standard",
+
+  "metrics": {
+    "perplexity": {
+      "enabled": true,
+      "max_samples": null,
+      "dataset": "wikitext2"
+    },
+    "boolq": {
+      "enabled": true,
+      "max_samples": 100
+    },
+    "smoke_tests": {
+      "enabled": true,
+      "categories": [
+        "basic_knowledge",
+        "language_understanding",
+        "reasoning",
+        "creativity",
+        "instruction_following",
+        "wikipedia_style",
+        "conversation",
+        "multilingual"
+      ]
+    },
+    "generation": {
+      "enabled": true,
+      "num_samples": 5,
+      "prompts": [
+        "Explain what machine learning is in simple terms.",
+        "Write a short poem about the ocean.",
+        "What are the benefits of renewable energy?",
+        "How do you make a good first impression?",
+        "Describe the process of photosynthesis."
+      ]
+    }
+  },
+
+  "generation_params": {
+    "max_new_tokens": 128,
+    "temperature": 0.7,
+    "top_p": 0.9,
+    "top_k": 50,
+    "do_sample": true,
+    "repetition_penalty": 1.1,
+    "no_repeat_ngram_size": 3
+  },
+
+  "output": {
+    "save_generations": true,
+    "save_metrics": true,
+    "format": "json"
+  }
+}

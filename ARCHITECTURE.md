@@ -2,7 +2,7 @@
 
 ## Overview
 
-Lumi implements a **decoder-only transformer architecture** closely following the **LLaMA (Large Language Model Meta AI)** design principles, optimized for personal GPU training on RTX 4090. This document provides precise technical details of all architectural choices and their justifications.
+Lumi implements a **decoder-only transformer architecture** closely following the **LLaMA (Large Language Model Meta AI)** design principles, optimized for personal GPU training. While optimized for RTX 4090, this architecture works on any NVIDIA GPU with CUDA support (even 8GB cards like RTX 3060) - you'll just need to adjust batch sizes and be patient. This document provides precise technical details of all architectural choices and their justifications.
 
 ## 🔧 Core Architecture Principles
 
@@ -27,19 +27,30 @@ Lumi implements a **decoder-only transformer architecture** closely following th
 
 ### Parameter Scaling Strategy
 
-| Model | Layers (L) | Hidden Size (d_model) | Heads (H) | FFN Size | Parameters | Memory (FP16) |
-|-------|------------|----------------------|-----------|----------|------------|---------------|
-| **tiny** | 6 | 256 | 4 | 1024 | ~6M | ~2GB |
-| **small** | 12 | 512 | 8 | 2048 | ~42M | ~4GB |  
-| **base** | 24 | 768 | 12 | 3072 | ~124M | ~8GB |
+| Model | Layers (L) | Hidden Size (d_model) | Heads (H) | FFN Size | Parameters | Memory (BF16) | Chinchilla Tokens |
+|-------|------------|----------------------|-----------|----------|------------|---------------|-------------------|
+| **tiny** | 6 | 256 | 4 | 1024 | ~23M | ~2-4GB | ~500M |
+| **small** | 12 | 512 | 8 | 2048 | ~42M | ~4-6GB | ~840M |
+| **base** | 24 | 768 | 12 | 3072 | ~124M | ~8-12GB | ~2.5B |
+
+**Note**: Memory shown is base model memory. Training adds ~2-4x for gradients, optimizer states, and activations.
 
 ### Scaling Relationships
 
 ```
-FFN_size = 4 × d_model (standard transformer ratio)
+FFN_size = 4 × d_model (standard transformer ratio, SwiGLU)
 head_dim = d_model / num_heads = 64 (consistent across all models)
 vocab_size = 32768 (fixed, SentencePiece optimized)
+sequence_length = 1024 (default, configurable)
 ```
+
+### Chinchilla-Optimal Training
+Following the Chinchilla scaling laws, optimal training uses **~20 tokens per parameter**:
+- **tiny (23M)**: ~500M tokens
+- **small (42M)**: ~840M tokens
+- **base (124M)**: ~2.5B tokens
+
+See training configs in `config/pretrain/training/*.json` for implementation.
 
 ---
 
@@ -181,11 +192,18 @@ Residual Dropout: Applied before residual connections
 
 ### Mixed Precision Training
 ```yaml
-Primary Type: FP16 (automatic with Accelerate)
-Master Weights: FP32 (for optimizer)
-Loss Scaling: Dynamic (prevents underflow)
-FlashAttention: Uses FP16 natively for efficiency
+Primary Type: BF16 (bfloat16, recommended)
+Alternative: FP16 (if BF16 not available)
+Master Weights: FP32 (for optimizer states)
+Loss Scaling: Not needed for BF16, dynamic for FP16
+FlashAttention: Uses BF16/FP16 natively for efficiency
 ```
+
+**Why BF16 over FP16**:
+- ✅ Better numerical stability (same exponent range as FP32)
+- ✅ No loss scaling needed
+- ✅ Handles gradients better during training
+- ✅ Supported on Ampere+ GPUs (RTX 30/40 series)
 
 ---
 
@@ -267,31 +285,37 @@ Shared Layers: Not used (maintains full expressivity)
 
 ### Why These Specific Configurations?
 
-#### Tiny Model (6M parameters)
+#### Tiny Model (23M parameters)
 ```yaml
-Target: Proof-of-concept, rapid experimentation  
+Target: Fast iteration, proof-of-concept, learning
 Layers: 6 (minimum for reasonable depth)
 Hidden: 256 (smallest practical size)
 Heads: 4 (maintains head_dim=64)
 Context: 1024 (sufficient for most tasks)
+Training: ~24h on RTX 4090, works on 8GB GPUs
+Chinchilla: ~500M tokens
 ```
 
-#### Small Model (42M parameters)  
+#### Small Model (42M parameters)
 ```yaml
-Target: Development, fine-tuning experiments
-Layers: 12 (good depth-width balance)  
-Hidden: 512 (2x tiny for 4x parameters)
+Target: Balanced development, fine-tuning experiments
+Layers: 12 (good depth-width balance)
+Hidden: 512 (2x tiny for 7x parameters)
 Heads: 8 (maintains head_dim=64)
 Context: 1024 (memory-efficient)
+Training: ~48h on RTX 4090, works on 8GB GPUs (batch=2)
+Chinchilla: ~840M tokens
 ```
 
 #### Base Model (124M parameters)
 ```yaml
 Target: Production use, best quality
 Layers: 24 (deeper for better representation)
-Hidden: 768 (standard BERT-base size)  
+Hidden: 768 (standard BERT-base size)
 Heads: 12 (maintains head_dim=64)
-Context: 2048 (longer context capability)
+Context: 1024 (default, expandable to 2048)
+Training: ~120h on RTX 4090, tight on 8GB GPUs
+Chinchilla: ~2.5B tokens
 ```
 
 ### Head Dimension Consistency
@@ -343,21 +367,25 @@ Reproducibility: Bit-exact reproduction possible
 
 ## 🏎️ Performance Characteristics
 
-### Memory Usage (RTX 4090 16GB)
+### Memory Usage (with BF16 + FlashAttention-2)
 
-| Model | Training (FP16) | Inference (FP16) | Max Batch Size |
-|-------|------------------|------------------|----------------|
-| **tiny** | ~6GB | ~2GB | 16 |
-| **small** | ~10GB | ~4GB | 8 |
-| **base** | ~14GB | ~8GB | 4 |
+| Model | Training (batch=8) | Training (batch=4) | Training (batch=2) | Inference | Works on 8GB GPU? |
+|-------|-------------------|-------------------|-------------------|-----------|-------------------|
+| **tiny (23M)** | ~6-8 GB | ~4-5 GB | ~3-4 GB | ~2 GB | ✅ Yes |
+| **small (42M)** | ~8-12 GB | ~5-7 GB | ~4-5 GB | ~4 GB | ✅ Yes (batch=2) |
+| **base (124M)** | ~12-18 GB | ~8-10 GB | ~6-7 GB | ~8 GB | ⚠️ Tight (batch=1-2) |
 
-### Training Speed (RTX 4090)
+**For 8GB GPUs**: Use batch_size=2-4 with gradient_accumulation_steps=8-16 to maintain effective batch size.
 
-| Model | Tokens/sec | Steps/hour | Time per Epoch |
-|-------|------------|-------------|----------------|
-| **tiny** | ~2000 | 1800 | 2-4h |
-| **small** | ~800 | 720 | 8-12h |
-| **base** | ~300 | 270 | 24-48h |
+### Training Speed (RTX 4090 with BF16 + FlashAttention-2)
+
+| Model | Tokens/sec | Steps/hour | Chinchilla Training Time |
+|-------|------------|-------------|--------------------------|
+| **tiny (23M)** | ~600-800 | ~1000 | ~24h (500M tokens) |
+| **small (42M)** | ~400-600 | ~600 | ~48h (840M tokens) |
+| **base (124M)** | ~200-300 | ~300 | ~120h (2.5B tokens) |
+
+**Note**: Times assume optimal batch size. Smaller GPUs will need smaller batches → longer training time but same final quality.
 
 ### Inference Speed (RTX 4090)
 
@@ -373,23 +401,27 @@ Reproducibility: Bit-exact reproduction possible
 
 ### Choosing Model Size
 
-**Use Tiny (6M) when**:
+**Use Tiny (23M) when**:
 - 🧪 Prototyping new ideas
-- ⚡ Need very fast training/iteration
-- 💾 Limited GPU memory (<8GB)
+- ⚡ Need very fast training/iteration (~24h)
+- 💾 Limited GPU memory (works great on 8GB)
 - 🎯 Testing code/pipeline changes
+- 📚 Learning LLM training from scratch
+- 💰 Limited compute budget
 
 **Use Small (42M) when**:
 - 🔬 Balanced development work
-- 📚 Fine-tuning experiments  
-- 🎯 Good quality without long training
-- 💾 Moderate GPU memory (8-12GB)
+- 📚 Fine-tuning experiments
+- 🎯 Good quality without long training (~48h)
+- 💾 Moderate GPU memory (8-16GB)
+- 🏃 Want reasonable performance quickly
 
 **Use Base (124M) when**:
 - 🏆 Production deployment
 - 📈 Best possible quality needed
-- 💪 Have sufficient compute budget
+- 💪 Have sufficient compute budget (~120h)
 - 💾 Full GPU memory available (16GB+)
+- 🎓 Research-grade results required
 
 ### Hyperparameter Recommendations
 
@@ -400,12 +432,20 @@ small: 1e-4 to 3e-4  (balanced)
 base:  5e-5 to 1e-4  (lower for stability)
 ```
 
-#### Batch Size Guidelines  
+#### Batch Size Guidelines
 ```yaml
-tiny:  16-32 (can afford larger batches)
-small: 8-16  (balance memory/convergence)
-base:  4-8   (memory constrained)
+# RTX 4090 (16GB)
+tiny:  8-16  (comfortable, can go higher)
+small: 4-8   (optimal balance)
+base:  2-4   (memory constrained)
+
+# RTX 3060/3070 (8GB)
+tiny:  2-4   (use gradient_accumulation=8-16)
+small: 2     (use gradient_accumulation=16-32)
+base:  1-2   (tight, use gradient_accumulation=32-64)
 ```
+
+**Pro tip**: Use gradient accumulation to maintain effective batch size even with small per-device batches.
 
 #### Context Length Trade-offs
 ```yaml
@@ -449,4 +489,19 @@ All changes will maintain **backward compatibility** with existing checkpoints a
 
 ---
 
-*This architecture documentation is maintained alongside the codebase and updated with each major release.*
+## 🌍 Hardware Accessibility
+
+This architecture is designed to be **democratically accessible**:
+
+- **RTX 4090 (16GB)**: Optimal performance, all models comfortable
+- **RTX 3080/3090 (10-12GB)**: All models work well with adjusted batch sizes
+- **RTX 3060/3070 (8GB)**: Tiny and Small models work great, Base is possible with patience
+- **Lower-end cards**: Tiny model works on even more modest hardware
+
+**Philosophy**: You don't need a datacenter to train LLMs from scratch. A consumer GPU, patience, and good coffee ☕ are enough.
+
+> *"I don't have an excavator, I have a fork. But technical complexity has never been an obstacle, only an exciting puzzle."*
+
+---
+
+*This architecture documentation is maintained alongside the codebase and updated with each major release. Last updated: January 2025*

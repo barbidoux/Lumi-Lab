@@ -1,0 +1,32 @@
+{
+  "name": "gutenberg_books",
+  "description": "Project Gutenberg English books - classic literature in public domain",
+  "type": "huggingface",
+  "dataset_name": "sedthh/gutenberg_english",
+  "subset": null,
+  "split": "train",
+  "text_keys": "TEXT",
+  "trust_remote_code": false,
+
+  "quality_filters": {
+    "min_length": 200,
+    "max_length": 12000,
+    "require_english": true
+  },
+
+  "processing_params": {
+    "chars_per_token": 4.0,
+    "margin_ratio": 0.02,
+    "use_streaming": true,
+    "max_stream_samples": 60000,
+    "shard_size": 50000
+  },
+
+  "source_metadata": {
+    "category": "literature",
+    "language": "en",
+    "license": "public_domain",
+    "size_estimate": "medium",
+    "quality": "very_high"
+  }
+}

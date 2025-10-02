@@ -1,0 +1,25 @@
+{
+  "name": "alpaca",
+  "description": "Stanford Alpaca instruction dataset",
+  "source": "tatsu-lab/alpaca",
+  "output_file": "data/sft/alpaca.jsonl",
+  "max_samples": null,
+  "format": {
+    "prompt_key": "prompt",
+    "response_key": "response",
+    "instruction_key": "instruction",
+    "input_key": "input",
+    "output_key": "output"
+  },
+  "preprocessing": {
+    "combine_instruction_input": true,
+    "min_prompt_length": 10,
+    "min_response_length": 20,
+    "max_prompt_length": 2000,
+    "max_response_length": 4000,
+    "enable_packing": true
+  },
+  "recommended_weight": 0.2,
+  "quality": "medium",
+  "size": "~52k samples"
+}

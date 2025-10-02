@@ -1,0 +1,29 @@
+{
+  "name": "oasst1",
+  "description": "OpenAssistant Conversations Dataset v1",
+  "source": "OpenAssistant/oasst1",
+  "output_file": "data/sft/oasst1_en.jsonl",
+  "max_samples": null,
+  "language": "en",
+  "format": {
+    "prompt_key": "prompt",
+    "response_key": "response",
+    "message_id_key": "message_id",
+    "parent_id_key": "parent_id",
+    "role_key": "role",
+    "rank_key": "rank"
+  },
+  "preprocessing": {
+    "filter_by_language": true,
+    "sort_by_rank": true,
+    "only_assistant_responses": true,
+    "min_prompt_length": 10,
+    "min_response_length": 20,
+    "max_prompt_length": 2000,
+    "max_response_length": 4000,
+    "enable_packing": true
+  },
+  "recommended_weight": 0.4,
+  "quality": "medium-high",
+  "size": "~35k samples (EN)"
+}

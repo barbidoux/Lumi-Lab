@@ -2,7 +2,19 @@
   "permissions": {
     "allow": [
       "Bash(mkdir:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(tree:*)",
+      "Bash(__NEW_LINE__ cd scripts)",
+      "Bash(__NEW_LINE__ cd config/sft/datasets)",
+      "Bash(__NEW_LINE__ cd config/sft/training)",
+      "Bash(python:*)",
+      "Bash(for file in utils/debug/*.py)",
+      "Bash(done)",
+      "Bash(for file in utils/debug/adaptive_estimation.py utils/debug/corpus_cache.py utils/debug/precise_token_counter.py utils/debug/robust_imports.py utils/debug/tokenizer_metrics.py utils/debug/tokenizer_validation.py)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(head:*)",
+      "Bash(for:*)"
     ],
     "deny": []
   }

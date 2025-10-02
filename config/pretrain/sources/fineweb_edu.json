@@ -1,0 +1,32 @@
+{
+  "name": "fineweb_edu",
+  "description": "FineWeb-Edu - high-quality educational content including technical discussions",
+  "type": "huggingface",
+  "dataset_name": "HuggingFaceFW/fineweb-edu",
+  "subset": "sample-10BT",
+  "split": "train",
+  "text_keys": "text",
+  "trust_remote_code": false,
+
+  "quality_filters": {
+    "min_length": 100,
+    "max_length": 5000,
+    "require_english": true
+  },
+
+  "processing_params": {
+    "chars_per_token": 4.0,
+    "margin_ratio": 0.02,
+    "use_streaming": true,
+    "max_stream_samples": 5000000,
+    "shard_size": 50000
+  },
+
+  "source_metadata": {
+    "category": "educational",
+    "language": "en",
+    "license": "ODC-BY",
+    "size_estimate": "large",
+    "quality": "high"
+  }
+}

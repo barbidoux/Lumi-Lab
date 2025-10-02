@@ -1,0 +1,31 @@
+{
+  "_description": "Small model: 42M parameters, balanced for development and fine-tuning",
+  "model_name": "small",
+  
+  "_architecture_comment": "LLaMA-like decoder-only transformer with modern optimizations",
+  "n_layer": 12,
+  "d_model": 512,
+  "n_head": 8,
+  "d_ff": 2048,
+  
+  "_tokenization_comment": "SentencePiece vocabulary optimized for English text",
+  "vocab_size": 32768,
+  "sequence_length": 1024,
+  
+  "_training_params": "Dropout and normalization settings",
+  "dropout": 0.1,
+  "layer_norm_epsilon": 1e-5,
+  
+  "_architecture_details": {
+    "head_dim": 64,
+    "ffn_ratio": 4.0,
+    "estimated_parameters": "~42M",
+    "normalization": "RMSNorm",
+    "activation": "SwiGLU", 
+    "position_encoding": "RoPE",
+    "attention_type": "causal_self_attention",
+    "bias_terms": false
+  },
+  "_memory_estimate": "~4GB VRAM (FP16), ~10GB training",
+  "_target_use_cases": ["development", "fine_tuning", "quality_experiments"]
+}

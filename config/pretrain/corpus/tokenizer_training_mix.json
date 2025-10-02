@@ -1,0 +1,85 @@
+{
+  "name": "tokenizer_training_corpus_optimal",
+  "description": "Corpus d'entraînement du tokenizer OPTIMAL - mix représentatif pour réutilisation 23M->124M",
+  "version": "2.0.0",
+  "purpose": "tokenizer_training_optimal",
+  "target_total_tokens": 100000000,
+  "datasets_count": 4,
+
+  "processing_params": {
+    "shard_size": 10000,
+    "vocab_size": 32768
+  },
+
+  "deduplication": {
+    "threshold": 0.85,
+    "num_perm": 128,
+    "shingle_size": 3
+  },
+
+  "sources": {
+    "c4_tokenizer_sample": {
+      "type": "huggingface",
+      "dataset_name": "allenai/c4",
+      "subset": "en",
+      "split": "train",
+      "text_keys": "text",
+      "token_budget": 28000000,
+      "analysis_sample_size": 1000,
+      "chars_per_token": 4.0,
+      "margin_ratio": 0.02,
+      "trust_remote_code": false,
+      "min_length": 50,
+      "max_length": 10000,
+      "require_english": true
+    },
+
+    "gutenberg_tokenizer_sample": {
+      "type": "huggingface",
+      "dataset_name": "sedthh/gutenberg_english",
+      "subset": null,
+      "split": "train",
+      "text_keys": "TEXT",
+      "token_budget": 24000000,
+      "analysis_sample_size": 800,
+      "chars_per_token": 4.0,
+      "margin_ratio": 0.02,
+      "trust_remote_code": false,
+      "min_length": 200,
+      "max_length": 900000,
+      "require_english": true
+    },
+
+    "fineweb_tokenizer_sample": {
+      "type": "huggingface",
+      "dataset_name": "HuggingFaceFW/fineweb-edu",
+      "subset": "sample-10BT",
+      "split": "train",
+      "text_keys": "text",
+      "token_budget": 24000000,
+      "analysis_sample_size": 800,
+      "chars_per_token": 4.0,
+      "margin_ratio": 0.02,
+      "trust_remote_code": false,
+      "min_length": 100,
+      "max_length": 9000,
+      "require_english": true
+    },
+
+    "vietgpt_tokenizer_sample": {
+      "type": "huggingface",
+      "dataset_name": "vietgpt/wikipedia_en",
+      "subset": null,
+      "split": "train",
+      "text_keys": "text",
+      "token_budget": 24000000,
+      "analysis_sample_size": 1000,
+      "chars_per_token": 4.0,
+      "margin_ratio": 0.02,
+      "trust_remote_code": false,
+      "min_length": 100,
+      "max_length": 50000,
+      "require_english": true
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "_description": "Base model: 124M parameters, production-quality with extended context",
+  "model_name": "base",
+  
+  "_architecture_comment": "LLaMA-like decoder-only transformer with modern optimizations",
+  "n_layer": 24,
+  "d_model": 768,
+  "n_head": 12,
+  "d_ff": 3072,
+  
+  "_tokenization_comment": "SentencePiece vocabulary optimized for English text",
+  "vocab_size": 32768,
+  "sequence_length": 2048,
+  
+  "_training_params": "Dropout and normalization settings",
+  "dropout": 0.1,
+  "layer_norm_epsilon": 1e-5,
+  
+  "_architecture_details": {
+    "head_dim": 64,
+    "ffn_ratio": 4.0,
+    "estimated_parameters": "~124M",
+    "normalization": "RMSNorm",
+    "activation": "SwiGLU", 
+    "position_encoding": "RoPE",
+    "attention_type": "causal_self_attention",
+    "bias_terms": false,
+    "extended_context": true
+  },
+  "_memory_estimate": "~8GB VRAM (FP16), ~14GB training",
+  "_target_use_cases": ["production", "best_quality", "long_context_tasks"]
+}

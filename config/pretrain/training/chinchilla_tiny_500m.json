@@ -1,0 +1,52 @@
+{
+  "name": "chinchilla_tiny_500m_training",
+  "description": "Complete training config for 23M model - 500M tokens Chinchilla-optimal",
+  "version": "1.0",
+
+  "architecture_config": "config/architectures/tiny.json",
+
+  "training_params": {
+    "learning_rate": 5e-4,
+    "per_device_train_batch_size": 8,
+    "gradient_accumulation_steps": 4,
+    "max_steps": 30000,
+    "warmup_steps": 3000,
+    "warmup_ratio": 0.1,
+    "weight_decay": 0.1,
+    "max_grad_norm": 1.0,
+    "save_steps": 2000,
+    "logging_steps": 200,
+    "eval_steps": 2000,
+    "log_dataset_mix_steps": 500,
+    "save_total_limit": 3
+  },
+
+  "optimizer": {
+    "type": "adamw",
+    "betas": [0.9, 0.95],
+    "eps": 1e-8
+  },
+
+  "scheduler": {
+    "type": "cosine",
+    "num_cycles": 0.5
+  },
+
+  "hardware_params": {
+    "use_flash_attn": true,
+    "bf16": true,
+    "gradient_checkpointing": false,
+    "dataloader_num_workers": 4
+  },
+
+  "reproducibility": {
+    "seed": 42,
+    "deterministic": true
+  },
+
+  "data_params": {
+    "sequence_length": 1024,
+    "data_seed": 42,
+    "train_val_split": 0.95
+  }
+}

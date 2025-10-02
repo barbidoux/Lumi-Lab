@@ -1,0 +1,101 @@
+{
+  "name": "model_124M_phase_a_foundation",
+  "description": "Phase A: Foundation de haute qualité pour modèle 124M - Curriculum learning",
+  "version": "1.0.0",
+  "phase": "A",
+  "model_target": "124M parameters",
+  "target_total_tokens": 1500000000,
+  "datasets_count": 3,
+  "curriculum_strategy": "High-quality foundation with structured content",
+  "sequence_length": 1024,
+  "vocab_size": 32768,
+
+  "processing_params": {
+    "shard_size": 20000,
+    "vocab_size": 32768
+  },
+
+  "deduplication": {
+    "threshold": 0.85,
+    "num_perm": 128,
+    "shingle_size": 3
+  },
+
+  "training_params": {
+    "train_ratio": 0.98,
+    "shard_tokens": 4000000,
+    "sequence_length": 1024,
+    "vocab_size": 32768,
+    "tokenizer_path": "data/models/tokenizers/spm_32k"
+  },
+
+  "sources": {
+    "vietgpt_wikipedia_foundation": {
+      "type": "huggingface",
+      "dataset_name": "vietgpt/wikipedia_en",
+      "subset": null,
+      "split": "train",
+      "text_keys": "text",
+      "token_budget": 750000000,
+      "weight": 0.50,
+      "description": "VietGPT Wikipedia - encyclopedic knowledge foundation (50%)",
+      "analysis_sample_size": 3000,
+      "chars_per_token": 4.0,
+      "margin_ratio": 0.02,
+      "trust_remote_code": false,
+      "min_length": 100,
+      "max_length": 8000,
+      "require_english": true
+    },
+
+    "gutenberg_literary_excellence": {
+      "type": "huggingface",
+      "dataset_name": "sedthh/gutenberg_english",
+      "subset": null,
+      "split": "train",
+      "text_keys": "TEXT",
+      "token_budget": 500000000,
+      "weight": 0.33,
+      "description": "Project Gutenberg - literary excellence and narrative structures (33%)",
+      "analysis_sample_size": 2000,
+      "chars_per_token": 4.0,
+      "margin_ratio": 0.02,
+      "trust_remote_code": false,
+      "min_length": 200,
+      "max_length": 12000,
+      "require_english": true
+    },
+
+    "fineweb_educational_structured": {
+      "type": "huggingface",
+      "dataset_name": "HuggingFaceFW/fineweb-edu",
+      "subset": "sample-10BT",
+      "split": "train",
+      "text_keys": "text",
+      "token_budget": 250000000,
+      "weight": 0.17,
+      "description": "FineWeb-Edu - structured educational content (17%)",
+      "analysis_sample_size": 1500,
+      "chars_per_token": 4.0,
+      "margin_ratio": 0.02,
+      "trust_remote_code": false,
+      "min_length": 100,
+      "max_length": 5000,
+      "require_english": true
+    }
+  },
+
+  "_curriculum_philosophy": {
+    "phase_goal": "Establish strong linguistic foundations",
+    "content_focus": "High-quality, structured, curated content",
+    "learning_objective": "Basic language patterns, factual knowledge, narrative structures",
+    "preparation_for": "Phase B - robustness and generalization"
+  },
+
+  "_expected_capabilities": {
+    "factual_knowledge": "Strong encyclopedic foundation",
+    "language_quality": "Excellent grammar and coherence",
+    "narrative_understanding": "Good story and structure comprehension",
+    "educational_content": "Structured learning material processing"
+  }
+}

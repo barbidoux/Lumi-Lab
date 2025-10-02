@@ -1067,28 +1067,28 @@ class WeightedMultiDatasetSampler:
         """
         batch_input_ids = []
         batch_labels = []
-        
+        batch_attention_masks = []
+
         for _ in range(self.batch_size):
             # Choose dataset according to weights
             dataset_idx = self.sample_dataset_index()
             self.sample_counts[dataset_idx] += 1
-            
+
             # Sample from chosen dataset
             dataset = self.datasets[dataset_idx]
             sample_idx = self.rng.randint(0, len(dataset) - 1)
             sample = dataset[sample_idx]
-            
+
             batch_input_ids.append(sample['input_ids'])
             batch_labels.append(sample['labels'])
-        
+            batch_attention_masks.append(sample.get('attention_mask', torch.ones_like(sample['input_ids'])))
+
         # Stack into tensors
         batch = {
             'input_ids': torch.stack(batch_input_ids),
-            'labels': torch.stack(batch_labels)
+            'labels': torch.stack(batch_labels),
+            'attention_mask': torch.stack(batch_attention_masks)
         }
-        
-        # Create attention mask
-        batch['attention_mask'] = (batch['input_ids'] != 0).long()
         
         self.current_step += 1
         return batch

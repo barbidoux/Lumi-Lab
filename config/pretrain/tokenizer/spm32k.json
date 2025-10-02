@@ -1,0 +1,43 @@
+{
+  "name": "spm32k",
+  "description": "SentencePiece 32k vocabulary - optimal for English + multilingual",
+  "version": "1.0",
+
+  "tokenizer_params": {
+    "vocab_size": 32768,
+    "model_type": "unigram",
+    "character_coverage": 0.9995,
+    "normalization_rule": "nfkc"
+  },
+
+  "training_params": {
+    "max_training_sentences": 10000000,
+    "max_sentence_length": 32768,
+    "calibration_samples": 1000,
+    "shuffle_input_sentence": true,
+    "seed_sentencepiece_size": 1000000,
+    "min_sentence_length": 5,
+    "sentence_filter_max_length": 2048,
+    "initial_chars_per_token": 4.0,
+    "num_threads": 8,
+    "train_extremely_large_corpus": true,
+    "split_digits": true,
+    "allow_whitespace_only_pieces": false,
+    "byte_fallback": false
+  },
+
+  "special_tokens": {
+    "unk_id": 0,
+    "bos_id": 1,
+    "eos_id": 2,
+    "pad_id": 3,
+    "control_symbols": ["<pad>", "<mask>"]
+  },
+
+  "validation_params": {
+    "dataset_sample_rate": 0.1,
+    "tokenizer_validation_samples": 500
+  },
+
+  "corpus_manifest": "data/datasets/tokenizer_corpus/manifest.json"
+}
