@@ -160,13 +160,15 @@ class SFTEvaluator:
         return np.mean(log_probs)
 
     def evaluate_prompts(self, prompts: List[str],
-                        generation_config: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+                        generation_config: Optional[Dict[str, Any]] = None,
+                        batch_size: int = 4) -> List[Dict[str, Any]]:
         """
-        Evaluate model on a list of prompts.
+        Evaluate model on a list of prompts with optional batching.
 
         Args:
             prompts: List of prompts to evaluate
             generation_config: Optional generation configuration
+            batch_size: Number of prompts to generate in parallel (default: 4)
 
         Returns:
             List of evaluation results
@@ -180,21 +182,123 @@ class SFTEvaluator:
             }
 
         results = []
+        logging.info(f"Evaluating {len(prompts)} prompts (batch_size={batch_size})...")
 
-        logging.info(f"Evaluating {len(prompts)} prompts...")
+        # Process prompts in batches for faster generation
+        for batch_start in tqdm(range(0, len(prompts), batch_size), desc="Generating responses"):
+            batch_prompts = prompts[batch_start:batch_start + batch_size]
+            batch_results = self._generate_batch(batch_prompts, generation_config)
 
-        for i, prompt in enumerate(tqdm(prompts, desc="Generating responses")):
-            try:
-                result = self.generate_response(prompt, **generation_config)
-                result['prompt_index'] = i
+            for i, result in enumerate(batch_results):
+                result['prompt_index'] = batch_start + i
                 results.append(result)
-            except Exception as e:
-                logging.warning(f"Error generating response for prompt {i}: {e}")
+
+        return results
+
+    def _generate_batch(self, prompts: List[str], generation_config: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Generate responses for a batch of prompts in parallel.
+
+        Args:
+            prompts: List of prompts
+            generation_config: Generation configuration
+
+        Returns:
+            List of generation results
+        """
+        results = []
+
+        # Format all prompts
+        formatted_prompts = []
+        for prompt in prompts:
+            formatted_prompt = self.template_processor.format_conversation(prompt, "", None)
+
+            # Remove the empty response part
+            if self.template_processor.template_name == 'chatml':
+                formatted_prompt = formatted_prompt.rsplit('<|im_start|>assistant\n\n<|im_end|>', 1)[0]
+                formatted_prompt += '<|im_start|>assistant\n'
+            elif self.template_processor.template_name == 'instruct':
+                formatted_prompt = formatted_prompt.rsplit('### Response:\n', 1)[0]
+                formatted_prompt += '### Response:\n'
+            elif self.template_processor.template_name == 'chat':
+                formatted_prompt = formatted_prompt.rsplit('Assistant: ', 1)[0]
+                formatted_prompt += 'Assistant: '
+
+            formatted_prompts.append(formatted_prompt)
+
+        # Tokenize all prompts with padding
+        all_tokens = [self.tokenizer.encode(fp) for fp in formatted_prompts]
+        max_len = max(len(t) for t in all_tokens)
+
+        # Pad to same length (left padding for generation)
+        padded_tokens = []
+        attention_masks = []
+        input_lengths = []
+
+        for tokens in all_tokens:
+            pad_len = max_len - len(tokens)
+            padded = [self.pad_token_id] * pad_len + tokens
+            mask = [0] * pad_len + [1] * len(tokens)
+            padded_tokens.append(padded)
+            attention_masks.append(mask)
+            input_lengths.append(len(tokens))
+
+        input_ids = torch.tensor(padded_tokens, dtype=torch.long, device=self.device)
+        attention_mask = torch.tensor(attention_masks, dtype=torch.long, device=self.device)
+
+        # Generate for entire batch
+        try:
+            with torch.no_grad():
+                gen_config = {
+                    'max_new_tokens': generation_config.get('max_new_tokens', 128),
+                    'temperature': generation_config.get('temperature', 0.7),
+                    'top_p': generation_config.get('top_p', 0.9),
+                    'top_k': generation_config.get('top_k', 50),
+                    'do_sample': generation_config.get('do_sample', True),
+                    'pad_token_id': self.pad_token_id,
+                    'eos_token_id': self.eos_token_id,
+                    'use_cache': True,
+                    'attention_mask': attention_mask
+                }
+
+                outputs = self.model.generate(input_ids, **gen_config)
+
+            # Decode each output
+            for i, (prompt, formatted_prompt, input_len) in enumerate(zip(prompts, formatted_prompts, input_lengths)):
+                # Extract generated tokens (skip input)
+                generated_tokens = outputs[i][max_len:].tolist()
+                generated_text = self.tokenizer.decode(generated_tokens)
+
+                # Extract clean response
+                clean_response = self.template_processor.extract_response_from_generated(
+                    formatted_prompt + generated_text
+                )
+
                 results.append({
-                    'prompt_index': i,
                     'prompt': prompt,
-                    'error': str(e)
+                    'formatted_prompt': formatted_prompt,
+                    'generated_text': generated_text,
+                    'clean_response': clean_response,
+                    'generation_config': generation_config,
+                    'stats': {
+                        'input_length': input_len,
+                        'output_length': len(generated_tokens),
+                        'total_length': input_len + len(generated_tokens)
+                    }
                 })
+
+        except Exception as e:
+            logging.warning(f"Batch generation failed, falling back to sequential: {e}")
+            # Fallback to sequential generation
+            for i, prompt in enumerate(prompts):
+                try:
+                    result = self.generate_response(prompt, **generation_config)
+                    results.append(result)
+                except Exception as inner_e:
+                    results.append({
+                        'prompt': prompt,
+                        'error': str(inner_e)
+                    })
 
         return results
 

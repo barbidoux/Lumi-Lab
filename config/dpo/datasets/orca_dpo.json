@@ -1,0 +1,62 @@
+{
+  "name": "orca_dpo",
+  "description": "Intel ORCA DPO pairs - GPT-4 distillation with preference ranking",
+  "template": "dpo_standard",
+
+  "output_params": {
+    "shard_size": 1000,
+    "train_val_split": 0.95
+  },
+
+  "datasets": [
+    {
+      "name": "orca_dpo_pairs",
+      "type": "huggingface",
+      "dataset_name": "Intel/orca_dpo_pairs",
+      "split": "train",
+      "text_fields": {
+        "prompt": "system",
+        "chosen": "chosen",
+        "rejected": "rejected"
+      },
+      "max_samples": null,
+      "processing": {
+        "combine_system_user": true,
+        "remove_markdown": false
+      }
+    }
+  ],
+
+  "quality_filters": {
+    "min_prompt_length": 10,
+    "max_prompt_length": 1024,
+    "min_chosen_length": 20,
+    "max_chosen_length": 2048,
+    "min_rejected_length": 10,
+    "max_rejected_length": 2048,
+    "min_margin_tokens": 5,
+    "max_identical_pairs": 0,
+    "language": "en",
+    "language_threshold": 0.9,
+    "remove_duplicates": true,
+    "deduplication_method": "exact_prompt"
+  },
+
+  "statistics": {
+    "expected_samples": "~12,859",
+    "avg_prompt_length": "~150 tokens",
+    "avg_chosen_length": "~250 tokens",
+    "avg_rejected_length": "~200 tokens",
+    "source_quality": "high",
+    "distillation_model": "GPT-4"
+  },
+
+  "recommended_weight": 1.0,
+  "recommended_usage": "Excellent for small models (tiny/small). High-quality GPT-4 distilled preferences.",
+
+  "citation": {
+    "source": "Intel Corporation",
+    "url": "https://huggingface.co/datasets/Intel/orca_dpo_pairs",
+    "license": "apache-2.0"
+  }
+}

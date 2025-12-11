@@ -1,56 +1,54 @@
 {
-  "name": "alpaca_dolly_oasst_instruct",
-  "description": "High-quality multi-dataset SFT corpus: Alpaca + Dolly + OASST1 with Instruct formatting",
-  "version": "1.0",
+  "name": "tiny_23m_sft_balanced",
+  "description": "Balanced SFT corpus for Tiny 23M model: Dolly + OASST1 + ShareGPT + Alpaca (1.7 tokens/param = 40M tokens)",
+  "version": "3.0",
   "template": "instruct",
+
+  "sampling_strategy": {
+    "mode": "target_tokens",
+    "target_tokens": 40000000,
+    "seed": 42,
+    "chars_per_token": 4.0,
+    "analysis_sample_size": 100
+  },
 
   "output_params": {
     "sequence_length": 1024,
     "shard_size": 2000,
     "train_ratio": 0.95,
-    "enable_packing": true
+    "enable_packing": false,
+    "batch_size": 1000
   },
 
   "quality_filters": {
     "min_prompt_length": 10,
-    "max_prompt_length": 2000,
-    "min_response_length": 15,
-    "max_response_length": 2000,
-    "filter_urls": true,
+    "max_prompt_length": 1024,
+    "min_response_length": 20,
+    "max_response_length": 2048,
+    "filter_urls": false,
     "filter_code_blocks": false,
-    "require_ascii": false
+    "require_ascii": false,
+    "remove_duplicates": true,
+    "deduplication": {
+      "threshold": 0.85,
+      "num_perm": 128
+    }
   },
 
   "datasets": [
-    {
-      "name": "alpaca_gpt4",
-      "type": "huggingface",
-      "dataset_name": "tatsu-lab/alpaca",
-      "subset": null,
-      "split": "train",
-      "streaming": false,
-      "max_samples": 50000,
-      "text_fields": {
-        "prompt": "instruction",
-        "response": "output"
-      },
-      "weight": 0.4,
-      "description": "Stanford Alpaca - High-quality instruction-following dataset"
-    },
     {
       "name": "dolly_v2",
       "type": "huggingface",
       "dataset_name": "databricks/databricks-dolly-15k",
       "subset": null,
       "split": "train",
-      "streaming": false,
-      "max_samples": 15000,
       "text_fields": {
         "prompt": "instruction",
-        "response": "response"
+        "response": "response",
+        "context": "context"
       },
-      "weight": 0.3,
-      "description": "Databricks Dolly v2 - Human-generated instruction/response pairs"
+      "weight": 1.5,
+      "description": "Databricks Dolly v2 - PREMIUM QUALITY human-generated instruction/response pairs"
     },
     {
       "name": "openassistant_v1",
@@ -58,28 +56,63 @@
       "dataset_name": "OpenAssistant/oasst1",
       "subset": null,
       "split": "train",
-      "streaming": false,
-      "max_samples": 30000,
       "text_fields": {
         "prompt": "text",
         "response": "text"
       },
-      "weight": 0.3,
-      "description": "OpenAssistant OASST1 - High-quality conversational data with human preferences",
+      "weight": 1.5,
+      "description": "OpenAssistant OASST1 - PREMIUM QUALITY conversational data with human preferences",
       "custom_processing": {
         "conversation_tree": true,
         "filter_language": "en",
         "min_score": 2,
         "role_filter": ["prompter", "assistant"]
       }
+    },
+    {
+      "name": "sharegpt_vicuna",
+      "type": "huggingface",
+      "dataset_name": "anon8231489123/ShareGPT_Vicuna_unfiltered",
+      "subset": null,
+      "split": "train",
+      "text_fields": {
+        "prompt": "instruction",
+        "response": "output"
+      },
+      "weight": 1.2,
+      "description": "ShareGPT Vicuna - HIGH QUALITY real ChatGPT conversations with natural dialogue"
+    },
+    {
+      "name": "alpaca_gpt4",
+      "type": "huggingface",
+      "dataset_name": "tatsu-lab/alpaca",
+      "subset": null,
+      "split": "train",
+      "text_fields": {
+        "prompt": "instruction",
+        "input": "input",
+        "response": "output"
+      },
+      "weight": 0.3,
+      "description": "Stanford Alpaca - Instruction-following baseline (minimal weight due to lower quality)"
     }
   ],
 
   "processing_metadata": {
-    "target_conversations": 75000,
-    "estimated_tokens": 40000000,
     "processing_time_estimate": "60-90 minutes",
-    "quality_focus": "instruction_following_and_conversation",
-    "template_rationale": "Instruct format chosen for better tokenization efficiency (14 vs 18 tokens per turn)"
+    "quality_focus": "premium_datasets_with_balanced_token_budget_for_tiny_23m",
+    "template_rationale": "Instruct format chosen for better tokenization efficiency (14 vs 18 tokens per turn)",
+    "chinchilla_rationale": "40M tokens = 1.7 tokens/param for 23M model (balanced for LoRA SFT, realistic 5-6h training)",
+    "dataset_ratio": "1.5:1.5:1.2:0.3 (Dolly:OASST1:ShareGPT:Alpaca) for premium quality + natural conversations",
+    "dataset_distribution": {
+      "dolly_15k": "~34% of weight (premium instruction pairs)",
+      "oasst1": "~34% of weight (premium conversational)",
+      "sharegpt": "~27% of weight (natural ChatGPT conversations)",
+      "alpaca": "~7% of weight (baseline)"
+    },
+    "model_target": "Tiny 23M parameters (6 layers, 256 d_model, 4 heads)",
+    "training_efficiency": "~10,800 steps for 2 epochs, 5-6 hours on RTX 4090",
+    "expected_conversations": "~160k after sampling",
+    "tokens_per_param": "1.7 (optimal for LoRA SFT)"
   }
 }

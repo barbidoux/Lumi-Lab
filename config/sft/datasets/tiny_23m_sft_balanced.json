@@ -1,0 +1,106 @@
+{
+  "name": "tiny_23m_sft_balanced",
+  "description": "PREMIUM SFT corpus for Tiny 23M model - 3 high-quality datasets (15M tokens): OASST1 + WizardLM + Orca",
+  "version": "4.1",
+  "template": "instruct",
+
+  "sampling_strategy": {
+    "mode": "target_tokens",
+    "target_tokens": 15000000,
+    "target_conversations": null,
+    "max_samples_per_dataset": null,
+    "seed": 42,
+    "chars_per_token": 4.0,
+    "analysis_sample_size": 100
+  },
+
+  "output_params": {
+    "sequence_length": 1024,
+    "shard_size": 2000,
+    "train_ratio": 0.95,
+    "enable_packing": false,
+    "batch_size": 1000
+  },
+
+  "quality_filters": {
+    "min_prompt_length": 10,
+    "max_prompt_length": 1024,
+    "min_response_length": 20,
+    "max_response_length": 2048,
+    "filter_urls": false,
+    "filter_code_blocks": false,
+    "require_ascii": false,
+    "remove_duplicates": true,
+    "deduplication": {
+      "threshold": 0.85,
+      "num_perm": 128
+    }
+  },
+
+  "datasets": [
+    {
+      "name": "openassistant_v1",
+      "type": "huggingface",
+      "dataset_name": "OpenAssistant/oasst1",
+      "subset": null,
+      "split": "train",
+      "text_fields": {
+        "prompt": "text",
+        "response": "text"
+      },
+      "weight": 1.0,
+      "description": "OpenAssistant OASST1 - PREMIUM QUALITY conversational data with human preferences",
+      "custom_processing": {
+        "conversation_tree": true,
+        "filter_language": "en",
+        "min_score": 2,
+        "role_filter": ["prompter", "assistant"]
+      }
+    },
+    {
+      "name": "wizardlm_70k",
+      "type": "huggingface",
+      "dataset_name": "WizardLMTeam/WizardLM_evol_instruct_70k",
+      "subset": null,
+      "split": "train",
+      "text_fields": {
+        "prompt": "instruction",
+        "response": "output"
+      },
+      "weight": 1.0,
+      "description": "WizardLM Evol-Instruct 70k - PREMIUM QUALITY complex instructions (ICLR 2024, superior to Alpaca)"
+    },
+    {
+      "name": "open_orca",
+      "type": "huggingface",
+      "dataset_name": "Open-Orca/OpenOrca",
+      "subset": null,
+      "split": "train",
+      "text_fields": {
+        "prompt": "question",
+        "response": "response"
+      },
+      "weight": 1.0,
+      "description": "Open-Orca - HIGH QUALITY GPT-4 augmented dataset (1M samples, diverse reasoning tasks)"
+    }
+  ],
+
+  "processing_metadata": {
+    "processing_time_estimate": "60-90 minutes",
+    "quality_focus": "ALL_PREMIUM_QUALITY_no_baseline_datasets",
+    "template_rationale": "Instruct format chosen for better tokenization efficiency",
+    "sft_rationale": "SFT optimal range: 10-15M tokens (0.43-0.65 tokens/param) for quality/diversity balance",
+    "dataset_ratio": "1.0:1.0:1.0 (OASST1:WizardLM:OpenOrca) - Equal weight, ALL premium/high quality",
+    "dataset_distribution": {
+      "oasst1": "~33% of tokens (5.0M) - PREMIUM conversational with preferences",
+      "wizardlm_70k": "~33% of tokens (5.0M) - PREMIUM complex Evol-Instruct, ICLR 2024",
+      "open_orca": "~33% of tokens (5.0M) - HIGH QUALITY GPT-4 augmented dataset (1M samples)"
+    },
+    "model_target": "Tiny 23M parameters (6 layers, 256 d_model, 4 heads)",
+    "training_efficiency": "~5,400 steps for 2 epochs, 4-5 hours on RTX 4090",
+    "expected_conversations": "~60-80k after sampling",
+    "tokens_per_param": "0.65 (balanced for SFT - quality + diversity)",
+    "research_basis": "WizardLM (ICLR 2024) significantly outperforms Alpaca - balanced complexity distribution for better complex task handling",
+    "upgrade_notes": "v4.0: Replaced Alpaca with WizardLM (ICLR 2024, superior). v4.1: Removed Dolly (too small, 1.4M tokens) + ShareGPT (unavailable) + Intel Orca DPO (too small). Final 3-dataset mix: OASST1 + WizardLM + Open-Orca (equal weights, 5M tokens each, 1M+ samples total)."
+  }
+}

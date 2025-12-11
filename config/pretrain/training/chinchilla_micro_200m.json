@@ -1,0 +1,74 @@
+{
+  "name": "chinchilla_micro_200m_training",
+  "description": "Complete training config for micro model (9.4M) - 200M tokens Chinchilla-optimal",
+  "version": "1.0",
+
+  "architecture_config": "config/architectures/micro.json",
+
+  "training_params": {
+    "learning_rate": 6e-4,
+    "per_device_train_batch_size": 16,
+    "gradient_accumulation_steps": 2,
+    "max_steps": 6200,
+    "warmup_steps": 620,
+    "warmup_ratio": 0.1,
+    "weight_decay": 0.1,
+    "max_grad_norm": 1.0,
+    "save_steps": 500,
+    "logging_steps": 100,
+    "eval_steps": 500,
+    "log_dataset_mix_steps": 250,
+    "save_total_limit": 3
+  },
+
+  "optimizer": {
+    "type": "adamw",
+    "betas": [0.9, 0.95],
+    "eps": 1e-8
+  },
+
+  "scheduler": {
+    "type": "cosine",
+    "num_cycles": 0.5
+  },
+
+  "hardware_params": {
+    "use_flash_attn": true,
+    "bf16": true,
+    "gradient_checkpointing": false,
+    "dataloader_num_workers": 4
+  },
+
+  "reproducibility": {
+    "seed": 42,
+    "deterministic": true
+  },
+
+  "data_params": {
+    "sequence_length": 1024,
+    "data_seed": 42,
+    "train_val_split": 0.95
+  },
+
+  "_calculations": {
+    "effective_batch_size": "16 * 2 = 32 sequences",
+    "tokens_per_step": "32 * 1024 = 32,768 tokens",
+    "max_steps_calculation": "200M / 32,768 = 6,104, rounded to 6,200 for safety",
+    "warmup_steps_calculation": "6,200 * 0.1 = 620 steps",
+    "total_tokens": "6,200 * 32,768 = 203,161,600 tokens"
+  },
+
+  "_training_estimates": {
+    "training_time": "2-3 hours on RTX 4090",
+    "memory_usage": "~3-4GB VRAM",
+    "tokens_per_second": "~15,000-20,000"
+  },
+
+  "_hyperparameter_rationale": {
+    "learning_rate": "6e-4 (slightly higher than tiny's 5e-4 due to smaller model)",
+    "batch_size": "Effective 32 (same as tiny, proven stable)",
+    "warmup": "10% of max_steps (critical for stability)",
+    "weight_decay": "0.1 (matches tiny, standard for pre-training)",
+    "gradient_checkpointing": "false (model small enough, not needed)"
+  }
+}

@@ -96,16 +96,16 @@ def validate_training_config(config: Dict[str, Any]) -> None:
             raise ValueError(f"Missing required training parameter: {param}")
 
 
-def load_datasets(data_dirs: List[str], data_weights: Optional[List[float]] = None) -> Tuple[List[StreamingSFTDataset], List[StreamingSFTDataset]]:
+def load_datasets(data_dirs: List[str], data_weights: Optional[List[float]] = None) -> Tuple[List[StreamingSFTDataset], List[StreamingSFTDataset], Optional[List[float]]]:
     """
     Load SFT datasets from directories using the streaming dataset class.
 
     Args:
         data_dirs: List of data directories
-        data_weights: Optional weights for multi-dataset sampling (currently unused with streaming)
+        data_weights: Optional weights for multi-dataset sampling
 
     Returns:
-        Tuple of (train_datasets, val_datasets)
+        Tuple of (train_datasets, val_datasets, normalized_weights)
     """
     train_datasets = []
     val_datasets = []
@@ -148,11 +148,21 @@ def load_datasets(data_dirs: List[str], data_weights: Optional[List[float]] = No
     if val_datasets:
         logger.info(f"Successfully initialized {len(val_datasets)} validation dataset streams")
 
-    return train_datasets, val_datasets
+    # Normalize weights
+    normalized_weights = None
+    if data_weights and len(data_weights) > 0:
+        if len(data_weights) != len(data_dirs):
+            raise ValueError(f"Number of weights ({len(data_weights)}) must match number of data_dirs ({len(data_dirs)})")
+        total_weight = sum(data_weights)
+        normalized_weights = [w / total_weight for w in data_weights]
+        logger.info(f"📊 Dataset weights (normalized): {normalized_weights}")
+
+    return train_datasets, val_datasets, normalized_weights
 
 
 def setup_model_and_tokenizer(model_path: str,
                              lora_config: Dict[str, Any],
+                             training_params: Dict[str, Any],
                              tokenizer_path: str) -> Tuple[nn.Module, Dict[str, Any]]:
     """
     Setup model with LoRA and validate tokenizer.
@@ -183,8 +193,9 @@ def setup_model_and_tokenizer(model_path: str,
     # Apply LoRA to model
     model = get_peft_model(model, peft_config)
 
-    # Enable gradient checkpointing if specified
-    if lora_config.get('gradient_checkpointing', False):
+    # Enable gradient checkpointing if specified (read from training_params, not lora_config)
+    if training_params.get('gradient_checkpointing', False):
+        logger.info("✓ Enabling gradient checkpointing (VRAM optimization)")
         model.enable_input_require_grads()
         model.gradient_checkpointing_enable()
 
@@ -382,9 +393,31 @@ def train_model_with_trl(model: nn.Module,
     if not train_hf_datasets:
         raise ValueError("No training data could be loaded!")
 
+    # Apply weighted sampling if multiple datasets
     if len(train_hf_datasets) > 1:
-        train_hf_dataset = concatenate_datasets(train_hf_datasets)
-        logger.info(f"Concatenated {len(train_hf_datasets)} training datasets")
+        if data_weights:
+            # Weighted interleaving with config-driven parameters
+            from datasets import interleave_datasets
+
+            # Get interleave strategy from config (config-driven, no hardcoded values)
+            interleave_config = config.get('dataset_config', {}).get('interleave_strategy', {})
+            seed = interleave_config.get('seed', 42)
+            stopping_strategy = interleave_config.get('stopping_strategy', 'all_exhausted')
+
+            logger.info(f"🎲 Interleaving {len(train_hf_datasets)} datasets with weights: {data_weights}")
+            logger.info(f"   Strategy: seed={seed}, stopping_strategy={stopping_strategy}")
+
+            train_hf_dataset = interleave_datasets(
+                train_hf_datasets,
+                probabilities=data_weights,
+                seed=seed,
+                stopping_strategy=stopping_strategy
+            )
+            logger.info(f"✓ Interleaved {len(train_hf_datasets)} training datasets with weighted sampling")
+        else:
+            # Simple concatenation (equal weight)
+            train_hf_dataset = concatenate_datasets(train_hf_datasets)
+            logger.info(f"✓ Concatenated {len(train_hf_datasets)} training datasets (equal weight)")
     else:
         train_hf_dataset = train_hf_datasets[0]
 
@@ -564,8 +597,9 @@ def main():
                        help='Path to pre-trained model')
     parser.add_argument('--data_dirs', type=str, nargs='+', required=True,
                        help='Paths to SFT data directories')
-    parser.add_argument('--tokenizer_path', type=str, required=True,
-                       help='Path to tokenizer directory')
+    parser.add_argument('--tokenizer_path', '--tokenizer_dir', type=str, required=True,
+                       dest='tokenizer_path',
+                       help='Path to tokenizer directory (accepts --tokenizer_dir alias for consistency)')
     parser.add_argument('--output_dir', type=str, required=True,
                        help='Output directory for checkpoints')
 
@@ -613,12 +647,13 @@ def main():
     try:
 
         # Load datasets
-        train_datasets, val_datasets = load_datasets(args.data_dirs, args.data_weights)
+        train_datasets, val_datasets, data_weights = load_datasets(args.data_dirs, args.data_weights)
 
         # Setup model and tokenizer
         model, tokenizer_metadata = setup_model_and_tokenizer(
             args.model_path,
             config['lora_config'],
+            config['training_params'],
             args.tokenizer_path
         )
 

@@ -103,11 +103,39 @@ python scripts/80_evaluate_sft.py \
     --output_file evaluation_results/sft/tiny/results.json
 ```
 
+#### Step 10: DPO Corpus Preparation (Optional - ⚠️ EXPERIMENTAL - UNTESTED)
+```bash
+python scripts/90_prepare_dpo_corpus.py \
+    --config config/dpo/datasets/orca_dpo.json \
+    --tokenizer_dir data/models/tokenizers/spm_32k \
+    --output_dir data/dpo_processed/orca
+```
+
+#### Step 11: DPO Training (⚠️ EXPERIMENTAL - UNTESTED)
+```bash
+accelerate launch --mixed_precision bf16 scripts/95_train_dpo.py \
+    --config config/dpo/training/dpo_tiny.json \
+    --model_path checkpoints/sft/tiny/final \
+    --data_dirs data/dpo_processed/orca \
+    --tokenizer_dir data/models/tokenizers/spm_32k \
+    --output_dir checkpoints/dpo/tiny 2>&1 | tee logs/dpo_tiny.log
+```
+
+#### Step 12: Evaluate DPO (⚠️ EXPERIMENTAL - UNTESTED)
+```bash
+python scripts/98_evaluate_dpo.py \
+    --config config/evaluation/dpo_standard.json \
+    --model_path checkpoints/dpo/tiny/final \
+    --tokenizer_dir data/models/tokenizers/spm_32k \
+    --eval_data_dir data/dpo_processed/orca \
+    --output_file evaluation_results/dpo/tiny/results.json
+```
+
 ## Architecture Overview
 
 ### Modular Pipeline Design
 
-Lumi-Lab implements a **9-step modular pipeline** that separates concerns for maximum flexibility:
+Lumi-Lab implements a **12-step modular pipeline** that separates concerns for maximum flexibility:
 
 #### Step 1: Corpus Preparation (`10_prepare_corpus.py`)
 - **Purpose**: Transform raw datasets into cleaned, validated text corpus
@@ -160,9 +188,26 @@ Lumi-Lab implements a **9-step modular pipeline** that separates concerns for ma
 - **Metrics**: Perplexity, BoolQ, smoke tests, generation quality
 - **Output**: `evaluation_results/sft/{model}/results.json`
 
-#### Step 9: DPO Training (`90_train_dpo.py`)
-- **Purpose**: Direct Preference Optimization (optional)
-- **Output**: `checkpoints/dpo/{model}/`
+#### Step 9a: DPO Corpus Preparation (`90_prepare_dpo_corpus.py`) - ⚠️ EXPERIMENTAL
+- **Purpose**: Prepare DPO datasets with chosen/rejected response pairs
+- **Config**: `config/dpo/datasets/*.json` (orca_dpo.json, hh_rlhf.json)
+- **Operations**: Loading, validation, quality filtering, sharding with tokenizer verification
+- **Output**: `data/dpo_processed/{name}/` with JSONL shards + manifest
+- **Key**: Validates triplets (prompt, chosen, rejected), ensures tokenizer consistency
+
+#### Step 9b: DPO Training (`95_train_dpo.py`) - ⚠️ EXPERIMENTAL
+- **Purpose**: Align model with human preferences using DPO loss
+- **Config**: `config/dpo/training/*.json` (dpo_tiny.json, dpo_small.json, dpo_base.json)
+- **Features**: Multi-dataset weighted sampling, LoRA adapters, config-driven, tokenizer SHA256 verification
+- **Key parameters**: beta=0.1 (KL penalty), learning_rate=5e-7 (much lower than SFT)
+- **Output**: `checkpoints/dpo/{model}/` with LoRA adapters + full state
+- **Note**: Run AFTER SFT, not on pretrained model
+
+#### Step 9c: DPO Evaluation (`98_evaluate_dpo.py`) - ⚠️ EXPERIMENTAL
+- **Purpose**: Comprehensive DPO model evaluation
+- **Config**: `config/evaluation/dpo_standard.json`
+- **Metrics**: Reward margin, win rate, perplexity comparison (chosen vs rejected), BoolQ, generation quality
+- **Output**: `evaluation_results/dpo/{model}/results.json` + CSV summary
 
 ### Critical Design Principles
 
@@ -309,6 +354,25 @@ python scripts/20_train_tokenizer.py \
 - **Auto-resume**: Scripts detect latest checkpoint automatically
 - **Validation**: Restarting from checkpoint produces identical loss/LR curves
 
+**IMPORTANT - Path Conventions by Script:**
+| Script | Output Path Behavior | Example |
+|--------|---------------------|---------|
+| `40_pretrain.py` | Appends `{model_name}/` subdirectory | `--output_dir checkpoints/pretrain/micro` → saves to `checkpoints/pretrain/micro/micro/` |
+| `70_train_sft.py` | Uses path as-is (no subdirectory) | `--output_dir checkpoints/sft/micro` → saves to `checkpoints/sft/micro/` |
+| `95_train_dpo.py` | Uses path as-is (no subdirectory) | `--output_dir checkpoints/dpo/micro` → saves to `checkpoints/dpo/micro/` |
+
+**Chaining Pretrain → SFT:**
+```bash
+# Pretrain saves to: checkpoints/pretrain/micro/micro/final
+accelerate launch scripts/40_pretrain.py \
+    --output_dir checkpoints/pretrain/micro ...
+
+# SFT must reference the ACTUAL path (with double nesting):
+accelerate launch scripts/70_train_sft.py \
+    --model_path checkpoints/pretrain/micro/micro/final \
+    --output_dir checkpoints/sft/micro ...
+```
+
 ### SFT Templates
 - **ChatML** (recommended): `<|im_start|>user\n...\n<|im_end|>\n<|im_start|>assistant\n...\n<|im_end|>`
 - **Instruct**: `### Instruction:\n...\n\n### Response:\n...`
@@ -336,6 +400,14 @@ python scripts/20_train_tokenizer.py \
 7. **Not monitoring progress tracking**: Watch equivalent epochs in evaluation logs to detect overfitting
 8. **Not using accelerate**: Always use `accelerate launch --mixed_precision bf16` for training
 9. **Forgetting --log-level**: Use `--log-level INFO` for detailed training logs
+10. **Log buffering issues (WSL2)**: Logs may appear in bursts instead of real-time. Use unbuffered output:
+    ```bash
+    # Option 1: Environment variable (recommended)
+    PYTHONUNBUFFERED=1 python scripts/40_pretrain.py ... 2>&1 | tee logs/pretrain.log
+
+    # Option 2: stdbuf for line buffering
+    stdbuf -oL python scripts/40_pretrain.py ... 2>&1 | tee logs/pretrain.log
+    ```
 
 ## File Structure Reference
 
@@ -350,7 +422,9 @@ Lumi-Lab/
 │   ├── 60_prepare_sft_corpus.py   # SFT corpus preparation
 │   ├── 70_train_sft.py            # SFT training (LoRA)
 │   ├── 80_evaluate_sft.py         # SFT evaluation
-│   ├── 90_train_dpo.py            # DPO training
+│   ├── 90_prepare_dpo_corpus.py   # DPO corpus preparation (⚠️ experimental)
+│   ├── 95_train_dpo.py            # DPO training (⚠️ experimental)
+│   ├── 98_evaluate_dpo.py         # DPO evaluation (⚠️ experimental)
 │   └── 100_serve.py               # Model serving
 │
 ├── config/

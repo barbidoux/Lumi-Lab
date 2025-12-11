@@ -1,0 +1,74 @@
+{
+  "name": "dpo_standard_evaluation",
+  "description": "Standard evaluation suite for DPO-trained models",
+  "version": "1.0",
+
+  "metrics": {
+    "reward_margin": true,
+    "win_rate": true,
+    "perplexity": {
+      "chosen": true,
+      "rejected": true
+    },
+    "boolq": true,
+    "generation_quality": true,
+    "smoke_tests": true
+  },
+
+  "eval_dataset": {
+    "max_samples": 1000,
+    "stratified_sampling": false,
+    "shuffle_seed": 42
+  },
+
+  "generation_config": {
+    "max_new_tokens": 128,
+    "temperature": 0.7,
+    "top_p": 0.9,
+    "top_k": 50,
+    "do_sample": true,
+    "repetition_penalty": 1.1,
+    "no_repeat_ngram_size": 3
+  },
+
+  "comparison_prompts": [
+    "How can I improve my communication skills in professional settings?",
+    "What is the best way to learn a new programming language?",
+    "Explain the concept of neural networks in simple terms.",
+    "How do I deal with procrastination and stay focused?",
+    "What are the key benefits of regular physical exercise?",
+    "How can I be more creative when solving complex problems?",
+    "What is climate change and why should we care about it?",
+    "How do I build confidence in social situations?",
+    "What is the difference between empathy and sympathy?",
+    "How can I develop better time management skills?",
+    "What makes a good leader in a team environment?",
+    "How do I handle constructive criticism effectively?",
+    "What are the principles of effective writing?",
+    "How can I improve my critical thinking abilities?",
+    "What is the importance of emotional intelligence?"
+  ],
+
+  "output_format": {
+    "save_json": true,
+    "save_csv": true,
+    "save_plots": false,
+    "save_examples": true,
+    "max_generation_samples": 10
+  },
+
+  "baseline_comparison": {
+    "enabled": false,
+    "sft_model_path": null,
+    "pretrain_model_path": null
+  },
+
+  "notes": [
+    "This configuration evaluates DPO models on alignment quality",
+    "Reward margin should be positive (chosen > rejected)",
+    "Win rate should be > 0.5 for successful alignment",
+    "BoolQ tests general reasoning capabilities",
+    "Generation quality is assessed through comparison prompts",
+    "Recommended to run on held-out DPO test set"
+  ]
+}

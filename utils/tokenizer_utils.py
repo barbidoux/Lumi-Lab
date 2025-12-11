@@ -47,10 +47,22 @@ def validate_sp32k_tokenizer(tokenizer_path: str, model_path: str = None) -> Aut
                 print(f"WARNING: Could not load tokenizer metadata: {e}")
 
     try:
+        # Resolve the actual path to the .model file
+        # Handle both direct .model paths and directory paths containing spm.model
+        spm_model_path = None
+        if tokenizer_path.endswith('.model') and os.path.isfile(tokenizer_path):
+            spm_model_path = tokenizer_path
+        elif os.path.isdir(tokenizer_path):
+            # Check for spm.model in directory
+            potential_path = os.path.join(tokenizer_path, 'spm.model')
+            if os.path.exists(potential_path):
+                spm_model_path = potential_path
+                print(f"Found SentencePiece model: {spm_model_path}")
+
         # Load SentencePiece model to validate
-        if tokenizer_path.endswith('.model'):
+        if spm_model_path:
             sp_model = spm.SentencePieceProcessor()
-            sp_model.load(tokenizer_path)
+            sp_model.load(spm_model_path)
 
             vocab_size = sp_model.get_piece_size()
             print(f"Loaded SentencePiece model with vocab size: {vocab_size}")
@@ -65,7 +77,7 @@ def validate_sp32k_tokenizer(tokenizer_path: str, model_path: str = None) -> Aut
                     sys.exit(1)
 
             # Create tokenizer using SentencePiece directly with known config
-            tokenizer = LlamaTokenizer(vocab_file=tokenizer_path, legacy=True)
+            tokenizer = LlamaTokenizer(vocab_file=spm_model_path, legacy=True)
 
             # Set special tokens based on metadata or defaults
             if tokenizer_metadata and 'special_tokens' in tokenizer_metadata:

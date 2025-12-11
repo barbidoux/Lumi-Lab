@@ -511,12 +511,16 @@ def train_epoch(
     # For step-based training with max_steps, use step progress like multi-dataset training
     if config.max_steps > 0:
         progress_bar = tqdm(total=config.max_steps, desc=f"Epoch {epoch} Training", initial=global_step)
-        # Create infinite iterator from dataloader to avoid epoch boundaries
-        import itertools
-        infinite_dataloader = itertools.cycle(dataloader)
+        # Create iterator from dataloader (will be recreated when exhausted)
+        dataloader_iter = iter(dataloader)
 
         while global_step < config.max_steps:
-            batch = next(infinite_dataloader)
+            try:
+                batch = next(dataloader_iter)
+            except StopIteration:
+                # Dataloader exhausted, create new iterator
+                dataloader_iter = iter(dataloader)
+                batch = next(dataloader_iter)
 
             with accelerator.accumulate(model):
                 input_ids = batch['input_ids']
@@ -561,10 +565,17 @@ def train_epoch(
                     if accelerator.is_main_process:
                         # Calculate training progress
                         progress_pct = (global_step / config.max_steps) * 100
-                        equiv_epoch = global_step / len(dataloader) if len(dataloader) > 0 else 0
+                        epochs_no_accum = global_step / len(dataloader) if len(dataloader) > 0 else 0
+                        epochs_effective = epochs_no_accum * config.gradient_accumulation_steps
+
+                        # Calculate tokens seen
+                        tokens_per_step = config.batch_size * config.gradient_accumulation_steps * config.sequence_length
+                        total_tokens_seen = global_step * tokens_per_step
 
                         accelerator.print("📊 Evaluation...")
-                        accelerator.print(f"   Progress: {global_step}/{config.max_steps} steps ({progress_pct:.1f}%), ~{equiv_epoch:.2f} epochs")
+                        accelerator.print(f"   Progress: {global_step}/{config.max_steps} steps ({progress_pct:.1f}%)")
+                        accelerator.print(f"   Epochs: {epochs_effective:.2f} effective ({epochs_no_accum:.2f} without gradient accumulation)")
+                        accelerator.print(f"   Tokens seen: {total_tokens_seen:,} ({total_tokens_seen/1e6:.1f}M)")
                         perplexity = calculate_perplexity(model, val_dataloader, accelerator.device, accelerator)
                         accelerator.print(f"   Validation perplexity: {perplexity:.2f}")
 
@@ -690,11 +701,18 @@ def train_multi_dataset(
                     # Calculate equivalent epochs (estimate based on total dataset size)
                     # For multi-dataset, use the largest dataset as reference
                     total_samples = sum(len(ds) for ds in multi_dataset_sampler.datasets)
-                    steps_per_epoch = total_samples / (config.batch_size * config.gradient_accumulation_steps)
-                    equiv_epoch = global_step / steps_per_epoch if steps_per_epoch > 0 else 0
+                    effective_batch_size = config.batch_size * config.gradient_accumulation_steps
+                    steps_per_epoch = total_samples / effective_batch_size
+                    epochs_effective = global_step / steps_per_epoch if steps_per_epoch > 0 else 0
+
+                    # Calculate tokens seen
+                    tokens_per_step = config.batch_size * config.gradient_accumulation_steps * config.sequence_length
+                    total_tokens_seen = global_step * tokens_per_step
 
                     accelerator.print("📊 Evaluation...")
-                    accelerator.print(f"   Progress: {global_step}/{max_steps} steps ({progress_pct:.1f}%), ~{equiv_epoch:.2f} epochs")
+                    accelerator.print(f"   Progress: {global_step}/{max_steps} steps ({progress_pct:.1f}%)")
+                    accelerator.print(f"   Epochs: {epochs_effective:.2f} effective (across all datasets)")
+                    accelerator.print(f"   Tokens seen: {total_tokens_seen:,} ({total_tokens_seen/1e6:.1f}M)")
                     perplexity = calculate_perplexity(model, val_dataloader, accelerator.device, accelerator)
                     accelerator.print(f"   Validation perplexity: {perplexity:.2f}")
 
@@ -783,6 +801,7 @@ def main():
     # Extract hardware parameters
     use_flash_attention = hardware_params.get('use_flash_attn', True)
     bf16 = hardware_params.get('bf16', True)
+    use_gradient_checkpointing = hardware_params.get('gradient_checkpointing', False)
 
     # Extract reproducibility parameters
     seed = repro_params['seed']
@@ -834,6 +853,11 @@ def main():
     accelerator.print("Creating model...")
     model = create_model(config, use_flash_attention=use_flash_attention)
     accelerator.print(f"Model created: {sum(p.numel() for p in model.parameters()):,} parameters")
+
+    # Apply gradient checkpointing if configured
+    if use_gradient_checkpointing:
+        model.gradient_checkpointing_enable()
+        accelerator.print("✓ Gradient checkpointing enabled (reduces VRAM, slightly slower)")
     
     # Data loading - with multi-dataset support
     accelerator.print("Loading data...")

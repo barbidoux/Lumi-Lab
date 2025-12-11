@@ -8,11 +8,62 @@ import json
 import logging
 import os
 import subprocess
+import time
+from functools import wraps
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Callable, Optional, Tuple, TypeVar
 
 import huggingface_hub
 from huggingface_hub import HfApi
+
+
+# Type variable for generic retry function
+T = TypeVar('T')
+
+
+def retry_with_backoff(
+    max_retries: int = 5,
+    base_delay: float = 1.0,
+    max_delay: float = 60.0,
+    exponential_base: float = 2.0,
+    retryable_exceptions: Tuple[type, ...] = (Exception,)
+) -> Callable:
+    """
+    Decorator for retrying functions with exponential backoff.
+
+    Args:
+        max_retries: Maximum number of retry attempts (default: 5)
+        base_delay: Initial delay in seconds (default: 1.0)
+        max_delay: Maximum delay between retries in seconds (default: 60.0)
+        exponential_base: Base for exponential backoff (default: 2.0)
+        retryable_exceptions: Tuple of exception types to retry on (default: all exceptions)
+
+    Returns:
+        Decorated function with retry logic
+    """
+    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        @wraps(func)
+        def wrapper(*args, **kwargs) -> T:
+            last_exception = None
+            for attempt in range(max_retries + 1):
+                try:
+                    return func(*args, **kwargs)
+                except retryable_exceptions as e:
+                    last_exception = e
+                    if attempt < max_retries:
+                        delay = min(base_delay * (exponential_base ** attempt), max_delay)
+                        logging.warning(
+                            f"Attempt {attempt + 1}/{max_retries + 1} failed for {func.__name__}: {e}. "
+                            f"Retrying in {delay:.1f}s..."
+                        )
+                        time.sleep(delay)
+                    else:
+                        logging.error(
+                            f"All {max_retries + 1} attempts failed for {func.__name__}. Last error: {e}"
+                        )
+            raise last_exception
+        return wrapper
+    return decorator
 
 
 class HFAuthError(RuntimeError):
@@ -166,7 +217,7 @@ def ensure_hf_login(required_scopes: Tuple[str, ...] = ("read",)) -> str:
 
 def get_hf_api_client(required_scopes: Tuple[str, ...] = ("read",)) -> HfApi:
     """
-    Get authenticated Hugging Face API client.
+    Get authenticated Hugging Face API client with retry logic.
 
     Args:
         required_scopes: Required token scopes (default: ("read",))
@@ -175,17 +226,39 @@ def get_hf_api_client(required_scopes: Tuple[str, ...] = ("read",)) -> HfApi:
         Authenticated HfApi client instance
 
     Raises:
-        HFAuthError: If authentication fails
+        HFAuthError: If authentication fails after all retries
         HFScopesError: If token scopes are insufficient
     """
     # Ensure authentication
     ensure_hf_login(required_scopes)
 
-    # Return authenticated API client
-    try:
-        api = HfApi()
-        # Verify the client works by making a simple API call
+    # Define retryable network exceptions
+    import requests
+    retryable_exceptions = (
+        requests.exceptions.ConnectionError,
+        requests.exceptions.Timeout,
+        requests.exceptions.HTTPError,
+        ConnectionError,
+        TimeoutError,
+        OSError,  # Includes socket errors
+    )
+
+    @retry_with_backoff(
+        max_retries=5,
+        base_delay=1.0,
+        max_delay=60.0,
+        retryable_exceptions=retryable_exceptions
+    )
+    def _verify_api_connection(api: HfApi) -> HfApi:
+        """Verify API connection with retry logic."""
         api.whoami()
         return api
+
+    # Return authenticated API client with retry
+    try:
+        api = HfApi()
+        return _verify_api_connection(api)
+    except retryable_exceptions as e:
+        raise HFAuthError(f"Failed to create authenticated HF API client after retries: {e}")
     except Exception as e:
         raise HFAuthError(f"Failed to create authenticated HF API client: {e}")

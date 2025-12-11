@@ -1,0 +1,111 @@
+{
+  "name": "lora_micro",
+  "description": "LoRA configuration for micro model (9.4M params) fine-tuning - Clean v3.0",
+  "version": "3.0",
+  "model_target": "9.4M parameters (4 layers, 128 d_model, 2 heads)",
+
+  "training_params": {
+    "learning_rate": 1e-4,
+    "num_train_epochs": -1,
+    "max_steps": 2700,
+    "per_device_train_batch_size": 8,
+    "per_device_eval_batch_size": 16,
+    "gradient_accumulation_steps": 4,
+    "warmup_ratio": 0.1,
+    "weight_decay": 0.01,
+    "logging_steps": 20,
+    "save_steps": 200,
+    "eval_steps": 99999,
+    "evaluation_strategy": "no",
+    "save_strategy": "steps",
+    "load_best_model_at_end": false,
+    "metric_for_best_model": "eval_loss",
+    "greater_is_better": false,
+    "save_total_limit": 5,
+    "seed": 42,
+    "data_seed": 42,
+    "dataloader_num_workers": 0,
+    "remove_unused_columns": false,
+    "optim": "adamw_torch",
+    "lr_scheduler_type": "cosine",
+    "fp16": false,
+    "bf16": true,
+    "gradient_checkpointing": false,
+    "ddp_find_unused_parameters": false,
+    "group_by_length": false,
+    "report_to": ["none"],
+    "max_grad_norm": 1.0,
+    "adam_beta1": 0.9,
+    "adam_beta2": 0.95,
+    "adam_epsilon": 1e-8
+  },
+
+  "lora_config": {
+    "r": 16,
+    "lora_alpha": 32,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "lora_dropout": 0.05,
+    "bias": "none",
+    "fan_in_fan_out": false,
+    "init_lora_weights": true
+  },
+
+  "dataset_config": {
+    "interleave_strategy": {
+      "seed": 42,
+      "stopping_strategy": "all_exhausted"
+    }
+  },
+
+  "evaluation_config": {
+    "generation_config": {
+      "max_new_tokens": 128,
+      "temperature": 0.7,
+      "top_p": 0.9,
+      "top_k": 50,
+      "do_sample": true,
+      "pad_token_id": 0,
+      "eos_token_id": 2,
+      "repetition_penalty": 1.1,
+      "no_repeat_ngram_size": 3
+    },
+    "eval_prompts": [
+      "What is artificial intelligence and how does it work?",
+      "Explain the concept of machine learning in simple terms.",
+      "How do neural networks learn patterns from data?",
+      "What are the main applications of AI in everyday life?",
+      "Describe the difference between AI, machine learning, and deep learning."
+    ]
+  },
+
+  "_performance_rationale": {
+    "learning_rate": "1e-4 (higher than tiny's 8e-5 for smaller model)",
+    "batch_size": "32 effective (8*4 grad_accum) for maximum stability",
+    "lora_rank": "r=16 with alpha=32 (scaled from tiny's r=32 due to model size)",
+    "warmup": "10% warmup_ratio for critical initial stability",
+    "scheduler": "Cosine for smooth convergence without overfitting",
+    "weight_decay": "0.01 for light regularization (LoRA already regularized)",
+    "gradient_checkpointing": "false (not needed for micro model)",
+    "report_to": "none (TensorBoard disabled to avoid callback errors)"
+  },
+
+  "_training_estimates": {
+    "optimal_steps": "2700 steps (2 epochs through ~33k conversations)",
+    "training_time": "1-2 hours on RTX 4090",
+    "memory_usage": "~2-4GB VRAM with effective batch_size=32",
+    "convergence_step": "~1500-2000 steps",
+    "best_eval_loss_target": "<1.8",
+    "expected_boolq": "60-68% accuracy post-SFT",
+    "epochs_at_max_steps": "2.0 epochs (optimal for SFT without overfitting)",
+    "total_train_tokens": "~6M tokens (0.65 tokens/param for 9.4M model)",
+    "dataset_size": "~33k conversations (scaled from tiny)"
+  }
+}

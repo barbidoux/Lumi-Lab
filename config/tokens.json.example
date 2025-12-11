@@ -1,5 +1,8 @@
 {
-  "huggingface_token": "null",
+  "huggingface": {
+    "token": "hf_YOUR_TOKEN_HERE"
+  },
+  "huggingface_token": "hf_YOUR_TOKEN_HERE",
   "wandb_token": null,
   "openai_token": null
 }

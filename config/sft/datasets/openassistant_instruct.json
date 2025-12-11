@@ -8,7 +8,8 @@
     "sequence_length": 1024,
     "shard_size": 1000,
     "train_ratio": 0.95,
-    "enable_packing": true
+    "enable_packing": true,
+    "batch_size": 1000
   },
 
   "quality_filters": {
@@ -18,7 +19,12 @@
     "max_response_length": 2000,
     "filter_urls": true,
     "filter_code_blocks": false,
-    "require_ascii": false
+    "require_ascii": false,
+    "remove_duplicates": true,
+    "deduplication": {
+      "threshold": 0.85,
+      "num_perm": 128
+    }
   },
 
   "datasets": [
@@ -28,7 +34,6 @@
       "dataset_name": "OpenAssistant/oasst1",
       "subset": null,
       "split": "train",
-      "streaming": false,
       "max_samples": 30000,
       "text_fields": {
         "prompt": "text",

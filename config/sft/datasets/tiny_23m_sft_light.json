@@ -1,0 +1,90 @@
+{
+  "name": "tiny_23m_sft_light",
+  "description": "LIGHT SFT corpus for Tiny 23M model - Focus on QUALITY over quantity (10-15M tokens)",
+  "version": "3.0",
+  "template": "instruct",
+
+  "sampling_strategy": {
+    "mode": "target_tokens",
+    "target_tokens": 12000000,
+    "seed": 42,
+    "chars_per_token": 4.0,
+    "analysis_sample_size": 100
+  },
+
+  "output_params": {
+    "sequence_length": 1024,
+    "shard_size": 2000,
+    "train_ratio": 0.95,
+    "enable_packing": false,
+    "batch_size": 1000
+  },
+
+  "quality_filters": {
+    "min_prompt_length": 10,
+    "max_prompt_length": 1024,
+    "min_response_length": 20,
+    "max_response_length": 2048,
+    "filter_urls": false,
+    "filter_code_blocks": false,
+    "require_ascii": false,
+    "remove_duplicates": true,
+    "deduplication": {
+      "threshold": 0.85,
+      "num_perm": 128
+    }
+  },
+
+  "datasets": [
+    {
+      "name": "dolly_v2",
+      "type": "huggingface",
+      "dataset_name": "databricks/databricks-dolly-15k",
+      "subset": null,
+      "split": "train",
+      "text_fields": {
+        "prompt": "instruction",
+        "response": "response",
+        "context": "context"
+      },
+      "weight": 2.0,
+      "description": "Databricks Dolly v2 - PREMIUM QUALITY human-generated instruction/response pairs"
+    },
+    {
+      "name": "openassistant_v1",
+      "type": "huggingface",
+      "dataset_name": "OpenAssistant/oasst1",
+      "subset": null,
+      "split": "train",
+      "text_fields": {
+        "prompt": "text",
+        "response": "text"
+      },
+      "weight": 1.0,
+      "description": "OpenAssistant OASST1 - PREMIUM QUALITY conversational data with human preferences",
+      "custom_processing": {
+        "conversation_tree": true,
+        "filter_language": "en",
+        "min_score": 3,
+        "role_filter": ["prompter", "assistant"]
+      }
+    }
+  ],
+
+  "processing_metadata": {
+    "processing_time_estimate": "30-45 minutes",
+    "quality_focus": "MAXIMUM_QUALITY_premium_datasets_only",
+    "template_rationale": "Instruct format chosen for better tokenization efficiency",
+    "sft_rationale": "SFT focuses on QUALITY over QUANTITY - 12M tokens (0.52 tokens/param) is OPTIMAL for behavioral alignment",
+    "dataset_ratio": "2:1 (Dolly:OASST1) - premium quality focus",
+    "dataset_distribution": {
+      "dolly_15k": "~67% of weight (premium instruction pairs)",
+      "oasst1": "~33% of weight (premium conversational)"
+    },
+    "model_target": "Tiny 23M parameters (6 layers, 256 d_model, 4 heads)",
+    "training_efficiency": "~3,600 steps for 2 epochs, 2-3 hours on RTX 4090",
+    "expected_conversations": "~40-50k after sampling",
+    "tokens_per_param": "0.52 (optimal for SFT - quality over quantity)",
+    "research_basis": "SFT best practices: 10k-100k high-quality examples > large noisy datasets"
+  }
+}

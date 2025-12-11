@@ -1,0 +1,36 @@
+{
+  "model_path": "checkpoints/pretrain/micro/micro/final",
+  "model_parameters": 9438336,
+  "device": "cuda:0",
+  "perplexity_wikitext": 609.8585048546885,
+  "boolq_accuracy": 0.3,
+  "boolq_correct": 30,
+  "boolq_total": 100,
+  "smoke_tests": [
+    {
+      "prompt": "What is artificial intelligence?",
+      "response": "and? that. to? and the and' answer. think its something be., a of-able and. you see.' if can to the that you like. this be as! have 10 2 hours we up day1 ( Ill it 5) a ago in. am for11936 I been the of of, was by wife his son He a who at age4. was to with wife my and parents his",
+      "full_text": "What is artificial intelligence? and? that. to? and the and' answer. think its something be., a of-able and. you see.' if can to the that you like. this be as! have 10 2 hours we up day1 ( Ill it 5) a ago in. am for11936 I been the of of, was by wife his son He a who at age4. was to with wife my and parents his"
+    },
+    {
+      "prompt": "Explain machine learning in simple terms.",
+      "response": "ly ing,2%, to of to your' other, is % to1 or the you to the. . the that would? its the thing when is a and person in a or way do go  \" and\" you need to about same you be or as of! I the, you to me Im your and be for one my..., is to this. it not me You Ill to at to it But is so you know",
+      "full_text": "Explain machine learning in simple terms.ly ing,2%, to of to your' other, is % to1 or the you to the. . the that would? its the thing when is a and person in a or way do go  \" and\" you need to about same you be or as of! I the, you to me Im your and be for one my..., is to this. it not me You Ill to at to it But is so you know"
+    },
+    {
+      "prompt": "How does a neural network work?",
+      "response": "you your is to your, the is in way. you' need try manage- on data This not the thing is that will be a of to with and to out. cant a or if have data it and what would do. you the can are. do want create search.s' how they it. for data its the to to data This what take and is you about? the that can you one them? you get new that data a, your,",
+      "full_text": "How does a neural network work? you your is to your, the is in way. you' need try manage- on data This not the thing is that will be a of to with and to out. cant a or if have data it and what would do. you the can are. do want create search.s' how they it. for data its the to to data This what take and is you about? the that can you one them? you get new that data a, your,"
+    },
+    {
+      "prompt": "What are the benefits of renewable energy?",
+      "response": "about gas and oil? we to that. can a amount energy your will, you be- for?' that need help help get with heating in. should it good but if do have 0. billion?\" the is than21.0% to6, its the,\" said,I.' \" youre the thing need work Its you to?\" I' seen this as said my, he me it and had know I going say is 05",
+      "full_text": "What are the benefits of renewable energy? about gas and oil? we to that. can a amount energy your will, you be- for?' that need help help get with heating in. should it good but if do have 0. billion?\" the is than21.0% to6, its the,\" said,I.' \" youre the thing need work Its you to?\" I' seen this as said my, he me it and had know I going say is 05"
+    },
+    {
+      "prompt": "Describe the water cycle.",
+      "response": ", the and, the is on surface (-). ) to an layer the of ands the.: and the is by surface This is in ( The) the is surface the, and are through heat into. the that its the energy be. this its.,.. and.' its matter it that' all Im . Im if' the to., will have flow  Its to and the? the",
+      "full_text": "Describe the water cycle., the and, the is on surface (-). ) to an layer the of ands the.: and the is by surface This is in ( The) the is surface the, and are through heat into. the that its the energy be. this its.,.. and.' its matter it that' all Im . Im if' the to., will have flow  Its to and the? the"
+    }
+  ]
+}

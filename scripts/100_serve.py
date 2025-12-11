@@ -432,8 +432,9 @@ def main():
     # Arguments principaux
     parser.add_argument("--model_path", type=str, required=True,
                        help="Path to trained model")
-    parser.add_argument("--tokenizer_path", type=str, default="data/tokenizer/spm32k.model",
-                       help="Path to SentencePiece tokenizer (default: data/tokenizer/spm32k.model)")
+    parser.add_argument("--tokenizer_path", "--tokenizer_dir", type=str, default="data/tokenizer/spm32k.model",
+                       dest="tokenizer_path",
+                       help="Path to SentencePiece tokenizer (accepts --tokenizer_dir alias)")
     parser.add_argument("--mode", type=str, default="interactive", 
                        choices=["interactive", "api"],
                        help="Execution mode: interactive or api")

@@ -1,0 +1,132 @@
+{
+  "_comment": "TEMPLATE: Single Dataset SFT Corpus Configuration (v3.0)",
+  "_description": "This template shows how to configure a single dataset for SFT corpus preparation",
+
+  "name": "dataset_name",
+  "description": "Clear description of the dataset and its purpose",
+  "version": "3.0",
+  "template": "instruct",
+
+  "_template_options": {
+    "_comment": "Available templates for conversation formatting",
+    "chatml": "ChatML format: <|im_start|>user\\n...\\n<|im_end|>",
+    "instruct": "Instruct format: ### Instruction:\\n...\\n### Response:\\n...",
+    "chat": "Chat format: Human: ...\\n\\nAssistant: ...",
+    "alpaca": "Alpaca format with instruction/input/output structure"
+  },
+
+  "sampling_strategy": {
+    "_comment": "Controls how much data to sample from the dataset",
+    "mode": "target_tokens",
+
+    "_mode_options": {
+      "target_tokens": "Sample to reach a specific token budget (recommended)",
+      "target_conversations": "Sample to reach a specific number of conversations",
+      "max_samples": "Legacy mode using max_samples and weight fields"
+    },
+
+    "target_tokens": 20000000,
+    "_target_tokens_comment": "Total tokens to sample (e.g., 20M = 20 million tokens). Set to null if not using target_tokens mode",
+
+    "seed": 42,
+    "_seed_comment": "Random seed for deterministic sampling",
+
+    "chars_per_token": 4.0,
+    "_chars_per_token_comment": "Fallback estimation: 1 token ≈ 4 characters (used only if tokenizer unavailable)",
+
+    "analysis_sample_size": 100,
+    "_analysis_sample_size_comment": "Number of samples to analyze for token estimation (100-500 recommended)"
+  },
+
+  "output_params": {
+    "sequence_length": 1024,
+    "_sequence_length_comment": "Maximum sequence length in tokens (must match training config)",
+
+    "shard_size": 2000,
+    "_shard_size_comment": "Number of conversations per shard file",
+
+    "train_ratio": 0.95,
+    "_train_ratio_comment": "Ratio of data for training (0.95 = 95% train, 5% validation)",
+
+    "enable_packing": false,
+    "_enable_packing_comment": "Pack multiple conversations into sequences (must match training config packing setting)",
+
+    "batch_size": 1000,
+    "_batch_size_comment": "Number of conversations to batch before flushing to disk (memory vs I/O trade-off)"
+  },
+
+  "quality_filters": {
+    "_comment": "Filters to remove low-quality conversations",
+
+    "min_prompt_length": 10,
+    "max_prompt_length": 1024,
+    "_prompt_length_comment": "Min/max prompt length in characters",
+
+    "min_response_length": 20,
+    "max_response_length": 2048,
+    "_response_length_comment": "Min/max response length in characters",
+
+    "filter_urls": false,
+    "_filter_urls_comment": "Remove conversations containing URLs",
+
+    "filter_code_blocks": false,
+    "_filter_code_blocks_comment": "Remove conversations containing code blocks",
+
+    "require_ascii": false,
+    "_require_ascii_comment": "Keep only ASCII-compatible text",
+
+    "remove_duplicates": true,
+    "_remove_duplicates_comment": "Remove duplicate conversations",
+
+    "deduplication": {
+      "threshold": 0.85,
+      "_threshold_comment": "MinHash LSH similarity threshold (0.85 = 85% similar considered duplicate)",
+      "num_perm": 128,
+      "_num_perm_comment": "Number of permutations for MinHash (higher = more accurate but slower)"
+    }
+  },
+
+  "datasets": [
+    {
+      "name": "example_dataset",
+      "_name_comment": "Unique identifier for this dataset",
+
+      "type": "huggingface",
+      "_type_options": {
+        "huggingface": "Load from Hugging Face Hub",
+        "local": "Load from local JSONL or JSON file"
+      },
+
+      "dataset_name": "organization/dataset-name",
+      "_dataset_name_comment": "HuggingFace dataset path (e.g., databricks/databricks-dolly-15k)",
+
+      "subset": null,
+      "_subset_comment": "Dataset subset/configuration name (null for default)",
+
+      "split": "train",
+      "_split_comment": "Dataset split to use (train, validation, test)",
+
+      "text_fields": {
+        "prompt": "instruction",
+        "response": "response",
+        "context": "context"
+      },
+      "_text_fields_comment": "Mapping of conversation fields to dataset columns",
+
+      "weight": 1.0,
+      "_weight_comment": "Weight for sampling (used in target_tokens and target_conversations modes)",
+
+      "description": "High-quality human-generated instruction/response pairs",
+
+      "custom_processing": null,
+      "_custom_processing_comment": "Optional: special processing (e.g., conversation trees for OASST1)"
+    }
+  ],
+
+  "processing_metadata": {
+    "_comment": "Informational metadata about processing characteristics",
+    "processing_time_estimate": "30-45 minutes",
+    "quality_focus": "high_quality_single_dataset",
+    "template_rationale": "Instruct format for efficient tokenization"
+  }
+}

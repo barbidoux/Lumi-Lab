@@ -27,6 +27,7 @@
   },
 
   "special_tokens": {
+    "_comment": "Note: Current order differs from industry standard (pad=0,unk=1,bos=2,eos=3). DO NOT change for existing tokenizers - would break trained models. For NEW tokenizers, consider using standard order.",
     "unk_id": 0,
     "bos_id": 1,
     "eos_id": 2,

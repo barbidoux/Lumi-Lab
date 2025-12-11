@@ -1,24 +1,61 @@
 {
   "name": "dolly15k",
-  "description": "Databricks Dolly 15k instruction dataset",
-  "source": "databricks/databricks-dolly-15k",
-  "output_file": "data/sft/dolly15k.jsonl",
-  "max_samples": null,
-  "format": {
-    "prompt_key": "prompt",
-    "response_key": "response",
-    "instruction_key": "instruction",
-    "context_key": "context"
+  "description": "Databricks Dolly 15k - Premium quality human-generated instruction/response pairs",
+  "version": "3.0",
+  "template": "instruct",
+
+  "sampling_strategy": {
+    "mode": "max_samples",
+    "seed": 42,
+    "chars_per_token": 4.0,
+    "analysis_sample_size": 100
   },
-  "preprocessing": {
-    "combine_instruction_context": true,
+
+  "output_params": {
+    "sequence_length": 1024,
+    "shard_size": 2000,
+    "train_ratio": 0.95,
+    "enable_packing": false,
+    "batch_size": 1000
+  },
+
+  "quality_filters": {
     "min_prompt_length": 10,
-    "min_response_length": 20,
     "max_prompt_length": 2000,
+    "min_response_length": 20,
     "max_response_length": 4000,
-    "enable_packing": true
+    "filter_urls": false,
+    "filter_code_blocks": false,
+    "require_ascii": false,
+    "remove_duplicates": true,
+    "deduplication": {
+      "threshold": 0.85,
+      "num_perm": 128
+    }
   },
-  "recommended_weight": 0.4,
-  "quality": "high",
-  "size": "~15k samples"
+
+  "datasets": [
+    {
+      "name": "dolly_v2",
+      "type": "huggingface",
+      "dataset_name": "databricks/databricks-dolly-15k",
+      "subset": null,
+      "split": "train",
+      "max_samples": null,
+      "text_fields": {
+        "prompt": "instruction",
+        "response": "response",
+        "context": "context"
+      },
+      "weight": 1.0,
+      "description": "Full Dolly 15k dataset - all ~15k samples"
+    }
+  ],
+
+  "processing_metadata": {
+    "processing_time_estimate": "15-20 minutes",
+    "quality_focus": "premium_human_generated",
+    "template_rationale": "Instruct format for efficient tokenization",
+    "dataset_size": "~15k conversations, ~3-4M tokens"
+  }
 }

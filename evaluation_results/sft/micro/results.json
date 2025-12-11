@@ -1,0 +1,211 @@
+{
+  "model_path": "checkpoints/sft/micro/final",
+  "tokenizer_path": "data/models/tokenizers/spm_32k",
+  "prompt_template": "instruct",
+  "evaluation_mode": "standard",
+  "model_parameters": 9626752,
+  "timestamp": "2025-12-11 17:26:01",
+  "evaluation_time_seconds": 67.4845838546753,
+  "perplexity_metrics": {
+    "perplexity": 266.4039003553184,
+    "avg_loss": 5.585013579532474,
+    "total_tokens": 7245,
+    "processed_samples": 50,
+    "dataset": "wikitext_raw_text",
+    "template": "raw_text"
+  },
+  "boolq_metrics": {
+    "accuracy": 0.49,
+    "correct": 49,
+    "total": 100,
+    "samples": 100
+  },
+  "boolq_accuracy": 0.49,
+  "smoke_tests": {
+    "summary_stats": {
+      "avg_quality_score": 0.5708333333333333,
+      "total_prompts": 24,
+      "categories_tested": 8
+    },
+    "category_results": {
+      "basic_knowledge": {
+        "avg_score": 0.6,
+        "samples": 3
+      },
+      "language_understanding": {
+        "avg_score": 0.7333333333333334,
+        "samples": 3
+      },
+      "reasoning": {
+        "avg_score": 0.43333333333333335,
+        "samples": 3
+      },
+      "creativity": {
+        "avg_score": 0.43333333333333335,
+        "samples": 3
+      },
+      "instruction_following": {
+        "avg_score": 0.5,
+        "samples": 3
+      },
+      "wikipedia_style": {
+        "avg_score": 0.5,
+        "samples": 3
+      },
+      "conversation": {
+        "avg_score": 0.6333333333333333,
+        "samples": 3
+      },
+      "multilingual": {
+        "avg_score": 0.7333333333333333,
+        "samples": 3
+      }
+    },
+    "individual_results": [
+      {
+        "category": "basic_knowledge",
+        "prompt": "What is the capital of France?",
+        "response": "#3.5.6. If you are sure to find a list of 10 people and the population, you can do that. This is a part of the trade of the government? You may have some reasons about the government. Our government may have been been used in a country. Do you not be an official of state, it is the most important to these many ways? Theses are not much important for the parties, as the largest of the governments, and they can be seen as a public in the country. What would the the election or those would be a a-up-run-up.",
+        "quality_score": 0.6
+      },
+      {
+        "category": "basic_knowledge",
+        "prompt": "How many days are in a year?",
+        "response": "#1:You're going to be in this time, which is a good day. The few days, I have been having a little time that was looking to get the first week! We will be doing with a big calendar and you don't like the same event. What can you do the term? The term \"I did it in the month) 934\" as the second season, including the second event in the 1932s, which was one for the first year. It's just a year of month and it's a few, even as they did be to",
+        "quality_score": 0.7
+      },
+      {
+        "category": "basic_knowledge",
+        "prompt": "What is 2+2?",
+        "response": "#5. You can use a language to create a array of languages that can be used to generate a number of groups for each group. These are the most common, which can be used to get a number of users in the list. However, it has a number of groups to play a more important point of time, when you can to find a specific number of individuals from the 2013. If you are interested for your number, you are sure to do the main names of people who don't find the list of the 2014. If you need to get the highest rate of their same name",
+        "quality_score": 0.5
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "Complete this sentence: The quick brown fox",
+        "response": "#) 1. A of 1900: I am that the mother is a a-rounding and a-year-old born from the world of the world. This question is:",
+        "quality_score": 0.8999999999999999
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "What is the opposite of 'hot'?",
+        "response": "External:Fsvettt 2000: (1.425): The main word \"the\" used to refer with \"conggs\" to be a \"d\" with \"reto\", and \"and\" to be a 'd\" to \" \"d\" or \"ed\" from \"\", \"inin\" and \"one\" in \"ded\" \" \"erd\".\"?\" as \"one\" and \"ded\" in \"The \"d\", \"inly\" \" \"sed\"\". The name \"Id\" is a \"n",
+        "quality_score": 0.8
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "Rephrase: 'The cat sat on the mat'",
+        "response": "|The species of women had been in a mouth, as it was to have some reasons. The animals was likely to be from the name of the genus, which were not used to be the first part of the family's family area, and the animals could be seen at a small park. At the same, I are that this reason, it is not a possible idea for any the dogs to stop or go by the animal's house. It is only not a reason to get there, but we can have the first time of the water's room. The species are not only an way to describe the habitat of the",
+        "quality_score": 0.5
+      },
+      {
+        "category": "reasoning",
+        "prompt": "If it's raining, should you take an umbrella?",
+        "response": "#2. I can be taken in a way to find the same or used of a 3005, as it does not use the type of a, which is not possible to have be done. This may also be used to do a very water. We can use the \"I\" to make the right to take a way to get a time or start. To provide the single order of a first, it should be available to the first, which will be available by the last 1804, to make you more happy. This is not the first of the first term of the term. If the",
+        "quality_score": 0.5
+      },
+      {
+        "category": "reasoning",
+        "prompt": "Why do we need to sleep?",
+        "response": "| | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | |",
+        "quality_score": 0.3
+      },
+      {
+        "category": "reasoning",
+        "prompt": "What happens when water freezes?",
+        "response": "#1. In the case, it is not possible to determine the amount of gas in a pot and the area for a water. These are 30 years of the winter. An example of an hot ice, you can use the temperature of water on the water, which will be used to build the water at the temperature, and it does a temperature of a cool heat in the summer. For example, the energy is also used to add the temperature of water and water. The weight of water has a amount of water and it is possible to take your water. There can also be be a low temperature that can be found by",
+        "quality_score": 0.5
+      },
+      {
+        "category": "creativity",
+        "prompt": "Write a short poem about winter.",
+        "response": "#0-1:You can be find in your location. If this was a one of the famous medieval, the Lord of the Christ of the Church and the Christian. At my you, you are going to visit. I will be happy to take on a weekend for any holiday. It is important to find your idea to find the same picture in a restaurant? Please give the same name if it's just up for their night. We will also learn about your new story, or which we need to find the exact name of your event?### Response:So you are excited to do you. The",
+        "quality_score": 0.5
+      },
+      {
+        "category": "creativity",
+        "prompt": "Describe a perfect day in 3 sentences.",
+        "response": "#6:For an summer period, I'm sure to be the time to see this week, I can use my time to keep on the night when it was not same. This is not the same that I have to learn about your life and getting the day of the evening. You can be also used for your event to show you with a meal and take the next days. If you need some event, I'll work to get you with the morning, you have be very nice for your time and you will need to provide out more or time to make the time you need. For the time, it are not",
+        "quality_score": 0.5
+      },
+      {
+        "category": "creativity",
+        "prompt": "Create a name for a new planet.",
+        "response": "#4, \"Ding\", it is a part of the series. This is a role in a series of characters which is called \"Sorals\" in the series. An example, the game has a ability to play a role in a series of series. The game is an two-year-old star. It is a popular football game. It is a popular player that have been played on the stage, as a player in the game. While the game has been popular in the 18th century, it was not a 6-3 minutes. This does some role in this situation. When the game",
+        "quality_score": 0.3
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "List exactly 3 animals that live in the ocean.",
+        "response": "#5:And I'm sure that is a oldest species in the planet. The first plants of Earth is located in the river. At the level of 3 fish, the 4 food of the ice is on the road. It is the best possible way to find a little number of fish. As as 4 species, they are not known to be the most common group of species. Some groups of species have been described as a more than 2 species that can be used in the oceans. For example, 15 species found in the sea, the largest species of plants, which is a largest in the",
+        "quality_score": 0.5
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "Write 'Hello World' in uppercase.",
+        "response": "#), 11:Beal : The first letter to the first title, and it is not possible to read the first version of the first version of the next list. It can also be used for an second edition for the 201 edition. This was a part of the first edition and the third name of the English \"Fter\", which is not considered a final format. You can use the 201 edition, as the first first name of the 201 edition, but it's the 201 edition. This is the standard version of the first release of",
+        "quality_score": 0.5
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "Count from 1 to 5.",
+        "response": "#0:To find the following questions: 1. To get the same article, 2. How is this question: 1. We can help you with the first topic and how it can be applied for your next period? 2. To take the few time, 2. We can also use a description of the 2. The first essay is to use a list of the first words that is a original 2. This essay is used to improve the 3. It is often possible to avoid an two words as a language in the three words, as the the main word in the three of the",
+        "quality_score": 0.5
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "Paris is the capital of",
+        "response": "#1. He was a party in a manner that was held by his mother who were to be in a way for her years. In this case, I would have a good thing, but he was a person on a party and a party for her family. If it's an opportunity to make your friend to find how you can help with you. The place is the national city, when you might need a family who will have been born in 2011. You are sure to find the own business you. That is the same if we need to be a business or a job to learn about your business, that",
+        "quality_score": 0.5
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "The Earth orbits around",
+        "response": "#1:To discover that the Solar–st\" is one of the earliest most common events of the universe, it does not be described as the first seasons. This is because this of the Earth's atmosphere is the highest distance of the planets in the world and its stars. It are found to have a large of 15 days, with the Sun-st\". The magnitude of the planet is the world of a planet. The galaxy is known as the \"Ambbd\", which is the first event of the Earth's surface. There has been an example of the Earth's atmosphere,",
+        "quality_score": 0.5
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "Photosynthesis is the process by which",
+        "response": "#) 1. Use the type of t-sor. The sample is not an specific method, but it are common to use a application that can use such as, and a number of t-sinance (). This is a problem and can be used to provide a different-up-point system that can be used for a new function. For example, the t-sor. You may be not known in a process or a computer, while this does not be available to a type of t-sining. The number of t-st-",
+        "quality_score": 0.5
+      },
+      {
+        "category": "conversation",
+        "prompt": "Hello, how are you today?",
+        "response": "#3. How can I help you with your website? Are you doing the first list in the 10ththth-0ththththththththththstthththththndthththththththththththththththththththththththththththththththththththththththththththththth century 18ththththrdththththththththththththththstthththththththththstththth",
+        "quality_score": 0.8
+      },
+      {
+        "category": "conversation",
+        "prompt": "What's your favorite hobby?",
+        "response": "#3. The first season is 10 hours of the month, and it shows the best place in this season. The second season is a event, which will be hosted in the month and be out to start, but it is also important to determine that the highest day is going in 10 days. In this year, I've been interested for your life, and you need to tell it! For example, it's the same way that you can make an first record of your time, that is on a first season. You will be doing your role and take a extra months or with an good time.",
+        "quality_score": 0.6
+      },
+      {
+        "category": "conversation",
+        "prompt": "Can you help me with a problem?",
+        "response": "#6, get a error. When you need to find the idea of the probability, if you are that it is not possible to use a algorithm and be useful to get the value of the equation. The problem is always the problem. In this case, there is a possibility of an random number in the process that can be used to add the given and the input. It's difficult to tell that the idea, as a point that is to get the time to write the problem: 1. How is the value of the population and the density of the value? 2. Do you get the amount of energy, and",
+        "quality_score": 0.5
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Bonjour, comment allez-vous?",
+        "response": "#1:Remve, he ssre, hiss ands the great. How can we send to the page?### Response:The 12thrdthththththththththththththththththththththththththththththththththththththth century I had been to one of the earliest. After this, we'll have a lot of a different of the first chapters that were about the original, and they're not enough to make their information or information with a different of",
+        "quality_score": 0.7
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Hola, ¿cómo estás?",
+        "response": "#6-208-206-205-30-204-205-208-10-20-208-12-208-207-12-10-206-10-1-20-199-12-10-20-1-10-209-201-11-20-10-208-19-209-20-12-10-10-1",
+        "quality_score": 0.6
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Guten Tag, wie geht es Ihnen?",
+        "response": "-1. We 1000 a 000 a12050 one.(/)(/)(+>>(/)(/);().(/))(-) (-)(/ -/(/)(/)(/)(((/))(//))(/)(/ / /000)",
+        "quality_score": 0.8999999999999999
+      }
+    ]
+  }
+}

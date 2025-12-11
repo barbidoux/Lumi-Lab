@@ -38,7 +38,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import utilities
 from utils.tokenizer_utils import validate_sp32k_tokenizer
-from utils.sft_templates import format_prompt_response
+# Note: format_prompt_response was removed - script uses inline formatting
 
 
 def load_sft_model(model_path: str, tokenizer_path: str, use_lora: bool = True):
@@ -502,8 +502,9 @@ def main():
                        help="Path to evaluation config JSON (e.g., config/evaluation/sft_standard.json)")
     parser.add_argument("--model_path", type=str, required=True,
                        help="Path to SFT model directory")
-    parser.add_argument("--tokenizer_path", type=str, required=True,
-                       help="Path to tokenizer")
+    parser.add_argument("--tokenizer_path", "--tokenizer_dir", type=str, required=True,
+                       dest="tokenizer_path",
+                       help="Path to tokenizer (accepts --tokenizer_dir alias)")
 
     # Runtime options
     parser.add_argument("--inference", type=str, default=None,
@@ -532,9 +533,9 @@ def main():
     run_boolq = metrics_config.get('boolq', {}).get('enabled', True)
     max_boolq_samples = metrics_config.get('boolq', {}).get('max_samples', 100)
 
-    run_smoke_tests = metrics_config.get('smoke_tests', {}).get('enabled', True)
+    do_smoke_tests = metrics_config.get('smoke_tests', {}).get('enabled', True)
 
-    run_generation = metrics_config.get('generation', {}).get('enabled', True)
+    do_generation = metrics_config.get('generation', {}).get('enabled', True)
     num_gen_samples = metrics_config.get('generation', {}).get('num_samples', 5)
 
     # Extract generation parameters from config
@@ -600,14 +601,14 @@ def main():
         )
         results["boolq_accuracy"] = results["boolq_metrics"]["accuracy"]
 
-    if run_smoke_tests:
+    if do_smoke_tests:
         results["smoke_tests"] = run_smoke_tests(
             model, tokenizer, prompt_template, mode,
             max_new_tokens=max_new_tokens, temperature=temperature,
             top_p=top_p, repetition_penalty=repetition_penalty
         )
 
-    if run_generation:
+    if do_generation:
         print("\n" + "="*60)
         generation_test(
             model, tokenizer, prompt_template, num_gen_samples,

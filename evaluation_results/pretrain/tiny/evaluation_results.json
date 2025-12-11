@@ -1,0 +1,40 @@
+{
+  "model_path": "checkpoints/pretrain/tiny/final",
+  "model_parameters": 23072000,
+  "device": "cuda:0",
+  "tokenizer_metadata": {
+    "tokenizer_config_hash": "08d5beaf092ca71358425325786162b25554142e1e46e6d906f7a17c66f99d6b"
+  },
+  "ppl_tiny_23M_1024": 180.59344731560958,
+  "ppl_weighted": 180.59344731560958,
+  "boolq_accuracy": 0.3,
+  "boolq_correct": 30,
+  "boolq_total": 100,
+  "smoke_tests": [
+    {
+      "prompt": "What is artificial intelligence?",
+      "response": "the of is intelligence,,,' this said;I to to. was mansable But his, and. was and. answer answer,. the question what could answer answer? answer— answer question question which to the was answered The, by? answer question answers answer answers answer? reply answers answer reply answer question answer. answer question questions question answer answer to? answer answer answered sentence answer What the was answer answer answer questions reply question answer question the answer question What answer",
+      "full_text": "What is artificial intelligence? the of is intelligence,,,' this said;I to to. was mansable But his, and. was and. answer answer,. the question what could answer answer? answer— answer question question which to the was answered The, by? answer question answers answer answers answer? reply answers answer reply answer question answer. answer question questions question answer answer to? answer answer answered sentence answer What the was answer answer answer questions reply question answer question the answer question What answer"
+    },
+    {
+      "prompt": "Explain machine learning in simple terms.",
+      "response": "in.s- and a of-..-,' we the to-,, ---, we just into the. are to at the time to their. do know are, is all, the thing will to out that are to in,. do be., of.,; in.. 2 And the of a, and a? not of.3 The are. are. and are as.  They. to with their:",
+      "full_text": "Explain machine learning in simple terms. in.s- and a of-..-,' we the to-,, ---, we just into the. are to at the time to their. do know are, is all, the thing will to out that are to in,. do be., of.,; in.. 2 And the of a, and a? not of.3 The are. are. and are as.  They. to with their:"
+    },
+    {
+      "prompt": "How does a neural network work?",
+      "response": ", the' is for the to. theres to a,.,. are more and important than other networks And can bed at one  as as.,' they. to,. you: are a of? to; the of.s? the.: you its is., will to that (): are?,???. the:.: to:, the is,,  or is to..:, have been",
+      "full_text": "How does a neural network work?, the' is for the to. theres to a,.,. are more and important than other networks And can bed at one  as as.,' they. to,. you: are a of? to; the of.s? the.: you its is., will to that (): are?,???. the:.: to:, the is,,  or is to..:, have been"
+    },
+    {
+      "prompt": "What are the benefits of renewable energy?",
+      "response": ",? solar,,, solar and have potential to up the of energys the is most to for. Solar is to used energy a and is from other that to it The and of plants power, is a concept the of, which been by insators the of' for ands Its a thats energy. the is because energy be into power is to electricity to electricity The of was as bys as 00 of210, by means a",
+      "full_text": "What are the benefits of renewable energy?,? solar,,, solar and have potential to up the of energys the is most to for. Solar is to used energy a and is from other that to it The and of plants power, is a concept the of, which been by insators the of' for ands Its a thats energy. the is because energy be into power is to electricity to electricity The of was as bys as 00 of210, by means a"
+    },
+    {
+      "prompt": "Describe the water cycle.",
+      "response": "is for 1 years If' you' going be with,' he to it But will use in water a?2 This it that a water is that of, it not has 004  in water water32 If get water3 It have 04 for18 water3 Then need water the water have water 032  water Now take1% water41 06 water8  21 the water12 water9",
+      "full_text": "Describe the water cycle. is for 1 years If' you' going be with,' he to it But will use in water a?2 This it that a water is that of, it not has 004  in water water32 If get water3 It have 04 for18 water3 Then need water the water have water 032  water Now take1% water41 06 water8  21 the water12 water9"
+    }
+  ]
+}

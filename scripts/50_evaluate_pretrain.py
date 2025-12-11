@@ -6,10 +6,17 @@ Calculates perplexity, performs zero-shot benchmarks and smoke-tests.
 
 import argparse
 import json
+import logging
 import math
+import os
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional
+
+# Fix WSL/Windows deadlock issues with PyTorch
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['TOKENIZERS_PARALLELISM'] = 'false'
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
@@ -26,13 +33,16 @@ from utils.dataset_utils import PackedDataset
 from utils.model_utils import load_pretrained_model
 from utils.tokenizer_utils import SentencePieceTokenizerWrapper
 
+# Initialize logger
+logger = logging.getLogger(__name__)
+
 
 def validate_tokenizer_consistency_eval(data_dirs: List[str]) -> Dict:
     """Validate that all datasets use the same tokenizer via SHA256 hash (modern approach)."""
     if not data_dirs:
         return {}
 
-    print("🔍 Validating tokenizer consistency across datasets...")
+    logger.info("🔍 Validating tokenizer consistency across datasets...")
 
     reference_hash = None
     reference_dir = None
@@ -66,9 +76,9 @@ def validate_tokenizer_consistency_eval(data_dirs: List[str]) -> Dict:
         if reference_hash is None:
             reference_hash = tokenizer_hash
             reference_dir = data_dir
-            print(f"📊 Reference tokenizer hash (from {data_dir}): {reference_hash[:16]}...")
+            logger.info(f"📊 Reference tokenizer hash (from {data_dir}): {reference_hash[:16]}...")
             if 'statistics' in manifest and 'vocab_size' in manifest['statistics']:
-                print(f"   Vocab size: {manifest['statistics']['vocab_size']:,}")
+                logger.info(f"   Vocab size: {manifest['statistics']['vocab_size']:,}")
         else:
             if tokenizer_hash != reference_hash:
                 raise ValueError(
@@ -78,26 +88,27 @@ def validate_tokenizer_consistency_eval(data_dirs: List[str]) -> Dict:
                     f"All datasets must use the same tokenizer. Please re-process datasets."
                 )
 
-            print(f"✅ {data_dir}: tokenizer hash matches reference")
+            logger.info(f"✅ {data_dir}: tokenizer hash matches reference")
 
-    print(f"✅ All {len(data_dirs)} datasets use consistent tokenizer")
+    logger.info(f"✅ All {len(data_dirs)} datasets use consistent tokenizer")
     return {"tokenizer_config_hash": reference_hash}
 
 
 def evaluate_packed_perplexity(model, tokenizer, data_dir: str, split: str = "val", batch_size: int = 8) -> Dict[str, float]:
     """Efficiently calculate perplexity on packed dataset format (.bin/.idx)."""
-    print(f"Calculating perplexity on packed dataset: {data_dir} ({split} split)...")
+    logger.info(f"Calculating perplexity on packed dataset: {data_dir} ({split} split)...")
 
     # Load packed dataset
     dataset = PackedDataset(data_dir, split=split)
 
     # Create efficient dataloader
+    # pin_memory enabled for GPU performance (env vars prevent WSL deadlocks)
     dataloader = DataLoader(
         dataset,
         batch_size=batch_size,
         shuffle=False,
         num_workers=0,  # Memory-mapped files work best with single process
-        pin_memory=True
+        pin_memory=torch.cuda.is_available()  # Auto-enable for GPU
     )
 
     model.eval()
@@ -122,21 +133,21 @@ def evaluate_packed_perplexity(model, tokenizer, data_dir: str, split: str = "va
         avg_loss = total_loss / total_tokens
         perplexity = math.exp(avg_loss)
 
-        print(f"   └─ Perplexity: {perplexity:.2f} ({total_tokens:,} tokens)")
+        logger.info(f"   └─ Perplexity: {perplexity:.2f} ({total_tokens:,} tokens)")
         return {
             "perplexity": perplexity,
             "total_tokens": total_tokens,
             "avg_loss": avg_loss
         }
     else:
-        print(f"   └─ No valid tokens found")
+        logger.warning(f"   └─ No valid tokens found")
         return {"perplexity": float('inf'), "total_tokens": 0, "avg_loss": float('inf')}
 
 
 
 def calculate_perplexity_wikitext(model, tokenizer, max_samples: int = 100) -> float:
     """Calculate perplexity on Wikitext-2 with memory-efficient processing."""
-    print(f"Calculating perplexity on Wikitext-2 (max {max_samples} samples)...")
+    logger.info(f"Calculating perplexity on Wikitext-2 (max {max_samples} samples)...")
 
     # Load dataset
     dataset = load_dataset("wikitext", "wikitext-2-raw-v1", split="test")
@@ -177,16 +188,16 @@ def calculate_perplexity_wikitext(model, tokenizer, max_samples: int = 100) -> f
                 total_tokens += valid_tokens
 
             except torch.cuda.OutOfMemoryError:
-                print("GPU memory limit reached, stopping evaluation")
+                logger.warning("GPU memory limit reached, stopping evaluation")
                 break
 
     if total_tokens > 0:
         avg_loss = total_loss / total_tokens
         perplexity = math.exp(avg_loss)
-        print(f"   └─ Wikitext Perplexity: {perplexity:.2f} ({total_tokens:,} tokens)")
+        logger.info(f"   └─ Wikitext Perplexity: {perplexity:.2f} ({total_tokens:,} tokens)")
         return perplexity
     else:
-        print("   └─ No valid tokens found")
+        logger.warning("   └─ No valid tokens found")
         return float('inf')
 
 
@@ -197,7 +208,7 @@ def calculate_multi_dataset_perplexity(
     weights: Optional[List[float]] = None
 ) -> Dict[str, float]:
     """Calculate per-dataset and weighted perplexity across multiple packed datasets."""
-    print(f"📊 Multi-dataset perplexity evaluation on {len(data_dirs)} datasets...")
+    logger.info(f"📊 Multi-dataset perplexity evaluation on {len(data_dirs)} datasets...")
 
     # Normalize weights
     if weights is None:
@@ -215,7 +226,7 @@ def calculate_multi_dataset_perplexity(
     # Calculate perplexity for each dataset using efficient packed format
     for i, (data_dir, weight) in enumerate(zip(data_dirs, normalized_weights)):
         dataset_name = Path(data_dir).name
-        print(f"   Dataset {i+1}/{len(data_dirs)}: {dataset_name} (weight: {weight:.3f})")
+        logger.info(f"   Dataset {i+1}/{len(data_dirs)}: {dataset_name} (weight: {weight:.3f})")
 
         # Use the new efficient evaluate_packed_perplexity function
         ppl_result = evaluate_packed_perplexity(model, tokenizer, data_dir, split="val")
@@ -236,17 +247,17 @@ def calculate_multi_dataset_perplexity(
         weighted_avg_loss = total_weighted_loss / total_weighted_tokens
         weighted_perplexity = math.exp(weighted_avg_loss)
         results["ppl_weighted"] = weighted_perplexity
-        print(f"📈 Weighted perplexity: {weighted_perplexity:.2f}")
+        logger.info(f"📈 Weighted perplexity: {weighted_perplexity:.2f}")
     else:
         results["ppl_weighted"] = float('inf')
-        print(f"❌ No valid tokens found across datasets")
+        logger.error(f"❌ No valid tokens found across datasets")
 
     return results
 
 
 def evaluate_boolq(model, tokenizer, max_samples: int = 100) -> Dict[str, float]:
     """Evaluate model on BoolQ (Yes/No questions) with token validation."""
-    print(f"BoolQ evaluation (max {max_samples} samples)...")
+    logger.info(f"BoolQ evaluation (max {max_samples} samples)...")
 
     # VALIDATION: Ensure "Yes" and "No" are single tokens
     yes_tokens = tokenizer.encode("Yes", add_special_tokens=False)
@@ -259,7 +270,7 @@ def evaluate_boolq(model, tokenizer, max_samples: int = 100) -> Dict[str, float]
 
     yes_token = yes_tokens[0]
     no_token = no_tokens[0]
-    print(f"✅ Token validation passed: Yes={yes_token}, No={no_token}")
+    logger.info(f"✅ Token validation passed: Yes={yes_token}, No={no_token}")
 
     # Load dataset
     dataset = load_dataset("boolq")["validation"]
@@ -305,15 +316,15 @@ def evaluate_boolq(model, tokenizer, max_samples: int = 100) -> Dict[str, float]
 
 def run_smoke_tests(model, tokenizer, test_prompts: List[str]) -> List[Dict[str, str]]:
     """Robust smoke test function with proper response extraction."""
-    print("Running smoke-tests...")
+    logger.info("Running smoke-tests...")
 
     results = []
     model.eval()
 
     with torch.no_grad():
         for i, prompt in enumerate(test_prompts):
-            print(f"\nTest {i+1}/{len(test_prompts)}")
-            print(f"Prompt: {prompt}")
+            logger.info(f"\nTest {i+1}/{len(test_prompts)}")
+            logger.info(f"Prompt: {prompt}")
 
             try:
                 # Tokenization
@@ -348,10 +359,10 @@ def run_smoke_tests(model, tokenizer, test_prompts: List[str]) -> List[Dict[str,
                 }
                 results.append(result)
 
-                print(f"Response: {response[:100]}{'...' if len(response) > 100 else ''}")
+                logger.info(f"Response: {response[:100]}{'...' if len(response) > 100 else ''}")
 
             except Exception as e:
-                print(f"Error in test {i+1}: {e}")
+                logger.error(f"Error in test {i+1}: {e}")
                 result = {
                     "prompt": prompt,
                     "response": f"Error: {str(e)}",
@@ -366,11 +377,12 @@ def main():
     parser = argparse.ArgumentParser(description="Complete model evaluation")
     parser.add_argument("--model_path", type=str, required=True,
                        help="Path to model to evaluate")
-    parser.add_argument("--tokenizer_path", type=str, default="data/tokenizer/spm32k.model",
-                       help="Path to SentencePiece tokenizer (default: data/tokenizer/spm32k.model)")
+    parser.add_argument("--tokenizer_path", "--tokenizer_dir", type=str, default="data/tokenizer/spm32k.model",
+                       dest="tokenizer_path",
+                       help="Path to SentencePiece tokenizer (accepts --tokenizer_dir alias)")
     parser.add_argument("--output_dir", type=str, default="./evaluation_results",
                        help="Directory to save results")
-    
+
     # Multi-dataset evaluation
     parser.add_argument("--data_dirs", nargs='+', type=str,
                        help="Multiple data directories for multi-dataset perplexity evaluation")
@@ -388,32 +400,53 @@ def main():
                        help="Run in fast mode with reduced samples")
     parser.add_argument("--detailed_output", action="store_true",
                        help="Generate detailed output files")
-    
+    parser.add_argument("--log-level", type=str, default="WARNING",
+                       choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+                       help="Set logging level (default: WARNING)")
+
     args = parser.parse_args()
+
+    # Setup logging
+    logging.basicConfig(
+        level=getattr(logging, args.log_level),
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
     
     # Create output directory
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    
-    print("Loading model...")
+
+    logger.info("Loading model...")
     model = load_pretrained_model(args.model_path)
     
     # Load tokenizer
     if args.tokenizer_path:
+        tokenizer_path = Path(args.tokenizer_path)
+
         # Handle SentencePiece tokenizer files
-        if args.tokenizer_path.endswith('.model'):
-            # Load SentencePiece model directly
-            tokenizer = SentencePieceTokenizerWrapper(args.tokenizer_path)
+        if tokenizer_path.is_file() and tokenizer_path.suffix == '.model':
+            # Direct .model file
+            tokenizer = SentencePieceTokenizerWrapper(str(tokenizer_path))
+        elif tokenizer_path.is_dir():
+            # Directory containing spm.model
+            spm_model_path = tokenizer_path / 'spm.model'
+            if spm_model_path.exists():
+                logger.info(f"Loading SentencePiece tokenizer from {spm_model_path}")
+                tokenizer = SentencePieceTokenizerWrapper(str(spm_model_path))
+            else:
+                # Try HuggingFace format
+                tokenizer = AutoTokenizer.from_pretrained(str(tokenizer_path))
         else:
-            tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_path)
+            tokenizer = AutoTokenizer.from_pretrained(str(tokenizer_path))
     else:
         tokenizer = AutoTokenizer.from_pretrained(args.model_path)
     
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
-    
-    print(f"Model: {sum(p.numel() for p in model.parameters()):,} parameters")
-    print(f"Device: {model.device}")
+
+    logger.info(f"Model: {sum(p.numel() for p in model.parameters()):,} parameters")
+    logger.info(f"Device: {model.device}")
     
     # Structure to store all results
     evaluation_results = {
@@ -437,15 +470,15 @@ def main():
                 
                 multi_ppl_results = calculate_multi_dataset_perplexity(model, tokenizer, args.data_dirs, args.data_weights)
                 evaluation_results.update(multi_ppl_results)
-                
+
                 # Print summary
                 for key, value in multi_ppl_results.items():
                     if key.startswith("ppl_"):
                         dataset_name = key[4:]  # Remove 'ppl_' prefix
-                        print(f"Perplexity ({dataset_name}): {value:.2f}")
-                
+                        logger.info(f"Perplexity ({dataset_name}): {value:.2f}")
+
             except Exception as e:
-                print(f"Error calculating multi-dataset perplexity: {e}")
+                logger.error(f"Error calculating multi-dataset perplexity: {e}")
                 evaluation_results["multi_perplexity_error"] = str(e)
         else:
             # Wikitext-2 perplexity evaluation
@@ -453,9 +486,9 @@ def main():
                 wikitext_samples = 50 if args.fast_mode else 100
                 perplexity = calculate_perplexity_wikitext(model, tokenizer, wikitext_samples)
                 evaluation_results["perplexity_wikitext"] = perplexity
-                print(f"Perplexity (Wikitext-2): {perplexity:.2f}")
+                logger.info(f"Perplexity (Wikitext-2): {perplexity:.2f}")
             except Exception as e:
-                print(f"Error calculating Wikitext perplexity: {e}")
+                logger.error(f"Error calculating Wikitext perplexity: {e}")
                 evaluation_results["perplexity_wikitext_error"] = str(e)
     
     # 2. BoolQ benchmark (adapted according to mode)
@@ -464,9 +497,9 @@ def main():
         try:
             boolq_results = evaluate_boolq(model, tokenizer, boolq_samples)
             evaluation_results.update(boolq_results)
-            print(f"BoolQ Accuracy: {boolq_results['boolq_accuracy']:.3f} ({boolq_results['boolq_correct']}/{boolq_results['boolq_total']})")
+            logger.info(f"BoolQ Accuracy: {boolq_results['boolq_accuracy']:.3f} ({boolq_results['boolq_correct']}/{boolq_results['boolq_total']})")
         except Exception as e:
-            print(f"Error during BoolQ evaluation: {e}")
+            logger.error(f"Error during BoolQ evaluation: {e}")
             evaluation_results["boolq_error"] = str(e)
     
     # 3. Smoke-tests
@@ -494,18 +527,18 @@ def main():
                 else:
                     test_prompts = custom_data.get("prompts", default_prompts)
         except Exception as e:
-            print(f"Error loading custom prompts: {e}. Using defaults.")
+            logger.error(f"Error loading custom prompts: {e}. Using defaults.")
             test_prompts = default_prompts
     else:
         test_prompts = default_prompts[:5]  # Use first 5 default EN prompts
-    
+
     # Run smoke-tests
     try:
         smoke_results = run_smoke_tests(model, tokenizer, test_prompts)
         evaluation_results["smoke_tests"] = smoke_results
-        print(f"\nSmoke-tests completed: {len(smoke_results)} prompts tested")
+        logger.info(f"\nSmoke-tests completed: {len(smoke_results)} prompts tested")
     except Exception as e:
-        print(f"Error during smoke-tests: {e}")
+        logger.error(f"Error during smoke-tests: {e}")
         evaluation_results["smoke_tests_error"] = str(e)
     
     # Save results
@@ -527,36 +560,36 @@ def main():
                 f.write(f"**Full Text:** {result['full_text']}\n\n")
                 f.write("---\n\n")
 
-        print(f"Detailed results in: {detailed_file}")
-    
+        logger.info(f"Detailed results in: {detailed_file}")
+
     # Summary report
-    print(f"\n{'='*50}")
-    print("EVALUATION REPORT")
-    print(f"{'='*50}")
-    print(f"Model: {args.model_path}")
-    print(f"Parameters: {evaluation_results['model_parameters']:,}")
-    
+    logger.info(f"\n{'='*50}")
+    logger.info("EVALUATION REPORT")
+    logger.info(f"{'='*50}")
+    logger.info(f"Model: {args.model_path}")
+    logger.info(f"Parameters: {evaluation_results['model_parameters']:,}")
+
     # Display results summary
     if "perplexity_wikitext" in evaluation_results:
-        print(f"Perplexity (Wikitext-2): {evaluation_results['perplexity_wikitext']:.2f}")
+        logger.info(f"Perplexity (Wikitext-2): {evaluation_results['perplexity_wikitext']:.2f}")
 
     # Multi-dataset perplexity results
     for key, value in evaluation_results.items():
         if key.startswith("ppl_") and key != "ppl_weighted":
             dataset_name = key[4:]  # Remove 'ppl_' prefix
-            print(f"Perplexity ({dataset_name}): {value:.2f}")
+            logger.info(f"Perplexity ({dataset_name}): {value:.2f}")
 
     if "ppl_weighted" in evaluation_results:
-        print(f"Weighted Perplexity: {evaluation_results['ppl_weighted']:.2f}")
+        logger.info(f"Weighted Perplexity: {evaluation_results['ppl_weighted']:.2f}")
 
     if "boolq_accuracy" in evaluation_results:
-        print(f"BoolQ Accuracy: {evaluation_results['boolq_accuracy']:.3f}")
+        logger.info(f"BoolQ Accuracy: {evaluation_results['boolq_accuracy']:.3f}")
 
     if "smoke_tests" in evaluation_results:
-        print(f"Smoke-tests: {len(evaluation_results['smoke_tests'])} prompts tested")
-    
-    print(f"\nResults saved to: {results_file}")
-    print(f"{'='*50}")
+        logger.info(f"Smoke-tests: {len(evaluation_results['smoke_tests'])} prompts tested")
+
+    logger.info(f"\nResults saved to: {results_file}")
+    logger.info(f"{'='*50}")
 
 
 if __name__ == "__main__":

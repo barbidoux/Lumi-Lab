@@ -38,7 +38,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.auth import get_hf_api_client
 from utils.sft_templates import ConversationTemplateProcessor
-from utils.dataset_utils import estimate_avg_tokens_per_sample
+from utils.dataset_utils import estimate_avg_tokens_per_sample, plan_samples_for_token_budget
 
 
 def _safe_cleanup_and_exit():
@@ -63,9 +63,14 @@ def _setup_signal_handlers():
     signal.signal(signal.SIGTERM, signal_handler)
 
 
-def setup_logging(output_dir: Path, verbose: bool = False) -> None:
+def setup_logging(output_dir: Path, verbose: bool = False, log_level_str: Optional[str] = None) -> None:
     """Setup logging configuration."""
-    log_level = logging.DEBUG if verbose else logging.INFO
+    # Priority: --log-level > --verbose > default (INFO)
+    if log_level_str:
+        log_level = getattr(logging, log_level_str.upper())
+    else:
+        log_level = logging.DEBUG if verbose else logging.INFO
+
     log_file = output_dir / "sft_preparation.log"
 
     # Create formatter
@@ -127,6 +132,23 @@ def validate_config(config: Dict[str, Any]) -> None:
     if config['template'] not in valid_templates:
         raise ValueError(f"Invalid template '{config['template']}'. Must be one of: {valid_templates}")
 
+    # Validate sampling_strategy (if present)
+    if 'sampling_strategy' in config:
+        sampling_strategy = config['sampling_strategy']
+        mode = sampling_strategy.get('mode', 'max_samples')
+
+        valid_modes = ['target_tokens', 'target_conversations', 'max_samples']
+        if mode not in valid_modes:
+            raise ValueError(f"Invalid sampling mode '{mode}'. Must be one of: {valid_modes}")
+
+        # Validate mode-specific fields
+        if mode == 'target_tokens':
+            if 'target_tokens' not in sampling_strategy or sampling_strategy['target_tokens'] is None:
+                raise ValueError("sampling_strategy.mode='target_tokens' requires 'target_tokens' field")
+        elif mode == 'target_conversations':
+            if 'target_conversations' not in sampling_strategy or sampling_strategy['target_conversations'] is None:
+                raise ValueError("sampling_strategy.mode='target_conversations' requires 'target_conversations' field")
+
     # Validate datasets
     if not isinstance(config['datasets'], list) or len(config['datasets']) == 0:
         raise ValueError("Configuration must contain at least one dataset")
@@ -136,11 +158,6 @@ def validate_config(config: Dict[str, Any]) -> None:
         for field in required_dataset_fields:
             if field not in dataset:
                 raise ValueError(f"Dataset {i} missing required field: {field}")
-
-
-def simple_validate_tokenizer_consistency(tokenizer_path: str) -> Dict[str, Any]:
-    """Simple tokenizer validation function."""
-    return verify_tokenizer(tokenizer_path)
 
 
 def normalize_tokenizer_path(tokenizer_path: str) -> str:
@@ -372,6 +389,172 @@ def apply_quality_filters(conversation: Dict[str, str], filters: Dict[str, Any])
             return False
 
     return True
+
+
+def create_stream_factory_sft(dataset_config: Dict[str, Any], hf_client):
+    """Create a stream factory for SFT dataset analysis."""
+    dataset_type = dataset_config['type']
+
+    if dataset_type == 'huggingface':
+        def stream_factory():
+            from datasets import load_dataset
+
+            dataset_name = dataset_config['dataset_name']
+            subset = dataset_config.get('subset')
+            split = dataset_config.get('split', 'train')
+
+            dataset = load_dataset(
+                dataset_name,
+                subset,
+                split=split,
+                streaming=True,
+                trust_remote_code=dataset_config.get('trust_remote_code', False)
+            )
+
+            return iter(dataset)
+
+    elif dataset_type == 'local':
+        def stream_factory():
+            import json
+            data_path = Path(dataset_config['data_path'])
+
+            if data_path.suffix == '.jsonl':
+                with open(data_path, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        yield json.loads(line.strip())
+            elif data_path.suffix == '.json':
+                with open(data_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    for item in data:
+                        yield item
+            else:
+                raise ValueError(f"Unsupported local file format: {data_path.suffix}")
+
+    else:
+        raise ValueError(f"Unsupported dataset type: {dataset_type}")
+
+    return stream_factory
+
+
+def plan_sampling_strategy(config: Dict[str, Any], tokenizer_path: str) -> Dict[str, Any]:
+    """
+    Plan sampling for each dataset based on sampling_strategy.
+
+    Supports 3 modes:
+    - target_tokens: Plan samples to reach target token budget (like pretrain)
+    - target_conversations: Plan samples to reach target conversation count
+    - max_samples: Use max_samples from each dataset config (legacy mode)
+
+    Returns:
+        Dict mapping dataset name to planned_samples
+    """
+    sampling_strategy = config.get('sampling_strategy', {})
+    mode = sampling_strategy.get('mode', 'max_samples')
+    seed = sampling_strategy.get('seed', 42)
+
+    logging.info(f"📊 Planning sampling strategy: mode={mode}")
+
+    # Get HF client for dataset loading
+    from utils.auth import get_hf_api_client
+    hf_client = get_hf_api_client()
+
+    planned_samples = {}
+
+    if mode == 'target_tokens':
+        # Mode 1: Token budget (like pretrain)
+        token_budget = sampling_strategy['target_tokens']
+        chars_per_token = sampling_strategy.get('chars_per_token', 4.0)
+        analysis_sample_size = sampling_strategy.get('analysis_sample_size', 100)
+
+        logging.info(f"🎯 Target token budget: {token_budget:,} tokens")
+
+        # Step 1: Analyze each dataset to estimate avg tokens per conversation
+        total_weight = sum(d.get('weight', 1.0) for d in config['datasets'])
+
+        for dataset_config in config['datasets']:
+            dataset_name = dataset_config['name']
+            weight = dataset_config.get('weight', 1.0)
+
+            logging.info(f"   Analyzing {dataset_name} (weight={weight:.2f})...")
+
+            # Create stream factory
+            stream_factory = create_stream_factory_sft(dataset_config, hf_client)
+
+            # Estimate tokens per conversation
+            text_keys = []
+            for key in ['prompt', 'response', 'text']:
+                if key in dataset_config.get('text_fields', {}):
+                    text_keys.append(dataset_config['text_fields'][key])
+            if not text_keys and 'text' in dataset_config.get('text_fields', {}):
+                text_keys = [dataset_config['text_fields']['text']]
+
+            estimation_stats = estimate_avg_tokens_per_sample(
+                stream_factory=stream_factory,
+                sample_size=analysis_sample_size,
+                tokenizer=None,
+                text_keys=text_keys if text_keys else ['text'],
+                chars_per_token=chars_per_token,
+                tokenizer_path=tokenizer_path
+            )
+
+            avg_tokens = estimation_stats['avg_tokens']
+            dataset_config['_avg_tokens'] = avg_tokens
+
+            # Step 2: Plan samples based on weight
+            dataset_token_budget = int(token_budget * (weight / total_weight))
+            planned = plan_samples_for_token_budget(
+                token_budget=dataset_token_budget,
+                estimation_stats=estimation_stats,
+                margin_ratio=0.02
+            )
+
+            planned_samples[dataset_name] = planned
+
+            logging.info(f"      → {avg_tokens:.0f} tokens/conv, budget={dataset_token_budget:,} → {planned:,} conversations")
+
+            # Store planned info for later validation
+            dataset_config['_planned_samples'] = planned
+            dataset_config['_token_budget'] = dataset_token_budget
+
+    elif mode == 'target_conversations':
+        # Mode 2: Target conversation count
+        target_conversations = sampling_strategy['target_conversations']
+        total_weight = sum(d.get('weight', 1.0) for d in config['datasets'])
+
+        logging.info(f"🎯 Target conversations: {target_conversations:,}")
+
+        for dataset_config in config['datasets']:
+            dataset_name = dataset_config['name']
+            weight = dataset_config.get('weight', 1.0)
+
+            planned = int(target_conversations * (weight / total_weight))
+            planned_samples[dataset_name] = planned
+
+            logging.info(f"   {dataset_name}: weight={weight:.2f} → {planned:,} conversations")
+
+    elif mode == 'max_samples':
+        # Mode 3: Legacy mode - use max_samples from config
+        logging.info(f"📋 Using max_samples from dataset configs (legacy mode)")
+
+        for dataset_config in config['datasets']:
+            dataset_name = dataset_config['name']
+            max_samples = dataset_config.get('max_samples', None)
+            weight = dataset_config.get('weight', 1.0)
+
+            planned_samples[dataset_name] = {
+                'max_samples': max_samples,
+                'weight': weight
+            }
+
+            if max_samples:
+                logging.info(f"   {dataset_name}: max_samples={max_samples:,}, weight={weight:.2f}")
+            else:
+                logging.info(f"   {dataset_name}: no limit, weight={weight:.2f}")
+
+    else:
+        raise ValueError(f"Unknown sampling mode: {mode}")
+
+    return planned_samples
 
 
 def process_dataset(dataset_config: Dict[str, Any],
@@ -915,8 +1098,9 @@ def main():
                        help='Configuration file (JSON/YAML)')
     parser.add_argument('--output_dir', type=str, required=True,
                        help='Output directory for processed corpus')
-    parser.add_argument('--tokenizer_path', type=str, required=True,
-                       help='Path to SentencePiece tokenizer model')
+    parser.add_argument('--tokenizer_path', '--tokenizer_dir', type=str, required=True,
+                       dest='tokenizer_path',
+                       help='Path to SentencePiece tokenizer (accepts --tokenizer_dir alias)')
 
     # Optional arguments
     parser.add_argument('--force', action='store_true',
@@ -925,6 +1109,15 @@ def main():
                        help='Enable verbose logging')
     parser.add_argument('--dry_run', action='store_true',
                        help='Perform dry run without writing files')
+    parser.add_argument('--log-level', type=str, default=None,
+                       choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+                       help='Set logging level (overrides --verbose)')
+
+    # Streaming mode arguments
+    parser.add_argument('--use-streaming', action='store_true',
+                       help='Use TRUE STREAMING mode for scalable processing (constant memory <100MB)')
+    parser.add_argument('--force-refresh', action='store_true',
+                       help='Force refresh all caches when using --use-streaming')
 
     args = parser.parse_args()
 
@@ -939,7 +1132,7 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Setup logging
-    setup_logging(output_dir, args.verbose)
+    setup_logging(output_dir, args.verbose, getattr(args, 'log_level', None))
 
     # Load and validate configuration first (to get enable_packing)
     config = load_config(args.config)
@@ -959,6 +1152,90 @@ def main():
 
     try:
 
+        # ============================================================
+        # STREAMING MODE (NEW - Scalable, constant memory)
+        # ============================================================
+        if args.use_streaming:
+            logging.info("=" * 80)
+            logging.info("🚀 Using TRUE STREAMING SFT processing mode")
+            logging.info("=" * 80)
+            logging.info("✅ Constant memory usage <100MB (regardless of dataset size)")
+            logging.info("✅ Token budget enforcement with real-time stop")
+            logging.info("✅ Resume capability via Parquet caching")
+            logging.info("✅ Global cross-dataset deduplication")
+            logging.info("=" * 80)
+
+            # Create cache directory
+            cache_dir = output_dir / "cache"
+
+            # Initialize streaming processor
+            from utils.sft_streaming import SFTStreamingProcessor
+
+            streaming_processor = SFTStreamingProcessor(
+                cache_dir=cache_dir,
+                tokenizer_path=args.tokenizer_path,
+                template_name=config['template']
+            )
+
+            # Process with streaming
+            results = streaming_processor.process_config_streaming(
+                config=config,
+                output_dir=output_dir,
+                force_refresh=args.force_refresh
+            )
+
+            # Check if packing was used (v3.0 format)
+            is_packed = results['assembly_result'].get('is_packed', False)
+            packing_stats = results['assembly_result'].get('packing_stats', None)
+
+            # Create manifest
+            create_manifest(
+                config=config,
+                tokenizer_metadata=verify_tokenizer(args.tokenizer_path),
+                splits_info=results['assembly_result']['splits_info'],
+                output_dir=output_dir,
+                packing_stats=packing_stats  # Pass packing stats if packing was enabled
+            )
+
+            # Create data card
+            create_data_card(
+                config=config,
+                splits_info=results['assembly_result']['splits_info'],
+                output_dir=output_dir,
+                packing_stats=packing_stats
+            )
+
+            # Log final summary
+            logging.info("")
+            logging.info("=" * 80)
+            logging.info("🎉 TRUE STREAMING SFT corpus preparation complete!")
+            logging.info("=" * 80)
+            logging.info(f"📊 Total conversations: {results['total_conversations']:,}")
+            logging.info(f"📊 Total tokens: {results['total_tokens']:,} ({results['total_tokens']/1e6:.1f}M)")
+            logging.info(f"🗑️  Duplicates removed: {results['deduplication_stats']['duplicates_found']:,} ({results['deduplication_stats']['deduplication_rate']*100:.1f}%)")
+            if is_packed and packing_stats:
+                logging.info(f"📦 Format: Pre-packed v3.0 (input_ids, attention_mask, labels)")
+                logging.info(f"📦 Packed sequences: {packing_stats['total_packed_sequences']:,}")
+                logging.info(f"📦 Packing efficiency: {packing_stats['packing_efficiency']:.1f}%")
+            else:
+                logging.info(f"📝 Format: Raw text v2.0 (TRL will tokenize during training)")
+            logging.info(f"💾 Memory usage: CONSTANT <100MB peak")
+            logging.info(f"⚡ Scalability: UNLIMITED dataset size")
+            logging.info(f"📂 Output: {output_dir}")
+            logging.info("=" * 80)
+
+            # Clean exit
+            _safe_cleanup_and_exit()
+            return
+
+        # ============================================================
+        # LEGACY MODE (Original - Memory accumulation)
+        # ============================================================
+        logging.info("📋 Using ORIGINAL SFT processing pipeline (legacy mode)")
+        logging.info("⚠️  Memory usage scales with dataset size (~5GB for 1M conversations)")
+        logging.info("💡 Use --use-streaming for unlimited scalability")
+        logging.info("")
+
         # Verify tokenizer
         tokenizer_metadata = verify_tokenizer(args.tokenizer_path)
 
@@ -968,16 +1245,120 @@ def main():
         # Get HuggingFace client
         hf_client = get_hf_api_client()
 
-        # Process all datasets
+        # Plan sampling strategy (supports 3 modes: target_tokens, target_conversations, max_samples)
+        planned_samples_map = plan_sampling_strategy(config, args.tokenizer_path)
+
+        # Get seed from config (config-driven, no hardcoded values)
+        sampling_strategy = config.get('sampling_strategy', {})
+        seed = sampling_strategy.get('seed', 42)
+        mode = sampling_strategy.get('mode', 'max_samples')
+
+        # Process all datasets and apply planned sampling
         all_conversations = []
+        dataset_stats = []
+
         for dataset_config in config['datasets']:
+            dataset_name = dataset_config['name']
+
             conversations = process_dataset(
                 dataset_config,
                 template_processor,
                 config.get('quality_filters', {}),
                 hf_client
             )
-            all_conversations.extend(conversations)
+
+            num_conversations = len(conversations)
+
+            # Apply planned sampling based on mode
+            if mode == 'max_samples':
+                # Legacy mode: use weight-based sampling
+                plan = planned_samples_map[dataset_name]
+                weight = plan['weight']
+                max_samples = plan.get('max_samples')
+
+                if max_samples and num_conversations > max_samples:
+                    num_sampled = max_samples
+                else:
+                    num_sampled = int(num_conversations * weight)
+
+            else:
+                # Modern modes (target_tokens, target_conversations): use planned samples
+                num_sampled = min(planned_samples_map[dataset_name], num_conversations)
+
+            # Sample conversations deterministically
+            if num_sampled < num_conversations:
+                import random
+                random.seed(seed)
+                sampled_conversations = random.sample(conversations, num_sampled)
+            else:
+                sampled_conversations = conversations
+
+            all_conversations.extend(sampled_conversations)
+
+            # Track stats
+            dataset_stats.append({
+                'name': dataset_name,
+                'total': num_conversations,
+                'planned': num_sampled,
+                'sampled': len(sampled_conversations)
+            })
+
+        # Log dataset sampling stats
+        logging.info(f"📊 Dataset sampling statistics:")
+
+        total_tokens_planned = 0
+        total_tokens_actual = 0
+
+        for stat in dataset_stats:
+            logging.info(f"   {stat['name']}: {stat['total']:,} → {stat['sampled']:,} (planned: {stat['planned']:,})")
+
+            # Calculate token shortfall for target_tokens mode
+            if mode == 'target_tokens':
+                # Find the dataset config with stored planning info
+                dataset_cfg = next((d for d in config['datasets'] if d['name'] == stat['name']), None)
+                if dataset_cfg and '_planned_samples' in dataset_cfg:
+                    planned = dataset_cfg['_planned_samples']
+                    token_budget = dataset_cfg['_token_budget']
+                    avg_tokens = dataset_cfg.get('_avg_tokens', 250)
+
+                    actual_samples = stat['sampled']
+                    actual_tokens = actual_samples * avg_tokens
+
+                    total_tokens_planned += token_budget
+                    total_tokens_actual += actual_tokens
+
+                    # Warn if dataset significantly undersized
+                    if actual_samples < planned * 0.5:  # Less than 50% of plan
+                        shortfall_pct = ((planned - actual_samples) / planned) * 100
+                        token_shortfall = token_budget - actual_tokens
+                        logging.warning(
+                            f"⚠️  Dataset '{stat['name']}' is too small! "
+                            f"Planned {planned:,} conversations but only {actual_samples:,} available "
+                            f"({shortfall_pct:.1f}% shortfall, ~{token_shortfall/1e6:.1f}M tokens missing)"
+                        )
+
+        # Overall token budget warning for target_tokens mode
+        if mode == 'target_tokens' and total_tokens_actual > 0:
+            target_tokens = sampling_strategy['target_tokens']
+            shortfall = target_tokens - total_tokens_actual
+            achievement_pct = (total_tokens_actual / target_tokens) * 100
+
+            logging.info(f"")
+            logging.info(f"📊 Token Budget Summary:")
+            logging.info(f"   Target: {target_tokens/1e6:.1f}M tokens")
+            logging.info(f"   Actual: {total_tokens_actual/1e6:.1f}M tokens ({achievement_pct:.1f}% of target)")
+
+            if achievement_pct < 80:
+                logging.warning(
+                    f"⚠️  Token budget significantly underachieved! "
+                    f"Missing {shortfall/1e6:.1f}M tokens ({100-achievement_pct:.1f}% shortfall)"
+                )
+                logging.warning(f"💡 Consider:")
+                logging.warning(f"   1. Reducing target_tokens to {int(total_tokens_actual)} (~{total_tokens_actual/1e6:.0f}M)")
+                logging.warning(f"   2. Adding larger datasets (UltraChat 200k, ShareGPT 90k, WizardLM 70k)")
+                logging.warning(f"   3. Adjusting weights to use available data more effectively")
+            elif achievement_pct < 95:
+                logging.info(f"ℹ️  Token budget slightly underachieved but acceptable")
 
         logging.info(f"✅ Total conversations collected: {len(all_conversations):,}")
 

@@ -1,0 +1,73 @@
+{
+  "name": "hh_rlhf",
+  "description": "Anthropic Helpful-Harmless RLHF dataset - Human preference pairs",
+  "template": "dpo_standard",
+
+  "output_params": {
+    "shard_size": 5000,
+    "train_val_split": 0.95
+  },
+
+  "datasets": [
+    {
+      "name": "hh_rlhf_helpful",
+      "type": "huggingface",
+      "dataset_name": "Anthropic/hh-rlhf",
+      "subset": null,
+      "split": "train",
+      "text_fields": {
+        "prompt": "prompt",
+        "chosen": "chosen",
+        "rejected": "rejected"
+      },
+      "max_samples": 50000,
+      "processing": {
+        "parse_conversation": true,
+        "extract_last_turn": false,
+        "strip_tags": false
+      }
+    }
+  ],
+
+  "quality_filters": {
+    "min_prompt_length": 20,
+    "max_prompt_length": 1024,
+    "min_chosen_length": 30,
+    "max_chosen_length": 2048,
+    "min_rejected_length": 20,
+    "max_rejected_length": 2048,
+    "min_margin_tokens": 10,
+    "max_identical_pairs": 0,
+    "language": "en",
+    "language_threshold": 0.95,
+    "remove_duplicates": true,
+    "deduplication_method": "fuzzy_prompt",
+    "min_quality_score": 0.5
+  },
+
+  "statistics": {
+    "expected_samples": "~161,000 (train)",
+    "avg_prompt_length": "~200 tokens",
+    "avg_chosen_length": "~300 tokens",
+    "avg_rejected_length": "~250 tokens",
+    "source_quality": "very_high",
+    "annotation_source": "Human preferences"
+  },
+
+  "recommended_weight": 0.7,
+  "recommended_usage": "Large-scale preference alignment. Best combined with other datasets. May require subsampling for small models.",
+
+  "notes": [
+    "Original dataset contains multi-turn conversations in special format",
+    "Preprocessing required to extract prompt/chosen/rejected",
+    "Consider using helpful-base subset for instruction-following",
+    "Harmless subset focuses on safety alignment"
+  ],
+
+  "citation": {
+    "source": "Anthropic",
+    "paper": "Training a Helpful and Harmless Assistant with Reinforcement Learning from Human Feedback",
+    "url": "https://huggingface.co/datasets/Anthropic/hh-rlhf",
+    "license": "mit"
+  }
+}

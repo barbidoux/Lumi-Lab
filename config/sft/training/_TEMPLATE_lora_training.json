@@ -1,0 +1,203 @@
+{
+  "name": "lora_template",
+  "description": "Template for LoRA SFT training configurations - Clean v3.0 (100% used parameters)",
+  "version": "3.0",
+  "model_target": "PLACEHOLDER - e.g., '23M parameters (6 layers, 256 d_model, 4 heads)'",
+
+  "training_params": {
+    "learning_rate": 8e-5,
+    "num_train_epochs": -1,
+    "max_steps": 5400,
+    "per_device_train_batch_size": 4,
+    "per_device_eval_batch_size": 8,
+    "gradient_accumulation_steps": 8,
+    "warmup_ratio": 0.1,
+    "weight_decay": 0.01,
+    "logging_steps": 25,
+    "save_steps": 300,
+    "eval_steps": 150,
+    "evaluation_strategy": "steps",
+    "save_strategy": "steps",
+    "load_best_model_at_end": true,
+    "metric_for_best_model": "eval_loss",
+    "greater_is_better": false,
+    "save_total_limit": 5,
+    "seed": 42,
+    "data_seed": 42,
+    "dataloader_num_workers": 4,
+    "remove_unused_columns": false,
+    "optim": "adamw_torch",
+    "lr_scheduler_type": "cosine",
+    "fp16": false,
+    "bf16": true,
+    "gradient_checkpointing": false,
+    "ddp_find_unused_parameters": false,
+    "group_by_length": false,
+    "report_to": ["none"],
+    "max_grad_norm": 1.0,
+    "adam_beta1": 0.9,
+    "adam_beta2": 0.95,
+    "adam_epsilon": 1e-8
+  },
+
+  "lora_config": {
+    "r": 32,
+    "lora_alpha": 64,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "lora_dropout": 0.05,
+    "bias": "none",
+    "fan_in_fan_out": false,
+    "init_lora_weights": true
+  },
+
+  "dataset_config": {
+    "interleave_strategy": {
+      "seed": 42,
+      "stopping_strategy": "all_exhausted"
+    }
+  },
+
+  "evaluation_config": {
+    "generation_config": {
+      "max_new_tokens": 128,
+      "temperature": 0.7,
+      "top_p": 0.9,
+      "top_k": 50,
+      "do_sample": true,
+      "pad_token_id": 0,
+      "eos_token_id": 2,
+      "repetition_penalty": 1.1,
+      "no_repeat_ngram_size": 3
+    },
+    "eval_prompts": [
+      "What is artificial intelligence and how does it work?",
+      "Explain the concept of machine learning in simple terms.",
+      "How do neural networks learn patterns from data?",
+      "What are the main applications of AI in everyday life?",
+      "Describe the difference between AI, machine learning, and deep learning."
+    ]
+  },
+
+  "_parameter_guide": {
+    "training_params": {
+      "learning_rate": "CRITICAL - Model-specific optimal LR (23M: 8e-5, 42M: 5e-5, 124M: 3e-5)",
+      "num_train_epochs": "Set to -1 when using max_steps (HF requirement)",
+      "max_steps": "Total training steps - Use 2-3 epochs through dataset",
+      "per_device_train_batch_size": "Per-GPU batch size - Tune for VRAM (23M: 4, 42M: 3, 124M: 2)",
+      "per_device_eval_batch_size": "Can be 2x train batch size (eval uses less VRAM)",
+      "gradient_accumulation_steps": "Effective batch = per_device × grad_accum × num_gpus (target: 32)",
+      "warmup_ratio": "10% of total steps for stability - CRITICAL for SFT",
+      "weight_decay": "Light regularization (0.01) - LoRA already provides regularization",
+      "logging_steps": "Progress logging frequency (smaller models: 25, larger: 50)",
+      "save_steps": "Checkpoint frequency (~5-10% of max_steps)",
+      "eval_steps": "Evaluation frequency (~2-5% of max_steps for fine-grained monitoring)",
+      "evaluation_strategy": "Always 'steps' for SFT (more control than 'epoch')",
+      "save_strategy": "Always 'steps' (matches evaluation_strategy)",
+      "load_best_model_at_end": "Always true - Load checkpoint with lowest eval_loss",
+      "metric_for_best_model": "Always 'eval_loss' for SFT",
+      "greater_is_better": "Always false for eval_loss",
+      "save_total_limit": "Keep last N checkpoints (5 is good balance)",
+      "seed": "RNG seed for reproducibility (42 is convention)",
+      "data_seed": "Separate seed for data shuffling",
+      "dataloader_num_workers": "Parallel data loading (4 is good default, 0 for debugging)",
+      "remove_unused_columns": "Must be false for pre-packed datasets",
+      "optim": "Always 'adamw_torch' (reliable, well-tested)",
+      "lr_scheduler_type": "Always 'cosine' for smooth convergence",
+      "fp16": "Always false (use bf16 instead on Ampere+)",
+      "bf16": "Always true for RTX 3090/4090 (better precision than fp16)",
+      "gradient_checkpointing": "VRAM vs speed tradeoff (23M: false, 42M+: true)",
+      "ddp_find_unused_parameters": "Always false (no unused params in our pipeline)",
+      "group_by_length": "Always false for SFT (pre-packed sequences all same length)",
+      "report_to": "Always ['none'] - TensorBoard disabled to avoid callback errors",
+      "max_grad_norm": "Gradient clipping (1.0 is standard)",
+      "adam_beta1": "Adam momentum (0.9 is standard)",
+      "adam_beta2": "Adam RMSprop (0.95 better than 0.999 for transformers)",
+      "adam_epsilon": "Adam numerical stability (1e-8 is standard)"
+    },
+    "lora_config": {
+      "r": "LoRA rank - Adaptation capacity (23M: 32, 42M: 32-48, 124M: 64)",
+      "lora_alpha": "LoRA scaling - Always 2×r for optimal performance",
+      "target_modules": "Always target all linear layers in attention + FFN",
+      "lora_dropout": "Light dropout for regularization (0.05 is optimal)",
+      "bias": "Always 'none' - Bias not needed with LoRA",
+      "fan_in_fan_out": "Always false for LLaMA-style models",
+      "init_lora_weights": "Always true - Use Kaiming initialization"
+    },
+    "dataset_config": {
+      "interleave_strategy": {
+        "seed": "Dataset interleaving seed (42 for consistency)",
+        "stopping_strategy": "Always 'all_exhausted' - Use all data from all datasets"
+      }
+    },
+    "evaluation_config": {
+      "generation_config": "Parameters for generation evaluation during training",
+      "eval_prompts": "5-10 diverse prompts covering different task types"
+    }
+  },
+
+  "_model_size_recommendations": {
+    "tiny_23m": {
+      "learning_rate": 8e-5,
+      "max_steps": 5400,
+      "per_device_train_batch_size": 4,
+      "gradient_accumulation_steps": 8,
+      "gradient_checkpointing": false,
+      "lora_r": 32,
+      "lora_alpha": 64,
+      "expected_training_time": "4-5 hours on RTX 4090",
+      "expected_vram": "6-8GB"
+    },
+    "small_42m": {
+      "learning_rate": 5e-5,
+      "max_steps": 10000,
+      "per_device_train_batch_size": 3,
+      "gradient_accumulation_steps": 11,
+      "gradient_checkpointing": true,
+      "lora_r": 32,
+      "lora_alpha": 64,
+      "expected_training_time": "10-12 hours on RTX 4090",
+      "expected_vram": "10-14GB"
+    },
+    "base_124m": {
+      "learning_rate": 3e-5,
+      "max_steps": 18000,
+      "per_device_train_batch_size": 2,
+      "gradient_accumulation_steps": 16,
+      "gradient_checkpointing": true,
+      "lora_r": 64,
+      "lora_alpha": 128,
+      "expected_training_time": "16-20 hours on RTX 4090",
+      "expected_vram": "14-18GB"
+    }
+  },
+
+  "_tuning_guidelines": {
+    "learning_rate": "Start with recommended values, decrease if loss oscillates, increase if convergence too slow",
+    "batch_size": "Effective batch_size = per_device × grad_accum × gpus. Target 32 for stability.",
+    "max_steps": "Calculate: (dataset_tokens / seq_length) / effective_batch_size × 2_epochs",
+    "lora_rank": "Higher r = more capacity but more VRAM. Start with 32, increase to 64 if underfitting.",
+    "warmup_ratio": "Always 0.1 (10%) for SFT - critical for stability",
+    "eval_frequency": "Smaller models: eval every 150 steps. Larger models: 500 steps.",
+    "gradient_checkpointing": "Enable for models >30M if VRAM limited (costs ~10% speed)"
+  },
+
+  "_version_history": {
+    "v3.0": [
+      "CLEANED: Removed unused sections (checkpointing, hardware_optimization, advanced_optimization)",
+      "CLEANED: Removed unused dataset_config params (max_seq_length, packing, etc. - only for raw text)",
+      "CLEANED: Removed deprecated lora_config params (use_rslora, use_dora, modules_to_save)",
+      "CLEANED: Removed unused evaluation_config params (eval_dataset_size, eval_accumulation_steps)",
+      "FIXED: report_to changed from 'tensorboard' to 'none' (matches code override)",
+      "Total params: 74 -> 43 (58% reduction, 100% actually used)",
+      "Added comprehensive parameter guide and tuning guidelines"
+    ]
+  }
+}

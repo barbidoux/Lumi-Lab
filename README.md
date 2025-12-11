@@ -2,7 +2,9 @@
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/barbidou)
 
-A complete, **config-driven** codebase for training mini-LLMs (decoder-only transformers) optimized for personal machines with RTX 4090 GPUs. Implements a modular pipeline: **corpus preparation**, **tokenizer training**, **pre-training**, **SFT (Supervised Fine-Tuning)**, and **DPO (Direct Preference Optimization)**.
+A complete, **config-driven** codebase for training mini-LLMs (decoder-only transformers) optimized for personal machines with RTX 4090 GPUs. Implements a modular pipeline: **corpus preparation**, **tokenizer training**, **pre-training**, and **SFT (Supervised Fine-Tuning)**. DPO (Direct Preference Optimization) is available as an experimental feature.
+
+> **⚠️ EXPERIMENTAL PROJECT**: Lumi-Lab is in active development and experimental phase. While pre-training and SFT have been tested on tiny models (23M params), **this is a research/educational project**, not production software. DPO implementation is untested. Use at your own risk and expect bugs. Contributions, testing, and feedback are welcome!
 
 > **💡 Works with more modest GPUs too!** While optimized for RTX 4090 (16GB), this pipeline works on any NVIDIA GPU with CUDA support (even 8GB cards like RTX 3060). You'll just need more time and patience - reduce batch sizes, use gradient accumulation, and maybe grab an extra coffee ☕ while training.
 
@@ -18,8 +20,40 @@ A complete, **config-driven** codebase for training mini-LLMs (decoder-only tran
 - 🔄 **Production Checkpoints**: Complete state preservation (RNG, optimizer, scheduler)
 - 🎲 **Deterministic Training**: Perfect reproducibility for research
 
+---
+
+## 📊 Benchmark Results
+
+**Pipeline validation on Micro model (9.4M parameters) - Full FROM SCRATCH test**
+
+### End-to-End Pipeline Performance
+
+| Stage | Script | Duration | Data Volume | Key Metric |
+|-------|--------|----------|-------------|------------|
+| Corpus Preparation | `10_prepare_corpus.py` | 30 min | 200M tokens | 166k tok/s streaming |
+| Dataset Packing | `30_pack_dataset.py` | 2 min | 200M tokens | 800 tok/s tokenization |
+| Pre-training | `40_pretrain.py` | 19.5 min | 6,200 steps | Loss: 6.80 → 5.80 |
+| Pretrain Evaluation | `50_evaluate_pretrain.py` | 12 sec | 100 samples | PPL: 609.86, BoolQ: 30% |
+| SFT Corpus Prep | `60_prepare_sft_corpus.py` | 2 min | 6M tokens | 3 datasets, 24k convos |
+| SFT Training | `70_train_sft.py` | 11m 50s | 2,700 steps | Loss: 4.70 |
+| SFT Evaluation | `80_evaluate_sft.py` | 67.5 sec | 50 samples | PPL: 266.40, BoolQ: 49% |
+| **TOTAL** | - | **~75 min** | **206M tokens** | **Full pipeline validated** |
+
+### Quality Improvements (Pre-training → Post-SFT)
+
+| Metric | Pre-training | Post-SFT | Improvement |
+|--------|--------------|----------|-------------|
+| Perplexity | 609.86 | 266.40 | **56% reduction** |
+| BoolQ Accuracy | 30% | 49% | **+19 points** |
+| Smoke Test Quality | - | 0.571/1.0 | Meaningful responses |
+
+> **Note**: Micro model (9.4M params) is designed for pipeline validation, not production. Larger models (23M+) achieve significantly better metrics following the same training protocol.
+
+---
+
 ## 📋 Table of Contents
 
+- [📊 Benchmark Results](#-benchmark-results)
 - [🚀 Quick Start](#-quick-start)
 - [⚙️ Installation](#️-installation)
 - [🔒 One Tokenizer to Rule Them All](#-one-tokenizer-to-rule-them-all)
@@ -28,9 +62,10 @@ A complete, **config-driven** codebase for training mini-LLMs (decoder-only tran
 - [📊 Model Configurations](#-model-configurations)
 - [🔄 Complete Training Pipeline](#-complete-training-pipeline)
 - [📖 Detailed Usage Guide](#-detailed-usage-guide)
-- [🎯 RTX 4090 Optimizations](#-rtx-4090-optimizations)
+- [🎯 GPU Optimizations](#-gpu-optimizations--lower-end-hardware)
 - [🔧 Troubleshooting](#-troubleshooting)
 - [📈 Monitoring and Evaluation](#-monitoring-and-evaluation)
+- [🔬 Technical Reference](#-technical-reference)
 
 ## 🚀 Quick Start
 
@@ -286,7 +321,12 @@ Lumi-Lab/
 │   ├── evaluation/                        # Evaluation configs
 │   │   ├── sft_standard.json
 │   │   └── smoke_test_prompts.json
-│   └── dpo/                               # DPO configs (future)
+│   └── dpo/                               # DPO configs
+│       ├── datasets/                      # DPO dataset configs
+│       │   ├── orca_dpo.json
+│       │   └── hh_rlhf.json
+│       └── training/                      # DPO training configs
+│           └── dpo_tiny.json
 │
 ├── scripts/                               # Training pipeline scripts
 │   ├── 10_prepare_corpus.py              # Clean, deduplicate, shard corpus
@@ -297,7 +337,9 @@ Lumi-Lab/
 │   ├── 60_prepare_sft_corpus.py          # Prepare SFT corpus (templates)
 │   ├── 70_train_sft.py                   # SFT with LoRA adapters
 │   ├── 80_evaluate_sft.py                # Evaluate SFT model
-│   ├── 90_train_dpo.py                   # DPO alignment (future)
+│   ├── 90_prepare_dpo_corpus.py          # Prepare DPO corpus (⚠️ experimental, untested)
+│   ├── 95_train_dpo.py                   # DPO alignment training (⚠️ experimental, untested)
+│   ├── 98_evaluate_dpo.py                # Evaluate DPO model (⚠️ experimental, untested)
 │   └── 100_serve.py                      # Inference server (CLI + API)
 │
 ├── utils/                                 # Shared utilities
@@ -305,6 +347,8 @@ Lumi-Lab/
 │   ├── model_utils.py                    # Model creation, checkpoints
 │   ├── sft_templates.py                  # ChatML, Instruct, Alpaca templates
 │   ├── sft_evaluation.py                 # SFT-specific evaluation
+│   ├── dpo_utils.py                      # DPO multi-dataset loading, metrics
+│   ├── dpo_evaluation.py                 # DPO-specific evaluation
 │   └── debug/                            # Debug utilities
 │       ├── corpus_cache.py
 │       ├── tokenizer_validation.py
@@ -340,10 +384,10 @@ Lumi-Lab/
 │
 ├── logs/                                  # Training logs
 │
-├── CLAUDE.md                              # Claude Code integration guide
-├── ARCHITECTURE.md                        # Technical architecture details
-├── CHINCHILLA_PIPELINE.md                 # Chinchilla-optimal training strategy
-├── SFT_INDUSTRIAL_PIPELINE.md             # Industrial SFT documentation
+├── CLAUDE.md                              # Complete technical documentation
+├── MANIFESTO.md                           # Project philosophy
+├── SECURITY.md                            # Security guidelines
+├── CITATION.md                            # Academic citation
 ├── Makefile                               # Convenience commands
 ├── requirements.txt                       # Python dependencies
 └── README.md                              # This file
@@ -372,7 +416,37 @@ Lumi-Lab implements a modern decoder-only transformer following **LLaMA design p
 - ✅ **Compatible**: Full HuggingFace Transformers integration
 - ✅ **Memory-Optimal**: RMSNorm + no bias + FlashAttention-2
 
-**📖 For complete architectural details, see [ARCHITECTURE.md](ARCHITECTURE.md)**
+#### Model Architecture Diagram
+
+```mermaid
+flowchart TB
+    subgraph Input["Input Processing"]
+        A[Token IDs] --> B[Embedding Layer<br/>vocab=32768, d_model]
+        B --> C[RoPE Position<br/>Encoding]
+    end
+
+    subgraph Block["Transformer Block × N layers"]
+        C --> D[RMSNorm]
+        D --> E[Multi-Head Attention<br/>head_dim=64, causal]
+        E --> F[+ Residual]
+        F --> G[RMSNorm]
+        G --> H[SwiGLU FFN<br/>d_ff = 4 × d_model]
+        H --> I[+ Residual]
+    end
+
+    subgraph Output["Output Layer"]
+        I --> J[Final RMSNorm]
+        J --> K[LM Head<br/>vocab=32768]
+        K --> L[Logits]
+    end
+
+    style A fill:#e3f2fd
+    style L fill:#e8f5e9
+    style E fill:#fff3e0
+    style H fill:#fce4ec
+```
+
+**📖 For complete documentation, see [CLAUDE.md](CLAUDE.md)**
 
 ## 📊 Model Configurations
 
@@ -400,41 +474,45 @@ Based on [Chinchilla paper](https://arxiv.org/abs/2203.15556), optimal token cou
 
 Training with fewer tokens = underfitting. Training with more = diminishing returns.
 
-**📖 For complete Chinchilla strategy, see [CHINCHILLA_PIPELINE.md](CHINCHILLA_PIPELINE.md)**
+**📖 For complete training guidelines, see [CLAUDE.md](CLAUDE.md)**
 
 ## 🔄 Complete Training Pipeline
 
 ### Pipeline Overview
 
-```
-┌─────────────────────┐
-│   10_prepare_corpus │  ← Clean, deduplicate, shard
-│   (Raw Text → JSONL)│
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│ 20_train_tokenizer  │  ← Train SentencePiece (ONCE!)
-│   (JSONL → .model)  │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│  30_pack_dataset    │  ← Tokenize + pack sequences
-│ (JSONL → .bin+.idx) │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│    40_pretrain      │  ← Pre-train model (multi-dataset)
-│   (Data → Model)    │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│50_evaluate_pretrain │  ← Perplexity, benchmarks
-│  (Model → Metrics)  │
-└─────────────────────┘
+```mermaid
+flowchart LR
+    subgraph Corpus["📚 Corpus Preparation"]
+        A[Raw Data<br/>HuggingFace] --> B[10_prepare_corpus.py<br/>Clean, Dedupe, Shard]
+        B --> C[Cleaned JSONL<br/>+ Manifest]
+    end
+
+    subgraph Tokenizer["🔤 Tokenization"]
+        C --> D[20_train_tokenizer.py<br/>SentencePiece 32K]
+        D --> E[spm_32k.model<br/>SHA256 verified]
+        C --> F[30_pack_dataset.py<br/>Tokenize + Pack]
+        E --> F
+        F --> G[Binary Sequences<br/>.bin + .idx]
+    end
+
+    subgraph Training["🚀 Training Pipeline"]
+        G --> H[40_pretrain.py<br/>Multi-dataset, Deterministic]
+        H --> I[Base Model<br/>Checkpointed]
+        I --> J[60_prepare_sft_corpus.py<br/>ChatML Templates]
+        J --> K[70_train_sft.py<br/>LoRA Adapters]
+        K --> L[SFT Model<br/>Aligned]
+    end
+
+    subgraph Eval["📊 Evaluation"]
+        I --> M[50_evaluate_pretrain.py]
+        L --> N[80_evaluate_sft.py]
+        M --> O[Perplexity, BoolQ]
+        N --> O
+    end
+
+    style A fill:#e1f5fe
+    style L fill:#c8e6c9
+    style O fill:#fff3e0
 ```
 
 ### Stage 1: Corpus Preparation
@@ -699,7 +777,76 @@ accelerate launch --mixed_precision bf16 scripts/70_train_sft.py \
     --num_workers 4
 ```
 
-**📖 For complete SFT guide, see [SFT_INDUSTRIAL_PIPELINE.md](SFT_INDUSTRIAL_PIPELINE.md)**
+**📖 For complete SFT configuration, see [CLAUDE.md](CLAUDE.md)**
+
+### Direct Preference Optimization (DPO)
+
+> **⚠️ EXPERIMENTAL - UNTESTED**: The DPO implementation is experimental and has not been validated. Code is complete and follows the same architecture as pretrain/SFT, but requires real-world testing. Use at your own risk. Contributions and testing are welcome!
+
+DPO aligns models with human preferences using chosen/rejected response pairs. Run **after SFT** to improve helpfulness, harmlessness, and instruction-following quality.
+
+#### Step 9a: Prepare DPO Corpus
+
+```bash
+python scripts/90_prepare_dpo_corpus.py \
+    --config config/dpo/datasets/orca_dpo.json \
+    --tokenizer_dir data/models/tokenizers/spm_32k \
+    --output_dir data/dpo_processed/orca
+```
+
+**Available datasets** (config/dpo/datasets/):
+- `orca_dpo.json`: Intel ORCA DPO pairs (~13K, GPT-4 distilled) - **Recommended for tiny/small models**
+- `hh_rlhf.json`: Anthropic Helpful-Harmless RLHF (~161K pairs)
+
+**Output**: Sharded JSONL corpus with manifest + tokenizer verification
+
+#### Step 9b: DPO Training
+
+```bash
+accelerate launch --mixed_precision bf16 scripts/95_train_dpo.py \
+    --config config/dpo/training/dpo_tiny.json \
+    --model_path checkpoints/sft/tiny/final \
+    --data_dirs data/dpo_processed/orca \
+    --tokenizer_dir data/models/tokenizers/spm_32k \
+    --output_dir checkpoints/dpo/tiny
+```
+
+**Key config parameters** (`config/dpo/training/dpo_tiny.json`):
+- `beta=0.1`: KL penalty (higher = stronger preference enforcement)
+- `learning_rate=5e-7`: Much lower than SFT (careful alignment)
+- `max_steps=2000`: DPO converges faster than SFT
+
+**Multi-dataset training**:
+```bash
+--data_dirs data/dpo_processed/orca data/dpo_processed/hh_rlhf \
+--data_weights 0.7 0.3
+```
+
+**VRAM**: ~8-10GB (tiny model with LoRA + gradient checkpointing)
+**Time**: ~2-3 hours on RTX 4090 (2K steps)
+
+#### Step 9c: Evaluate DPO
+
+```bash
+python scripts/98_evaluate_dpo.py \
+    --config config/evaluation/dpo_standard.json \
+    --model_path checkpoints/dpo/tiny/final \
+    --tokenizer_dir data/models/tokenizers/spm_32k \
+    --eval_data_dir data/dpo_processed/orca \
+    --output_file evaluation_results/dpo/tiny/results.json
+```
+
+**DPO-specific metrics**:
+- **Reward margin**: Difference between chosen/rejected rewards (higher = better alignment)
+- **Win rate**: % of times chosen > rejected (should be > 0.5)
+- **Perplexity comparison**: Chosen vs rejected responses
+- **BoolQ accuracy**: General reasoning benchmark
+- **Generation quality**: Smoke tests + comparison prompts
+
+**Expected results** (tiny 23M model):
+- Reward margin: > 0.2
+- Win rate: > 0.70
+- BoolQ accuracy: ~72-76% (slight improvement over SFT)
 
 ### Inference and Serving
 
@@ -947,7 +1094,7 @@ If you encounter issues:
 1. **Check logs**: `logs/` directory contains detailed training logs
 2. **Check configs**: Verify all paths and hyperparameters
 3. **Check GPU**: `nvidia-smi` to monitor VRAM/utilization
-4. **Check documentation**: `CLAUDE.md`, `ARCHITECTURE.md`, `CHINCHILLA_PIPELINE.md`
+4. **Check documentation**: `CLAUDE.md` for complete command reference
 5. **Open an issue**: [GitHub Issues](https://github.com/your-username/Lumi-Lab/issues)
 
 ## 📈 Monitoring and Evaluation
@@ -1012,14 +1159,70 @@ Step 5000: loss=3.87, lr=3.0e-04
 | **small** (42M, 1B tokens) | 8-12h | 2.5-3.0 | 15-25 | 65-75% | 8-12 GB |
 | **base** (124M, 3B tokens) | 24-48h | 2.0-2.5 | 10-20 | 70-80% | 12-18 GB |
 
+---
+
+## 🔬 Technical Reference
+
+### Script Reference
+
+| Script | Purpose | Input | Output |
+|--------|---------|-------|--------|
+| `10_prepare_corpus.py` | Corpus preparation | HuggingFace datasets | JSONL shards + manifest |
+| `20_train_tokenizer.py` | Tokenizer training | JSONL corpus | SentencePiece model |
+| `30_pack_dataset.py` | Dataset packing | JSONL + tokenizer | Binary sequences (.bin/.idx) |
+| `40_pretrain.py` | Pre-training | Packed data | Model checkpoints |
+| `50_evaluate_pretrain.py` | Pretrain evaluation | Model checkpoint | Metrics JSON |
+| `60_prepare_sft_corpus.py` | SFT corpus prep | Instruct datasets | Formatted conversations |
+| `70_train_sft.py` | SFT training | Base model + SFT data | LoRA adapters |
+| `80_evaluate_sft.py` | SFT evaluation | SFT model | Comprehensive metrics |
+| `90_prepare_dpo_corpus.py` | DPO corpus prep ⚠️ | Preference data | Triplet format |
+| `95_train_dpo.py` | DPO training ⚠️ | SFT model + DPO data | Aligned model |
+| `98_evaluate_dpo.py` | DPO evaluation ⚠️ | DPO model | Preference metrics |
+| `100_serve.py` | Model serving | Any model | CLI/API interface |
+
+### Configuration Hierarchy
+
+```
+config/
+├── architectures/           # Model sizes (micro, tiny, small, base)
+│   └── *.json              # n_layer, d_model, n_head, vocab_size
+│
+├── pretrain/
+│   ├── corpus/             # Data sources + token budgets
+│   ├── tokenizer/          # SentencePiece params (vocab_size, model_type)
+│   ├── packing/            # Sequence length, train/val split
+│   └── training/           # LR, batch, optimizer, scheduler
+│
+├── sft/
+│   ├── datasets/           # Sources, templates, quality filters
+│   └── training/           # LoRA params (r, alpha, target_modules)
+│
+├── dpo/                    # ⚠️ Experimental
+│   ├── datasets/           # Preference pair configs
+│   └── training/           # DPO-specific params (beta, reference)
+│
+└── evaluation/             # Metrics, generation params, benchmarks
+```
+
+### Key Design Patterns
+
+| Pattern | Implementation | Benefit |
+|---------|---------------|---------|
+| **Config-Driven** | All hyperparams in JSON | WebUI-ready, reproducible |
+| **Manifest Validation** | SHA256 tokenizer hashes | Prevents silent mismatches |
+| **Memory Streaming** | Sharded JSONL + .bin/.idx | Handles unlimited corpus sizes |
+| **Deterministic Training** | Full RNG state preservation | Perfect reproducibility |
+| **Multi-Dataset Sampling** | Weighted interleaving | Curriculum learning |
+| **LoRA Adapters** | Rank-decomposed fine-tuning | 95% VRAM reduction |
+
+---
+
 ## 📚 Additional Documentation
 
-- **[CLAUDE.md](CLAUDE.md)**: Complete command reference for Claude Code integration
-- **[GEMINI.md](GEMINI.md)**: Complete command reference for Gemini CLI integration
-- **[ARCHITECTURE.md](ARCHITECTURE.md)**: Technical architecture details
-- **[CHINCHILLA_PIPELINE.md](CHINCHILLA_PIPELINE.md)**: Chinchilla-optimal training strategy
-- **[SFT_INDUSTRIAL_PIPELINE.md](SFT_INDUSTRIAL_PIPELINE.md)**: Industrial SFT guide
-- **[BREAKING_CHANGES.md](BREAKING_CHANGES.md)**: Migration guide from old versions
+- **[CLAUDE.md](CLAUDE.md)**: Complete command reference, architecture details, and configuration guide
+- **[MANIFESTO.md](MANIFESTO.md)**: Project philosophy and design principles
+- **[SECURITY.md](SECURITY.md)**: Security guidelines and reporting
+- **[CITATION.md](CITATION.md)**: Academic citation format
 
 ## 🤝 Contributing
 

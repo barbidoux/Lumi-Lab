@@ -19,7 +19,7 @@ import sys
 import gc
 import atexit
 import signal
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Set, Union
 
@@ -30,7 +30,7 @@ from datasketch import MinHash, MinHashLSH
 from langdetect import LangDetectException, detect
 from tqdm import tqdm
 
-from utils.auth import get_hf_api_client
+from utils.auth import get_hf_api_client, retry_with_backoff
 from utils.dataset_utils import estimate_avg_tokens_per_sample, plan_samples_for_token_budget
 from utils.debug.corpus_cache import CachedCorpusProcessor
 
@@ -76,6 +76,139 @@ def _safe_cleanup_and_exit():
         logging.warning(f"Cleanup warning: {e}")
         # Force exit anyway
         os._exit(0)
+
+
+def _create_corpus_subset(source_dir: str, output_dir: Path, config: dict) -> None:
+    """
+    Create a new corpus by subsetting an existing corpus.
+
+    This is much faster than re-downloading and re-processing data when you need
+    a smaller corpus (e.g., for micro model testing).
+
+    Args:
+        source_dir: Path to existing corpus directory (must have manifest.json and shards/)
+        output_dir: Output directory for the subset corpus
+        config: Configuration dict with target_total_tokens
+    """
+    import shutil
+    import gzip
+
+    source_path = Path(source_dir)
+    source_manifest_path = source_path / "manifest.json"
+    source_shards_dir = source_path / "shards"
+
+    # Validate source corpus
+    if not source_manifest_path.exists():
+        logging.error(f"Source corpus manifest not found: {source_manifest_path}")
+        logging.error("Please provide a valid corpus directory with manifest.json")
+        return
+
+    if not source_shards_dir.exists():
+        logging.error(f"Source shards directory not found: {source_shards_dir}")
+        return
+
+    # Load source manifest
+    with open(source_manifest_path, 'r', encoding='utf-8') as f:
+        source_manifest = json.load(f)
+
+    source_total_tokens = source_manifest.get('statistics', {}).get('total_tokens', 0)
+    if source_total_tokens == 0:
+        # Try alternative manifest structure
+        source_total_tokens = source_manifest.get('total_tokens', 0)
+
+    logging.info(f"📦 Source corpus: {source_path}")
+    logging.info(f"   Total tokens: {source_total_tokens:,}")
+
+    # Get target token count from config
+    target_tokens = config.get('target_total_tokens', source_total_tokens)
+    logging.info(f"🎯 Target tokens: {target_tokens:,}")
+
+    if target_tokens >= source_total_tokens:
+        logging.warning(f"Target ({target_tokens:,}) >= source ({source_total_tokens:,}). Copying entire corpus.")
+        target_tokens = source_total_tokens
+
+    # List all shards sorted by name
+    shard_files = sorted(source_shards_dir.glob("shard_*.jsonl.gz"))
+    if not shard_files:
+        shard_files = sorted(source_shards_dir.glob("shard_*.jsonl"))
+
+    if not shard_files:
+        logging.error("No shard files found in source corpus")
+        return
+
+    logging.info(f"   Source shards: {len(shard_files)}")
+
+    # Calculate tokens per shard (approximate)
+    tokens_per_shard = source_total_tokens / len(shard_files) if shard_files else 0
+
+    # Determine how many shards we need
+    shards_needed = max(1, int(target_tokens / tokens_per_shard) + 1) if tokens_per_shard > 0 else len(shard_files)
+    shards_needed = min(shards_needed, len(shard_files))
+
+    logging.info(f"📋 Copying {shards_needed} shards (approx {tokens_per_shard:,.0f} tokens/shard)")
+
+    # Create output directories
+    output_shards_dir = output_dir / "shards"
+    output_shards_dir.mkdir(parents=True, exist_ok=True)
+
+    # Copy shards
+    copied_tokens = 0
+    copied_docs = 0
+    copied_shards = 0
+
+    for i, shard_file in enumerate(shard_files[:shards_needed]):
+        dest_file = output_shards_dir / shard_file.name
+        shutil.copy2(shard_file, dest_file)
+        copied_shards += 1
+
+        # Count documents in shard for accurate manifest
+        try:
+            if shard_file.suffix == '.gz':
+                with gzip.open(shard_file, 'rt', encoding='utf-8') as f:
+                    shard_docs = sum(1 for _ in f)
+            else:
+                with open(shard_file, 'r', encoding='utf-8') as f:
+                    shard_docs = sum(1 for _ in f)
+            copied_docs += shard_docs
+        except Exception as e:
+            logging.warning(f"Could not count docs in {shard_file}: {e}")
+
+        if (i + 1) % 10 == 0:
+            logging.info(f"   Copied {i + 1}/{shards_needed} shards...")
+
+    # Estimate tokens (proportional)
+    copied_tokens = int(source_total_tokens * (copied_shards / len(shard_files)))
+
+    # Create new manifest
+    new_manifest = {
+        "created_at": datetime.now(timezone.utc).isoformat() + "Z",
+        "pipeline_version": "3.0.0-subset",
+        "processing_mode": "subset_from_existing",
+        "source_corpus": str(source_path),
+        "config": config,
+        "statistics": {
+            "total_documents": copied_docs,
+            "total_tokens": copied_tokens,
+            "total_shards": copied_shards
+        },
+        "subset_info": {
+            "source_total_tokens": source_total_tokens,
+            "source_total_shards": len(shard_files),
+            "target_tokens": target_tokens,
+            "actual_tokens_approx": copied_tokens
+        }
+    }
+
+    # Save manifest
+    output_manifest_path = output_dir / "manifest.json"
+    with open(output_manifest_path, 'w', encoding='utf-8') as f:
+        json.dump(new_manifest, f, indent=2, ensure_ascii=False, default=str)
+
+    logging.info(f"✅ Corpus subset created successfully!")
+    logging.info(f"   Output: {output_dir}")
+    logging.info(f"   Shards: {copied_shards}")
+    logging.info(f"   Documents: {copied_docs:,}")
+    logging.info(f"   Tokens (approx): {copied_tokens:,}")
 
 
 def setup_logging(level: str = "INFO") -> None:
@@ -219,6 +352,7 @@ def create_stream_factory(source_config: Dict[str, Any]):
     if source_type == 'huggingface':
         def stream_factory():
             from datasets import load_dataset
+            import requests
 
             dataset_name = source_config['dataset_name']
             subset = source_config.get('subset')
@@ -230,13 +364,37 @@ def create_stream_factory(source_config: Dict[str, Any]):
             except Exception as e:
                 logging.warning(f"HF authentication failed, trying without: {e}")
 
-            dataset = load_dataset(
-                dataset_name,
-                subset,
-                split=split,
-                streaming=True,
-                trust_remote_code=source_config.get('trust_remote_code', False)
+            # Set download timeout via environment variable
+            import os
+            os.environ.setdefault('HF_HUB_DOWNLOAD_TIMEOUT', '600')
+
+            # Define retryable network exceptions
+            retryable_exceptions = (
+                requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout,
+                requests.exceptions.HTTPError,
+                ConnectionError,
+                TimeoutError,
+                OSError,
             )
+
+            @retry_with_backoff(
+                max_retries=5,
+                base_delay=2.0,
+                max_delay=60.0,
+                retryable_exceptions=retryable_exceptions
+            )
+            def _load_dataset_with_retry():
+                """Load HuggingFace dataset with retry logic."""
+                return load_dataset(
+                    dataset_name,
+                    subset,
+                    split=split,
+                    streaming=True,
+                    trust_remote_code=source_config.get('trust_remote_code', False)
+                )
+
+            dataset = _load_dataset_with_retry()
 
             return iter(dataset)
 
@@ -742,6 +900,8 @@ def main():
     parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
     parser.add_argument("--use-cache", action="store_true", help="Use caching system for better performance and resume capability")
     parser.add_argument("--force-refresh", action="store_true", help="Force refresh all caches when using --use-cache")
+    parser.add_argument("--subset-from", type=str, default=None,
+                       help="Create corpus by subsetting from existing corpus directory (faster than re-downloading)")
 
     args = parser.parse_args()
 
@@ -761,6 +921,11 @@ def main():
     manifest_path = output_dir / "manifest.json"
     if manifest_path.exists() and not args.force:
         logging.info(f"Output already exists at {output_dir}. Use --force to re-run.")
+        return
+
+    # Handle --subset-from: create corpus by subsetting existing corpus
+    if args.subset_from:
+        _create_corpus_subset(args.subset_from, output_dir, config)
         return
 
     # Analyze sources

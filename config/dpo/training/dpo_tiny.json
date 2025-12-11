@@ -1,0 +1,155 @@
+{
+  "name": "dpo_tiny",
+  "description": "DPO configuration for tiny model (23M params) - Preference alignment after SFT",
+  "version": "1.0",
+
+  "training_params": {
+    "learning_rate": 5e-7,
+    "num_train_epochs": 1,
+    "max_steps": 2000,
+    "per_device_train_batch_size": 2,
+    "per_device_eval_batch_size": 2,
+    "gradient_accumulation_steps": 8,
+    "warmup_steps": 200,
+    "weight_decay": 0.01,
+    "logging_steps": 10,
+    "save_steps": 200,
+    "eval_steps": 100,
+    "evaluation_strategy": "steps",
+    "save_strategy": "steps",
+    "load_best_model_at_end": true,
+    "metric_for_best_model": "eval_loss",
+    "greater_is_better": false,
+    "save_total_limit": 3,
+    "seed": 42,
+    "data_seed": 42,
+    "dataloader_num_workers": 4,
+    "remove_unused_columns": false,
+    "optim": "adamw_torch",
+    "lr_scheduler_type": "cosine",
+    "fp16": false,
+    "bf16": true,
+    "gradient_checkpointing": true,
+    "ddp_find_unused_parameters": false,
+    "report_to": ["tensorboard"]
+  },
+
+  "dpo_params": {
+    "beta": 0.1,
+    "max_length": 1024,
+    "max_prompt_length": 512,
+    "label_smoothing": 0.0,
+    "loss_type": "sigmoid",
+    "reference_free": false,
+    "label_pad_token_id": -100,
+    "padding_value": 0,
+    "truncation_mode": "keep_end",
+    "generate_during_eval": false,
+    "precompute_ref_log_probs": false
+  },
+
+  "lora_config": {
+    "r": 32,
+    "lora_alpha": 64,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "lora_dropout": 0.05,
+    "bias": "none",
+    "task_type": "CAUSAL_LM",
+    "fan_in_fan_out": false,
+    "init_lora_weights": true,
+    "modules_to_save": null
+  },
+
+  "evaluation_config": {
+    "eval_dataset_size": 500,
+    "eval_accumulation_steps": 1,
+    "generation_config": {
+      "max_new_tokens": 128,
+      "temperature": 0.7,
+      "top_p": 0.9,
+      "top_k": 50,
+      "do_sample": true,
+      "repetition_penalty": 1.1,
+      "no_repeat_ngram_size": 3
+    },
+    "eval_prompts": [
+      "How can I improve my productivity at work?",
+      "What is the best way to learn programming?",
+      "Explain artificial intelligence in simple terms.",
+      "How do I stay motivated when working on difficult tasks?",
+      "What are some healthy eating habits?",
+      "How can I manage stress effectively?",
+      "What is the difference between machine learning and deep learning?",
+      "How do I build better relationships with others?",
+      "What are the benefits of regular exercise?",
+      "How can I develop better time management skills?"
+    ]
+  },
+
+  "checkpointing": {
+    "save_safetensors": true,
+    "save_on_each_node": false,
+    "resume_from_checkpoint": null,
+    "ignore_data_skip": false
+  },
+
+  "hardware_optimization": {
+    "auto_find_batch_size": false,
+    "dataloader_pin_memory": true,
+    "max_memory_mb": 12000,
+    "low_cpu_mem_usage": true,
+    "torch_compile": false,
+    "torch_compile_backend": "inductor",
+    "torch_compile_mode": "default"
+  },
+
+  "reproducibility": {
+    "seed": 42,
+    "deterministic": true,
+    "full_determinism": false
+  },
+
+  "notes": [
+    "DPO should be run AFTER SFT, not on pretrained model",
+    "Learning rate is much lower than SFT (5e-7 vs 1e-4)",
+    "Beta=0.1 is standard, increase for stronger preference enforcement",
+    "Effective batch size: 2 * 8 = 16 (good for 23M model)",
+    "Expected training time: ~2-3 hours on RTX 4090",
+    "VRAM usage: ~8-10GB with gradient checkpointing"
+  ],
+
+  "hyperparameter_guidelines": {
+    "beta": {
+      "description": "KL penalty coefficient - controls how much model deviates from reference",
+      "typical_range": "0.01 to 0.5",
+      "recommended": 0.1,
+      "effects": {
+        "low": "Weaker preference enforcement, more exploration",
+        "high": "Stronger preference enforcement, less deviation from SFT model"
+      }
+    },
+    "learning_rate": {
+      "description": "Step size for optimization",
+      "typical_range": "1e-7 to 1e-5",
+      "recommended": "5e-7",
+      "effects": {
+        "low": "Slower convergence, more stable",
+        "high": "Faster convergence, risk of instability"
+      }
+    },
+    "max_steps": {
+      "description": "Total training steps",
+      "typical_range": "500 to 5000",
+      "recommended": 2000,
+      "note": "DPO converges much faster than SFT"
+    }
+  }
+}
