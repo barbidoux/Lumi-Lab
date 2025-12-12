@@ -1,0 +1,110 @@
+SFT Model Evaluation Report
+============================================================
+Model Path: checkpoints/sft/tiny/final
+Tokenizer Path: data/models/tokenizers/spm_32k
+Prompt Template: instruct
+Evaluation Mode: standard
+LoRA Enabled: True
+============================================================
+Loading tokenizer from: data/models/tokenizers/spm_32k
+Found SentencePiece model: data/models/tokenizers/spm_32k/spm.model
+Loaded SentencePiece model with vocab size: 32768
+✓ Created HF tokenizer from SentencePiece model
+Special tokens mapping: {'pad': 0, 'unk': 1, 'bos': 2, 'eos': 3}
+✓ Tokenizer validation passed - SP32k compatible
+Loading model from: checkpoints/sft/tiny/final
+`torch_dtype` is deprecated! Use `dtype` instead!
+✓ Loaded base model
+Model parameters: 24,202,496 total, 0 trainable
+
+Calculating perplexity using real text data...
+  Processing 1940 text samples in RAW format (like 05_evaluate)...
+    Processed 10/50 samples...
+    Processed 20/50 samples...
+    Processed 30/50 samples...
+    Processed 40/50 samples...
+    Processed 50/50 samples...
+
+Perplexity Results:
+  Format: Raw text (no conversational formatting)
+  Samples: 50
+  Tokens: 7,281
+  Average Loss: 4.9223
+  Perplexity: 137.32
+
+Evaluating BoolQ accuracy (max 100 samples)...
+  Processing 100 BoolQ samples...
+    Processed 25/100 BoolQ samples...
+    Processed 50/100 BoolQ samples...
+    Processed 75/100 BoolQ samples...
+    Processed 100/100 BoolQ samples...
+
+BoolQ Results:
+  Samples: 100
+  Correct: 37
+  Accuracy: 0.370 (37.0%)
+
+Running smoke tests (standard mode)...
+  Testing category: basic_knowledge
+    basic_knowledge: 0.73 avg quality
+  Testing category: language_understanding
+    language_understanding: 0.43 avg quality
+  Testing category: reasoning
+    reasoning: 0.37 avg quality
+  Testing category: creativity
+    creativity: 0.43 avg quality
+  Testing category: instruction_following
+    instruction_following: 0.53 avg quality
+  Testing category: wikipedia_style
+    wikipedia_style: 0.53 avg quality
+  Testing category: conversation
+    conversation: 0.53 avg quality
+  Testing category: multilingual
+    multilingual: 0.53 avg quality
+
+Smoke Test Results:
+  Categories: 8
+  Total prompts: 24
+  Average quality: 0.513
+
+============================================================
+
+Generation Test (5 samples):
+============================================================
+
+--- Sample 1 ---
+Prompt: Explain what machine learning is in simple terms.
+Response: :What machine learning is in simple terms? I'd be happy to help you with that. This means you have to work together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together together each part together,
+------------------------------------------------------------
+
+--- Sample 2 ---
+Prompt: Write a short poem about the ocean.
+Response: #Dist:The Ocean is an marine-level marine region that contains all the marine habitats, including the ocean and sea. The sea is the largest ocean that is located in the ocean. The sea is located in a large ocean of 20 kilometers (5 kilometers). The ocean is a sea-wide sea. The ocean is a ocean-based sea with some marine habitat, including the waters of sea, coral reefs, and marine plants. It has been used for many centuries, but it has been used as a source for marine research, conservation, and preservation. The Atlantic Sea is a international ship in the oceans,
+------------------------------------------------------------
+
+--- Sample 3 ---
+Prompt: What are the benefits of renewable energy?
+Response: sur renewable energy is the ability to produce more electricity. It is important to note that solar consumption is the best way to use fossil sources for renewable energy, but it's also an important part of the overall contribution of the energy process and the economy. zyloprim### Response:We need to understand the importance of renewable energy in our lives and how the impact of power in the city can be improved by using fossil sources. --|### Response:There are some benefits of solar consumption that can be achieved through the technology and the economy. palavra### Response:The benefits of renewable energy are the ability to produce
+------------------------------------------------------------
+
+--- Sample 4 ---
+Prompt: How do you make a good first impression?
+Response: -The "A morning of a morning, the evening was, and the "A evening of a evening," and the "A afternoon of a evening, the night was," are not true. The reply is "Dry to the." The answer is "I will leave the hotel" and "Yes," and the answer is "Clling the Hotel." sees### Response:"Oh!" is nothing because the first answer is "The hotel," which means "A night of a afternoon", and the second answer is "In the room." It is not true that the "A morning of a morning", and it
+------------------------------------------------------------
+
+--- Sample 5 ---
+Prompt: Describe the process of photosynthesis.
+Response: -The process of photosynthesis is called "com". The process involves which photosynthesis becomes a process that begins in the process, forming an "to" process. The process involves creating new molecules or acids, which then generate more carbon and carbon, which then produce new molecules. This process involves making the process easier to absorb and store energy, such as carbon, or organic matter. For example, the plant needs to produce different substances, such as carbon, carbon, and carbon, which then use a different chemical to absorb and absorb oxygen. This process involves combining hydrogen and hydrogen into a new molecule, which then produce new atoms. However,
+------------------------------------------------------------
+
+Results saved to: evaluation_results/sft/tiny/results.json
+
+============================================================
+EVALUATION RESULTS
+============================================================
+Perplexity: 137.32
+BoolQ Accuracy: 0.370 (37.0%)
+Smoke Test Quality: 0.513
+Evaluation Time: 75.5s
+Model Parameters: 24,202,496
+============================================================

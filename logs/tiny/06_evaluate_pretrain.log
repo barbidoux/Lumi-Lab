@@ -1,0 +1,51 @@
+2025-12-12 14:31:13 - INFO - Loading model...
+Loading model from checkpoints/pretrain/tiny/tiny/final on cuda...
+`torch_dtype` is deprecated! Use `dtype` instead!
+2025-12-12 14:31:16 - INFO - We will use 90% of the memory on device 0 for storing the model, and 10% for the buffer to avoid OOM. You can set `max_memory` in to a higher value to use more memory (at your own risk).
+Model loaded: 23,072,000 parameters on cuda
+2025-12-12 14:31:21 - INFO - Loading SentencePiece tokenizer from data/models/tokenizers/spm_32k/spm.model
+2025-12-12 14:31:21 - INFO - Model: 23,072,000 parameters
+2025-12-12 14:31:21 - INFO - Device: cuda:0
+2025-12-12 14:31:21 - INFO - Calculating perplexity on Wikitext-2 (max 100 samples)...
+Wikitext Perplexity:   0%|          | 0/100 [00:00<?, ?it/s]Wikitext Perplexity:   4%|▍         | 4/100 [00:02<00:49,  1.94it/s]Wikitext Perplexity:  15%|█▌        | 15/100 [00:02<00:10,  7.74it/s]Wikitext Perplexity:  18%|█▊        | 18/100 [00:02<00:09,  8.65it/s]Wikitext Perplexity:  48%|████▊     | 48/100 [00:02<00:01, 34.35it/s]Wikitext Perplexity:  68%|██████▊   | 68/100 [00:02<00:00, 52.54it/s]Wikitext Perplexity:  92%|█████████▏| 92/100 [00:02<00:00, 77.71it/s]Wikitext Perplexity: 100%|██████████| 100/100 [00:02<00:00, 33.77it/s]
+2025-12-12 14:31:29 - INFO -    └─ Wikitext Perplexity: 587.78 (5,823 tokens)
+2025-12-12 14:31:29 - INFO - Perplexity (Wikitext-2): 587.78
+2025-12-12 14:31:29 - INFO - BoolQ evaluation (max 100 samples)...
+2025-12-12 14:31:29 - INFO - ✅ Token validation passed: Yes=2816, No=448
+BoolQ Evaluation:   0%|          | 0/100 [00:00<?, ?it/s]BoolQ Evaluation:  13%|█▎        | 13/100 [00:00<00:00, 121.10it/s]BoolQ Evaluation:  26%|██▌       | 26/100 [00:00<00:00, 124.92it/s]BoolQ Evaluation:  40%|████      | 40/100 [00:00<00:00, 131.16it/s]BoolQ Evaluation:  61%|██████    | 61/100 [00:00<00:00, 161.27it/s]BoolQ Evaluation:  83%|████████▎ | 83/100 [00:00<00:00, 181.93it/s]BoolQ Evaluation: 100%|██████████| 100/100 [00:00<00:00, 170.19it/s]
+2025-12-12 14:31:36 - INFO - BoolQ Accuracy: 0.310 (31/100)
+2025-12-12 14:31:36 - INFO - Running smoke-tests...
+2025-12-12 14:31:36 - INFO - 
+Test 1/5
+2025-12-12 14:31:36 - INFO - Prompt: What is artificial intelligence?
+2025-12-12 14:31:38 - INFO - Response: ,' I say "'s good evil a, ' bad the!' ", I,' replied' the.And this all ' do good' '; "How things not...
+2025-12-12 14:31:38 - INFO - 
+Test 2/5
+2025-12-12 14:31:38 - INFO - Prompt: Explain machine learning in simple terms.
+2025-12-12 14:31:38 - INFO - Response: youres and are to  your of own. is the that will with 01% your in to,10 you. the is 05 of 2% your to...
+2025-12-12 14:31:38 - INFO - 
+Test 3/5
+2025-12-12 14:31:38 - INFO - Prompt: How does a neural network work?
+2025-12-12 14:31:39 - INFO - Response: to the of 3 people The is in field, its or. is?. is a ofs thats the of,s which a network is to the. ...
+2025-12-12 14:31:39 - INFO - 
+Test 4/5
+2025-12-12 14:31:39 - INFO - Prompt: What are the benefits of renewable energy?
+2025-12-12 14:31:39 - INFO - Response: energy. solar? 18241: the of energyefficient solar? is the of importance a can to our. and is an to....
+2025-12-12 14:31:39 - INFO - 
+Test 5/5
+2025-12-12 14:31:39 - INFO - Prompt: Describe the water cycle.
+2025-12-12 14:31:40 - INFO - Response: to a of-- to-, on surface and. to water In 81 BC380 40 4 2  3 003 (40C2)t The of is3C3..:65 16C595F3...
+2025-12-12 14:31:40 - INFO - 
+Smoke-tests completed: 5 prompts tested
+2025-12-12 14:31:40 - INFO - 
+==================================================
+2025-12-12 14:31:40 - INFO - EVALUATION REPORT
+2025-12-12 14:31:40 - INFO - ==================================================
+2025-12-12 14:31:40 - INFO - Model: checkpoints/pretrain/tiny/tiny/final
+2025-12-12 14:31:40 - INFO - Parameters: 23,072,000
+2025-12-12 14:31:40 - INFO - Perplexity (Wikitext-2): 587.78
+2025-12-12 14:31:40 - INFO - BoolQ Accuracy: 0.310
+2025-12-12 14:31:40 - INFO - Smoke-tests: 5 prompts tested
+2025-12-12 14:31:40 - INFO - 
+Results saved to: evaluation_results/pretrain/tiny/evaluation_results.json
+2025-12-12 14:31:40 - INFO - ==================================================

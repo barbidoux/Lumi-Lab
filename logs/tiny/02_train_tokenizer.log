@@ -1,0 +1,1226 @@
+
+🚀 Enhanced Tokenizer Training v2.1
+============================================================
+
+📁 Corpus: data/datasets/tokenizer_corpus_23m/manifest.json
+   📊 11 shards, 102,430 documents
+
+🎯 Configuration:
+   📝 Vocab size: 32768
+   🔧 Model type: unigram
+   🎭 Character coverage: 0.9995
+   🔤 Normalization: nfkc
+
+============================================================
+        
+2025-12-12 07:56:21 - utils.debug.adaptive_estimation - INFO - 🎯 AdaptiveTokenEstimator initialized with 4.00 chars/token
+2025-12-12 07:56:21 - utils.debug.adaptive_estimation - INFO - 📊 Calibrating token estimation with 1,000 document samples...
+2025-12-12 07:56:37 - utils.debug.adaptive_estimation - INFO - 📋 Extracted 927 sample documents for calibration
+2025-12-12 07:56:37 - utils.debug.adaptive_estimation - INFO - ⚠️  Only got 927/1000 samples due to data availability
+2025-12-12 07:56:37 - utils.debug.adaptive_estimation - INFO - 📊 Using content analysis heuristics for calibration...
+2025-12-12 07:56:37 - utils.debug.adaptive_estimation - INFO - 📈 Heuristic adjustments: low_punctuation: +0.1
+2025-12-12 07:56:37 - utils.debug.adaptive_estimation - INFO - ✅ Heuristic-based calibration: 4.100 chars/token
+2025-12-12 07:56:37 - utils.debug.adaptive_estimation - INFO - 📈 Calibration complete: 4.00 → 4.10 chars/token (+2.5%)
+🔄 Starting phase: Integrity Verification
+2025-12-12 07:56:37 - root - INFO - Verifying shard integrity...
+2025-12-12 07:56:38 - root - INFO - All shards verified successfully
+✅ Completed: Integrity Verification (1s)
+🔄 Starting phase: Corpus Analysis
+📊 ░░░░░░░░░░░░░░░░░░░░   0.0% | 0/11 shards | ETA: calculating... | current_shard: 0000.jsonl.gz | sentences: 0 | chars: 0                                                                                                                          📊 ▓░░░░░░░░░░░░░░░░░░░   9.1% | 1/11 shards | 505.2/s | ETA: 3.3m | current_shard: 0001.jsonl.gz | sentences: 165388 | chars: 17164006                                                                                                                                      📊 ▓▓▓░░░░░░░░░░░░░░░░░  18.2% | 2/11 shards | 875.9/s | ETA: 1.7m | current_shard: 0002.jsonl.gz | sentences: 335284 | chars: 34710381                                                                                                                                      📊 ▓▓▓▓▓░░░░░░░░░░░░░░░  27.3% | 3/11 shards | 1178.9/s | ETA: 1.1m | current_shard: 0003.jsonl.gz | sentences: 502409 | chars: 51977417                                                                                                                                       📊 ▓▓▓▓▓▓▓░░░░░░░░░░░░░  36.4% | 4/11 shards | 1513.0/s | ETA: 46s | current_shard: 0004.jsonl.gz | sentences: 670465 | chars: 69278102                                                                                                                                      📊 ▓▓▓▓▓▓▓▓▓░░░░░░░░░░░  45.5% | 5/11 shards | 1729.3/s | ETA: 35s | current_shard: 0005.jsonl.gz | sentences: 839543 | chars: 86723463                                                                                                                                      📊 ▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░  54.5% | 6/11 shards | 1900.5/s | ETA: 26s | current_shard: 0006.jsonl.gz | sentences: 1006867 | chars: 103996520                                                                                                                                        📊 ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░  63.6% | 7/11 shards | 1447.6/s | ETA: 28s | current_shard: 0007.jsonl.gz | sentences: 2148974 | chars: 222683090                                                                                                                                        📊 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░  72.7% | 8/11 shards | 1468.2/s | ETA: 20s | current_shard: 0008.jsonl.gz | sentences: 2399205 | chars: 252999138                                                                                                                                        📊 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░  81.8% | 9/11 shards | 1557.7/s | ETA: 13s | current_shard: 0009.jsonl.gz | sentences: 2664216 | chars: 285063519                                                                                                                                        📊 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░  90.9% | 10/11 shards | 1487.8/s | ETA: 7s | current_shard: 0010.jsonl.gz | sentences: 3213980 | chars: 359725181
+2025-12-12 07:57:33 - root - INFO - 📋 Corpus Analysis Summary: 11/11 shards processed successfully
+✅ Completed: Corpus Analysis (55s)
+   📈 📄 Docs: 102,430 | 📝 Sentences: 3,476,555 | 🎯 Tokens: 96,825,032
+2025-12-12 07:57:33 - root - INFO - 🚀 Training SentencePiece tokenizer:
+2025-12-12 07:57:33 - root - INFO -   📄 vocab_size=32,768, model_type=unigram
+2025-12-12 07:57:33 - root - INFO -   📊 character_coverage=0.9995
+2025-12-12 07:57:33 - root - INFO -   🔍 max_sentence_length=32,768
+2025-12-12 07:57:33 - root - INFO - 📋 Writing training sentences to temporary file...
+🔄 Starting phase: Sentence Streaming
+                                                                                                                                        📊 ░░░░░░░░░░░░░░░░░░░░   0.2% | 16,704/10,000,000 sentences | 1429.7/s | ETA: 12.0h | docs: 1000 | tokens: 429591                                                                                                                 📊 ░░░░░░░░░░░░░░░░░░░░   0.3% | 33,407/10,000,000 sentences | 1434.1/s | ETA: 6.0h | docs: 2000 | tokens: 851448                                                                                                                📊 ░░░░░░░░░░░░░░░░░░░░   0.5% | 50,086/10,000,000 sentences | 1442.6/s | ETA: 4.0h | docs: 3000 | tokens: 1275042                                                                                                                 📊 ░░░░░░░░░░░░░░░░░░░░   0.7% | 66,835/10,000,000 sentences | 1451.2/s | ETA: 3.0h | docs: 4000 | tokens: 1703326                                                                                                                 📊 ░░░░░░░░░░░░░░░░░░░░   0.8% | 83,317/10,000,000 sentences | 1459.8/s | ETA: 2.4h | docs: 5000 | tokens: 2114520                                                                                                                 📊 ░░░░░░░░░░░░░░░░░░░░   1.0% | 99,493/10,000,000 sentences | 1468.2/s | ETA: 2.0h | docs: 6000 | tokens: 2523600                                                                                                                 📊 ░░░░░░░░░░░░░░░░░░░░   1.1% | 114,802/10,000,000 sentences | 1476.9/s | ETA: 1.8h | docs: 7000 | tokens: 2908354                                                                                                                  📊 ░░░░░░░░░░░░░░░░░░░░   1.3% | 131,972/10,000,000 sentences | 1484.8/s | ETA: 1.5h | docs: 8000 | tokens: 3337942                                                                                                                  📊 ░░░░░░░░░░░░░░░░░░░░   1.5% | 148,925/10,000,000 sentences | 1493.0/s | ETA: 1.4h | docs: 9000 | tokens: 3773906                                                                                                                  📊 ░░░░░░░░░░░░░░░░░░░░   1.7% | 165,388/10,000,000 sentences | 1500.5/s | ETA: 1.2h | docs: 10000 | tokens: 4181389                                                                                                                   📊 ░░░░░░░░░░░░░░░░░░░░   1.8% | 182,517/10,000,000 sentences | 1507.3/s | ETA: 1.1h | docs: 11000 | tokens: 4609145                                                                                                                   📊 ░░░░░░░░░░░░░░░░░░░░   2.0% | 199,546/10,000,000 sentences | 1513.0/s | ETA: 1.0h | docs: 12000 | tokens: 5035736                                                                                                                   📊 ░░░░░░░░░░░░░░░░░░░░   2.2% | 216,408/10,000,000 sentences | 1520.4/s | ETA: 57.2m | docs: 13000 | tokens: 5471348                                                                                                                    📊 ░░░░░░░░░░░░░░░░░░░░   2.3% | 234,080/10,000,000 sentences | 1527.7/s | ETA: 53.0m | docs: 14000 | tokens: 5924353                                                                                                                    📊 ░░░░░░░░░░░░░░░░░░░░   2.5% | 250,713/10,000,000 sentences | 1535.1/s | ETA: 49.6m | docs: 15000 | tokens: 6337204                                                                                                                    📊 ░░░░░░░░░░░░░░░░░░░░   2.7% | 266,931/10,000,000 sentences | 1543.2/s | ETA: 46.6m | docs: 16000 | tokens: 6737663                                                                                                                    📊 ░░░░░░░░░░░░░░░░░░░░   2.8% | 284,098/10,000,000 sentences | 1550.6/s | ETA: 43.9m | docs: 17000 | tokens: 7171640                                                                                                                    📊 ░░░░░░░░░░░░░░░░░░░░   3.0% | 300,868/10,000,000 sentences | 1557.1/s | ETA: 41.6m | docs: 18000 | tokens: 7590137                                                                                                                    📊 ░░░░░░░░░░░░░░░░░░░░   3.2% | 318,057/10,000,000 sentences | 1564.4/s | ETA: 39.4m | docs: 19000 | tokens: 8021445                                                                                                                    📊 ░░░░░░░░░░░░░░░░░░░░   3.4% | 335,284/10,000,000 sentences | 1571.7/s | ETA: 37.4m | docs: 20000 | tokens: 8456104                                                                                                                    📊 ░░░░░░░░░░░░░░░░░░░░   3.5% | 352,339/10,000,000 sentences | 1578.2/s | ETA: 35.7m | docs: 21000 | tokens: 8894128                                                                                                                    📊 ░░░░░░░░░░░░░░░░░░░░   3.7% | 367,737/10,000,000 sentences | 1585.2/s | ETA: 34.3m | docs: 22000 | tokens: 9287228                                                                                                                    📊 ░░░░░░░░░░░░░░░░░░░░   3.8% | 384,959/10,000,000 sentences | 1592.0/s | ETA: 32.8m | docs: 23000 | tokens: 9724533                                                                                                                    📊 ░░░░░░░░░░░░░░░░░░░░   4.0% | 402,843/10,000,000 sentences | 1599.3/s | ETA: 31.4m | docs: 24000 | tokens: 10171687                                                                                                                     📊 ░░░░░░░░░░░░░░░░░░░░   4.2% | 419,625/10,000,000 sentences | 1606.4/s | ETA: 30.2m | docs: 25000 | tokens: 10589400                                                                                                                     📊 ░░░░░░░░░░░░░░░░░░░░   4.4% | 435,544/10,000,000 sentences | 1613.6/s | ETA: 29.1m | docs: 26000 | tokens: 10996019                                                                                                                     📊 ░░░░░░░░░░░░░░░░░░░░   4.5% | 453,145/10,000,000 sentences | 1620.2/s | ETA: 28.1m | docs: 27000 | tokens: 11428344                                                                                                                     📊 ░░░░░░░░░░░░░░░░░░░░   4.7% | 469,213/10,000,000 sentences | 1627.3/s | ETA: 27.1m | docs: 28000 | tokens: 11832655                                                                                                                     📊 ░░░░░░░░░░░░░░░░░░░░   4.9% | 486,119/10,000,000 sentences | 1634.1/s | ETA: 26.2m | docs: 29000 | tokens: 12258116                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   5.0% | 502,409/10,000,000 sentences | 1641.2/s | ETA: 25.4m | docs: 30000 | tokens: 12662708                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   5.2% | 519,551/10,000,000 sentences | 1647.8/s | ETA: 24.6m | docs: 31000 | tokens: 13096488                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   5.4% | 537,241/10,000,000 sentences | 1653.9/s | ETA: 23.9m | docs: 32000 | tokens: 13537472                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   5.5% | 553,669/10,000,000 sentences | 1661.0/s | ETA: 23.2m | docs: 33000 | tokens: 13954040                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   5.7% | 570,005/10,000,000 sentences | 1668.0/s | ETA: 22.6m | docs: 34000 | tokens: 14367421                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   5.9% | 586,943/10,000,000 sentences | 1673.6/s | ETA: 21.9m | docs: 35000 | tokens: 14791497                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   6.0% | 603,282/10,000,000 sentences | 1680.4/s | ETA: 21.4m | docs: 36000 | tokens: 15198047                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   6.2% | 620,888/10,000,000 sentences | 1685.5/s | ETA: 20.8m | docs: 37000 | tokens: 15643374                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   6.4% | 636,814/10,000,000 sentences | 1691.9/s | ETA: 20.3m | docs: 38000 | tokens: 16040842                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   6.5% | 653,929/10,000,000 sentences | 1698.6/s | ETA: 19.8m | docs: 39000 | tokens: 16457943                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   6.7% | 670,465/10,000,000 sentences | 1705.0/s | ETA: 19.4m | docs: 40000 | tokens: 16877509                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   6.9% | 687,534/10,000,000 sentences | 1710.6/s | ETA: 18.9m | docs: 41000 | tokens: 17300666                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   7.0% | 704,358/10,000,000 sentences | 1714.9/s | ETA: 18.5m | docs: 42000 | tokens: 17727352                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   7.2% | 721,900/10,000,000 sentences | 1720.4/s | ETA: 18.1m | docs: 43000 | tokens: 18180974                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   7.4% | 739,413/10,000,000 sentences | 1727.0/s | ETA: 17.7m | docs: 44000 | tokens: 18622087                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   7.6% | 756,763/10,000,000 sentences | 1733.3/s | ETA: 17.3m | docs: 45000 | tokens: 19059518                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   7.7% | 772,992/10,000,000 sentences | 1739.6/s | ETA: 17.0m | docs: 46000 | tokens: 19468101                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   7.9% | 789,912/10,000,000 sentences | 1746.3/s | ETA: 16.6m | docs: 47000 | tokens: 19890421                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   8.1% | 805,863/10,000,000 sentences | 1753.2/s | ETA: 16.3m | docs: 48000 | tokens: 20295867                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   8.2% | 822,762/10,000,000 sentences | 1759.3/s | ETA: 16.0m | docs: 49000 | tokens: 20720891                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   8.4% | 839,543/10,000,000 sentences | 1764.7/s | ETA: 15.7m | docs: 50000 | tokens: 21127640                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   8.6% | 855,915/10,000,000 sentences | 1770.4/s | ETA: 15.4m | docs: 51000 | tokens: 21535837                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   8.7% | 872,499/10,000,000 sentences | 1777.0/s | ETA: 15.2m | docs: 52000 | tokens: 21947407                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   8.9% | 889,576/10,000,000 sentences | 1782.6/s | ETA: 14.9m | docs: 53000 | tokens: 22376167                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   9.1% | 905,860/10,000,000 sentences | 1788.1/s | ETA: 14.6m | docs: 54000 | tokens: 22792198                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   9.2% | 923,022/10,000,000 sentences | 1793.1/s | ETA: 14.4m | docs: 55000 | tokens: 23226548                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   9.4% | 940,093/10,000,000 sentences | 1797.1/s | ETA: 14.2m | docs: 56000 | tokens: 23653278                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   9.6% | 956,277/10,000,000 sentences | 1841.7/s | ETA: 13.6m | docs: 57000 | tokens: 24070726                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   9.7% | 973,180/10,000,000 sentences | 1844.4/s | ETA: 13.4m | docs: 58000 | tokens: 24489576                                                                                                                     📊 ▓░░░░░░░░░░░░░░░░░░░   9.9% | 990,178/10,000,000 sentences | 1848.4/s | ETA: 13.2m | docs: 59000 | tokens: 24913188                                                                                                                     📊 ▓▓░░░░░░░░░░░░░░░░░░  10.1% | 1,006,867/10,000,000 sentences | 1853.9/s | ETA: 13.0m | docs: 60000 | tokens: 25335680                                                                                                                       📊 ▓▓░░░░░░░░░░░░░░░░░░  10.2% | 1,022,453/10,000,000 sentences | 1859.6/s | ETA: 12.9m | docs: 61000 | tokens: 25736210                                                                                                                       📊 ▓▓░░░░░░░░░░░░░░░░░░  10.4% | 1,040,444/10,000,000 sentences | 1865.0/s | ETA: 12.7m | docs: 62000 | tokens: 26185389                                                                                                                       📊 ▓▓░░░░░░░░░░░░░░░░░░  10.6% | 1,056,877/10,000,000 sentences | 1870.3/s | ETA: 12.5m | docs: 63000 | tokens: 26596223                                                                                                                       📊 ▓▓░░░░░░░░░░░░░░░░░░  10.7% | 1,073,963/10,000,000 sentences | 1875.3/s | ETA: 12.3m | docs: 64000 | tokens: 27020334                                                                                                                       📊 ▓▓▓▓░░░░░░░░░░░░░░░░  20.3% | 2,030,605/10,000,000 sentences | 1633.0/s | ETA: 6.7m | docs: 65000 | tokens: 50705541                                                                                                                      📊 ▓▓▓▓░░░░░░░░░░░░░░░░  20.5% | 2,054,997/10,000,000 sentences | 1633.5/s | ETA: 6.6m | docs: 66000 | tokens: 51448056                                                                                                                      📊 ▓▓▓▓░░░░░░░░░░░░░░░░  20.8% | 2,078,247/10,000,000 sentences | 1636.9/s | ETA: 6.6m | docs: 67000 | tokens: 52147298                                                                                                                      📊 ▓▓▓▓░░░░░░░░░░░░░░░░  21.0% | 2,101,762/10,000,000 sentences | 1640.1/s | ETA: 6.5m | docs: 68000 | tokens: 52850857                                                                                                                      📊 ▓▓▓▓░░░░░░░░░░░░░░░░  21.3% | 2,125,382/10,000,000 sentences | 1642.5/s | ETA: 6.4m | docs: 69000 | tokens: 53563323                                                                                                                      📊 ▓▓▓▓░░░░░░░░░░░░░░░░  21.5% | 2,148,974/10,000,000 sentences | 1645.2/s | ETA: 6.4m | docs: 70000 | tokens: 54278753                                                                                                                      📊 ▓▓▓▓░░░░░░░░░░░░░░░░  21.7% | 2,173,936/10,000,000 sentences | 1647.6/s | ETA: 6.3m | docs: 71000 | tokens: 55010431                                                                                                                      📊 ▓▓▓▓░░░░░░░░░░░░░░░░  22.0% | 2,197,748/10,000,000 sentences | 1649.7/s | ETA: 6.3m | docs: 72000 | tokens: 55718196                                                                                                                      📊 ▓▓▓▓░░░░░░░░░░░░░░░░  22.2% | 2,222,317/10,000,000 sentences | 1652.5/s | ETA: 6.2m | docs: 73000 | tokens: 56448838                                                                                                                      📊 ▓▓▓▓░░░░░░░░░░░░░░░░  22.5% | 2,246,631/10,000,000 sentences | 1655.1/s | ETA: 6.1m | docs: 74000 | tokens: 57169311                                                                                                                      📊 ▓▓▓▓░░░░░░░░░░░░░░░░  22.7% | 2,270,567/10,000,000 sentences | 1658.2/s | ETA: 6.1m | docs: 75000 | tokens: 57878550                                                                                                                      📊 ▓▓▓▓░░░░░░░░░░░░░░░░  23.0% | 2,295,012/10,000,000 sentences | 1661.2/s | ETA: 6.0m | docs: 76000 | tokens: 58595611                                                                                                                      📊 ▓▓▓▓░░░░░░░░░░░░░░░░  23.2% | 2,320,351/10,000,000 sentences | 1663.6/s | ETA: 5.9m | docs: 77000 | tokens: 59340150                                                                                                                      📊 ▓▓▓▓░░░░░░░░░░░░░░░░  23.5% | 2,346,405/10,000,000 sentences | 1665.8/s | ETA: 5.9m | docs: 78000 | tokens: 60105711                                                                                                                      📊 ▓▓▓▓░░░░░░░░░░░░░░░░  23.7% | 2,372,793/10,000,000 sentences | 1668.1/s | ETA: 5.8m | docs: 79000 | tokens: 60891365                                                                                                                      📊 ▓▓▓▓░░░░░░░░░░░░░░░░  24.0% | 2,399,205/10,000,000 sentences | 1668.8/s | ETA: 5.8m | docs: 80000 | tokens: 61667979                                                                                                                      📊 ▓▓▓▓░░░░░░░░░░░░░░░░  24.3% | 2,425,427/10,000,000 sentences | 1669.3/s | ETA: 5.7m | docs: 81000 | tokens: 62443721                                                                                                                      📊 ▓▓▓▓░░░░░░░░░░░░░░░░  24.5% | 2,453,686/10,000,000 sentences | 1667.7/s | ETA: 5.7m | docs: 82000 | tokens: 63263905                                                                                                                      📊 ▓▓▓▓░░░░░░░░░░░░░░░░  24.8% | 2,482,494/10,000,000 sentences | 1669.7/s | ETA: 5.6m | docs: 83000 | tokens: 64102969                                                                                                                      📊 ▓▓▓▓▓░░░░░░░░░░░░░░░  25.1% | 2,511,598/10,000,000 sentences | 1657.5/s | ETA: 5.6m | docs: 84000 | tokens: 64951071                                                                                                                      📊 ▓▓▓▓▓░░░░░░░░░░░░░░░  25.4% | 2,539,047/10,000,000 sentences | 1648.6/s | ETA: 5.6m | docs: 85000 | tokens: 65758952                                                                                                                      📊 ▓▓▓▓▓░░░░░░░░░░░░░░░  25.7% | 2,567,942/10,000,000 sentences | 1648.5/s | ETA: 5.5m | docs: 86000 | tokens: 66585848                                                                                                                      📊 ▓▓▓▓▓░░░░░░░░░░░░░░░  25.9% | 2,593,017/10,000,000 sentences | 1647.7/s | ETA: 5.5m | docs: 87000 | tokens: 67331455                                                                                                                      📊 ▓▓▓▓▓░░░░░░░░░░░░░░░  26.2% | 2,616,812/10,000,000 sentences | 1641.3/s | ETA: 5.5m | docs: 88000 | tokens: 68051065                                                                                                                      📊 ▓▓▓▓▓░░░░░░░░░░░░░░░  26.4% | 2,640,349/10,000,000 sentences | 1643.4/s | ETA: 5.4m | docs: 89000 | tokens: 68764419                                                                                                                      📊 ▓▓▓▓▓░░░░░░░░░░░░░░░  26.6% | 2,664,216/10,000,000 sentences | 1645.8/s | ETA: 5.4m | docs: 90000 | tokens: 69483774                                                                                                                      📊 ▓▓▓▓▓░░░░░░░░░░░░░░░  26.9% | 2,686,819/10,000,000 sentences | 1647.9/s | ETA: 5.3m | docs: 91000 | tokens: 70174045                                                                                                                      📊 ▓▓▓▓▓░░░░░░░░░░░░░░░  27.1% | 2,710,983/10,000,000 sentences | 1651.0/s | ETA: 5.3m | docs: 92000 | tokens: 70889488                                                                                                                      📊 ▓▓▓▓▓░░░░░░░░░░░░░░░  27.4% | 2,735,507/10,000,000 sentences | 1652.4/s | ETA: 5.2m | docs: 93000 | tokens: 71608766                                                                                                                      📊 ▓▓▓▓▓░░░░░░░░░░░░░░░  27.6% | 2,759,563/10,000,000 sentences | 1679.5/s | ETA: 5.1m | docs: 94000 | tokens: 72309095                                                                                                                      📊 ▓▓▓▓▓░░░░░░░░░░░░░░░  27.9% | 2,785,283/10,000,000 sentences | 1680.3/s | ETA: 5.1m | docs: 95000 | tokens: 73055956                                                                                                                      📊 ▓▓▓▓▓░░░░░░░░░░░░░░░  28.1% | 2,809,019/10,000,000 sentences | 1683.2/s | ETA: 5.0m | docs: 96000 | tokens: 73749034                                                                                                                      📊 ▓▓▓▓▓░░░░░░░░░░░░░░░  28.8% | 2,883,421/10,000,000 sentences | 1673.9/s | ETA: 4.9m | docs: 97000 | tokens: 76176538                                                                                                                      📊 ▓▓▓▓▓░░░░░░░░░░░░░░░  29.9% | 2,985,013/10,000,000 sentences | 1658.7/s | ETA: 4.7m | docs: 98000 | tokens: 79727186                                                                                                                      📊 ▓▓▓▓▓▓░░░░░░░░░░░░░░  31.0% | 3,101,949/10,000,000 sentences | 1636.6/s | ETA: 4.6m | docs: 99000 | tokens: 83816860                                                                                                                      📊 ▓▓▓▓▓▓░░░░░░░░░░░░░░  32.1% | 3,213,980/10,000,000 sentences | 1614.5/s | ETA: 4.4m | docs: 100000 | tokens: 87689027                                                                                                                       📊 ▓▓▓▓▓▓░░░░░░░░░░░░░░  33.2% | 3,318,354/10,000,000 sentences | 1598.0/s | ETA: 4.3m | docs: 101000 | tokens: 91319432                                                                                                                       📊 ▓▓▓▓▓▓░░░░░░░░░░░░░░  34.3% | 3,425,610/10,000,000 sentences | 1578.4/s | ETA: 4.1m | docs: 102000 | tokens: 95066240
+✅ Completed: Sentence Streaming (58s)
+2025-12-12 07:58:31 - root - INFO - 🎯 Training data prepared:
+2025-12-12 07:58:31 - root - INFO -   📄 3,476,555 sentences written
+2025-12-12 07:58:31 - root - INFO -   ⛔ 0 sentences skipped
+2025-12-12 07:58:31 - root - INFO -   📊 94,355,089 estimated tokens
+2025-12-12 07:58:31 - root - INFO -   📈 113.3 chars/sentence, 27.1 tokens/sentence
+2025-12-12 07:58:31 - root - INFO - 🎆 Starting SentencePiece training with 21 configuration parameters...
+sentencepiece_trainer.cc(178) LOG(INFO) Running command: --input=/tmp/tmpxjtv641s.txt --model_prefix=data/models/tokenizers/spm_32k/spm --vocab_size=32768 --model_type=unigram --character_coverage=0.9995 --normalization_rule_name=nfkc --add_dummy_prefix=true --remove_extra_whitespaces=true --max_sentence_length=32768 --shuffle_input_sentence=true --input_sentence_size=1000000 --train_extremely_large_corpus=true --num_threads=8 --pad_id=3 --unk_id=0 --bos_id=1 --eos_id=2 --split_digits=true --allow_whitespace_only_pieces=false --byte_fallback=false --control_symbols=<pad>,<mask>
+sentencepiece_trainer.cc(78) LOG(INFO) Starts training with : 
+trainer_spec {
+  input: /tmp/tmpxjtv641s.txt
+  input_format: 
+  model_prefix: data/models/tokenizers/spm_32k/spm
+  model_type: UNIGRAM
+  vocab_size: 32768
+  self_test_sample_size: 0
+  character_coverage: 0.9995
+  input_sentence_size: 1000000
+  shuffle_input_sentence: 1
+  seed_sentencepiece_size: 1000000
+  shrinking_factor: 0.75
+  max_sentence_length: 32768
+  num_threads: 8
+  num_sub_iterations: 2
+  max_sentencepiece_length: 16
+  split_by_unicode_script: 1
+  split_by_number: 1
+  split_by_whitespace: 1
+  split_digits: 1
+  pretokenization_delimiter: 
+  treat_whitespace_as_suffix: 0
+  allow_whitespace_only_pieces: 0
+  control_symbols: <pad>
+  control_symbols: <mask>
+  required_chars: 
+  byte_fallback: 0
+  vocabulary_output_piece_score: 1
+  train_extremely_large_corpus: 1
+  seed_sentencepieces_file: 
+  hard_vocab_limit: 1
+  use_all_vocab: 0
+  unk_id: 0
+  bos_id: 1
+  eos_id: 2
+  pad_id: 3
+  unk_piece: <unk>
+  bos_piece: <s>
+  eos_piece: </s>
+  pad_piece: <pad>
+  unk_surface:  ⁇ 
+  enable_differential_privacy: 0
+  differential_privacy_noise_level: 0
+  differential_privacy_clipping_threshold: 0
+}
+normalizer_spec {
+  name: nfkc
+  add_dummy_prefix: 1
+  remove_extra_whitespaces: 1
+  escape_whitespaces: 1
+  normalization_rule_tsv: 
+}
+denormalizer_spec {}
+trainer_interface.cc(355) LOG(INFO) SentenceIterator is not specified. Using MultiFileSentenceIterator.
+trainer_interface.cc(186) LOG(INFO) Loading corpus: /tmp/tmpxjtv641s.txt
+trainer_interface.cc(148) LOG(INFO) Loaded 1000000 lines
+trainer_interface.cc(148) LOG(INFO) Loaded 2000000 lines
+trainer_interface.cc(148) LOG(INFO) Loaded 3000000 lines
+trainer_interface.cc(413) LOG(INFO) Sampled 1000000 sentences from 3476555 sentences.
+trainer_interface.cc(427) LOG(INFO) Adding meta_piece: <unk>
+trainer_interface.cc(427) LOG(INFO) Adding meta_piece: <s>
+trainer_interface.cc(427) LOG(INFO) Adding meta_piece: </s>
+trainer_interface.cc(427) LOG(INFO) Adding meta_piece: <pad>
+trainer_interface.cc(427) LOG(INFO) Adding meta_piece: <mask>
+trainer_interface.cc(432) LOG(INFO) Normalizing sentences...
+trainer_interface.cc(541) LOG(INFO) all chars count=114374193
+trainer_interface.cc(552) LOG(INFO) Done: 99.9505% characters are covered.
+trainer_interface.cc(562) LOG(INFO) Alphabet size=95
+trainer_interface.cc(563) LOG(INFO) Final character coverage=0.999505
+trainer_interface.cc(594) LOG(INFO) Done! preprocessed 1000000 sentences.
+unigram_model_trainer.cc(265) LOG(INFO) Making suffix array...
+unigram_model_trainer.cc(269) LOG(INFO) Extracting frequent sub strings... node_num=56068108
+unigram_model_trainer.cc(312) LOG(INFO) Initialized 766003 seed sentencepieces
+trainer_interface.cc(600) LOG(INFO) Tokenizing input sentences with whitespace: 1000000
+trainer_interface.cc(611) LOG(INFO) Done! 879179
+unigram_model_trainer.cc(602) LOG(INFO) Using 879179 sentences for EM training
+unigram_model_trainer.cc(618) LOG(INFO) EM sub_iter=0 size=279958 obj=12.1211 num_tokens=2373144 num_tokens/piece=8.47679
+unigram_model_trainer.cc(618) LOG(INFO) EM sub_iter=1 size=248003 obj=9.53515 num_tokens=2385033 num_tokens/piece=9.61695
+unigram_model_trainer.cc(618) LOG(INFO) EM sub_iter=0 size=185990 obj=9.51471 num_tokens=2449512 num_tokens/piece=13.1701
+unigram_model_trainer.cc(618) LOG(INFO) EM sub_iter=1 size=185913 obj=9.50707 num_tokens=2450430 num_tokens/piece=13.1805
+unigram_model_trainer.cc(618) LOG(INFO) EM sub_iter=0 size=139433 obj=9.54728 num_tokens=2544011 num_tokens/piece=18.2454
+unigram_model_trainer.cc(618) LOG(INFO) EM sub_iter=1 size=139431 obj=9.53844 num_tokens=2544139 num_tokens/piece=18.2466
+unigram_model_trainer.cc(618) LOG(INFO) EM sub_iter=0 size=104573 obj=9.59444 num_tokens=2647399 num_tokens/piece=25.3163
+unigram_model_trainer.cc(618) LOG(INFO) EM sub_iter=1 size=104573 obj=9.58385 num_tokens=2647305 num_tokens/piece=25.3154
+unigram_model_trainer.cc(618) LOG(INFO) EM sub_iter=0 size=78428 obj=9.65485 num_tokens=2756297 num_tokens/piece=35.1443
+unigram_model_trainer.cc(618) LOG(INFO) EM sub_iter=1 size=78428 obj=9.64161 num_tokens=2756203 num_tokens/piece=35.1431
+unigram_model_trainer.cc(618) LOG(INFO) EM sub_iter=0 size=58821 obj=9.73814 num_tokens=2870751 num_tokens/piece=48.8049
+unigram_model_trainer.cc(618) LOG(INFO) EM sub_iter=1 size=58821 obj=9.72111 num_tokens=2870586 num_tokens/piece=48.8021
+unigram_model_trainer.cc(618) LOG(INFO) EM sub_iter=0 size=44115 obj=9.83892 num_tokens=2988417 num_tokens/piece=67.7415
+unigram_model_trainer.cc(618) LOG(INFO) EM sub_iter=1 size=44115 obj=9.81709 num_tokens=2988407 num_tokens/piece=67.7413
+unigram_model_trainer.cc(618) LOG(INFO) EM sub_iter=0 size=36044 obj=9.9139 num_tokens=3070467 num_tokens/piece=85.1866
+unigram_model_trainer.cc(618) LOG(INFO) EM sub_iter=1 size=36044 obj=9.89603 num_tokens=3070745 num_tokens/piece=85.1943
+trainer_interface.cc(689) LOG(INFO) Saving model: data/models/tokenizers/spm_32k/spm.model
+trainer_interface.cc(701) LOG(INFO) Saving vocabs: data/models/tokenizers/spm_32k/spm.vocab
+2025-12-12 07:59:19 - root - INFO - ✅ SentencePiece training completed successfully
+2025-12-12 07:59:20 - root - INFO - 📊 Performing rigorous tokenizer calibration...
+2025-12-12 07:59:21 - root - INFO - 📊 Rigorous token estimation calibration:
+2025-12-12 07:59:21 - root - INFO -    🔬 Sampling method: Statistical interval sampling
+2025-12-12 07:59:21 - root - INFO -    📋 Representative sample: 5,000 sentences (every 695)
+2025-12-12 07:59:21 - root - INFO -    🔤 Sample chars: 565,899
+2025-12-12 07:59:21 - root - INFO -    🎯 Sample tokens: 130,199
+2025-12-12 07:59:21 - root - INFO -    📏 Calibrated ratio: 4.3464 chars/token
+2025-12-12 07:59:21 - root - INFO -    🎯 Corpus total chars: 397,187,661
+2025-12-12 07:59:21 - root - INFO -    🎯 Final estimated tokens: 91,382,802
+2025-12-12 07:59:21 - root - INFO - 💾 Tokenizer saved to: data/models/tokenizers/spm_32k/spm.model
+2025-12-12 07:59:21 - root - INFO - 📁 Vocabulary saved to: data/models/tokenizers/spm_32k/spm.vocab
+2025-12-12 07:59:21 - root - INFO - 📋 Enhanced tokenizer config saved to: data/models/tokenizers/spm_32k/tokenizer_config.json
+🔄 Starting phase: Tokenizer Testing
+2025-12-12 07:59:21 - root - INFO - Testing tokenizer...
+2025-12-12 07:59:21 - root - INFO - Test 1:
+2025-12-12 07:59:21 - root - INFO -   Original: Hello, world! This is a test sentence.
+2025-12-12 07:59:21 - root - INFO -   Tokens (10): [11639, 5, 196, 97, 105, 16, 13, 823, 3354, 7]
+2025-12-12 07:59:21 - root - INFO -   Decoded: Hello, world! This is a test sentence.
+2025-12-12 07:59:21 - root - INFO - Test 2:
+2025-12-12 07:59:21 - root - INFO -   Original: The quick brown fox jumps over the lazy dog.
+2025-12-12 07:59:21 - root - INFO -   Tokens (11): [27, 1596, 2124, 10928, 4270, 11, 117, 6, 13788, 1361]...
+2025-12-12 07:59:21 - root - INFO -   Decoded: The quick brown fox jumps over the lazy dog.
+2025-12-12 07:59:21 - root - INFO - Test 3:
+2025-12-12 07:59:21 - root - INFO -   Original: Machine learning and artificial intelligence are transforming our world.
+2025-12-12 07:59:21 - root - INFO -   Tokens (10): [5649, 696, 9, 4343, 3269, 34, 17252, 104, 196, 7]
+2025-12-12 07:59:21 - root - INFO -   Decoded: Machine learning and artificial intelligence are transforming our world.
+2025-12-12 07:59:21 - root - INFO - Tokenizer vocabulary size: 32,768
+✅ Completed: Tokenizer Testing (0s)
+🔄 Starting phase: Quality Validation
+2025-12-12 07:59:21 - root - INFO - 🔢 PreciseTokenCounter initialized with 32,768 vocab size
+2025-12-12 07:59:21 - root - INFO - 🔍 Validating dataset quality (sample rate: 10.0%)...
+2025-12-12 07:59:21 - root - INFO - 🔢 Counting exact tokens in 11 shards...
+📊 Processing shards:   0%|          | 0/11 [00:00<?]📊 Processing shards:   0%|          | 0/11 [00:00<?]
+📄 0000.jsonl.gz:   0%|          | 0/1000 [?doc/s][A
+📄 0000.jsonl.gz:   0%|          | 1/1000 [493.91doc/s][A
+📄 0000.jsonl.gz:   0%|          | 2/1000 [770.80doc/s][A
+📄 0000.jsonl.gz:   0%|          | 3/1000 [1099.33doc/s][A
+📄 0000.jsonl.gz:   0%|          | 4/1000 [1314.62doc/s][A
+📄 0000.jsonl.gz:   0%|          | 5/1000 [1507.33doc/s][A
+📄 0000.jsonl.gz:   1%|          | 6/1000 [1678.62doc/s][A
+📄 0000.jsonl.gz:   1%|          | 7/1000 [1885.08doc/s][A
+📄 0000.jsonl.gz:   1%|          | 8/1000 [2041.15doc/s][A
+📄 0000.jsonl.gz:   1%|          | 9/1000 [2182.76doc/s][A
+📄 0000.jsonl.gz:   1%|          | 10/1000 [1640.90doc/s][A
+📄 0000.jsonl.gz:   1%|          | 11/1000 [1757.35doc/s][A
+📄 0000.jsonl.gz:   1%|          | 12/1000 [1800.19doc/s][A
+📄 0000.jsonl.gz:   1%|▏         | 13/1000 [1858.92doc/s][A
+📄 0000.jsonl.gz:   1%|▏         | 14/1000 [1967.51doc/s][A
+📄 0000.jsonl.gz:   2%|▏         | 15/1000 [2082.85doc/s][A
+📄 0000.jsonl.gz:   2%|▏         | 16/1000 [1730.37doc/s][A
+📄 0000.jsonl.gz:   2%|▏         | 17/1000 [1731.63doc/s][A
+📄 0000.jsonl.gz:   2%|▏         | 18/1000 [1749.53doc/s][A
+📄 0000.jsonl.gz:   2%|▏         | 19/1000 [1485.57doc/s][A
+📄 0000.jsonl.gz:   2%|▏         | 20/1000 [1520.20doc/s][A
+📄 0000.jsonl.gz:   2%|▏         | 21/1000 [1565.04doc/s][A
+📄 0000.jsonl.gz:   2%|▏         | 22/1000 [1474.34doc/s][A
+📄 0000.jsonl.gz:   2%|▏         | 23/1000 [1508.93doc/s][A
+📄 0000.jsonl.gz:   2%|▏         | 24/1000 [1541.55doc/s][A
+📄 0000.jsonl.gz:   2%|▎         | 25/1000 [1561.57doc/s][A
+📄 0000.jsonl.gz:   3%|▎         | 26/1000 [1582.64doc/s][A
+📄 0000.jsonl.gz:   3%|▎         | 27/1000 [1464.55doc/s][A
+📄 0000.jsonl.gz:   3%|▎         | 28/1000 [1479.90doc/s][A
+📄 0000.jsonl.gz:   3%|▎         | 29/1000 [1507.02doc/s][A
+📄 0000.jsonl.gz:   3%|▎         | 30/1000 [1419.54doc/s][A
+📄 0000.jsonl.gz:   3%|▎         | 31/1000 [1380.32doc/s][A
+📄 0000.jsonl.gz:   3%|▎         | 32/1000 [1415.98doc/s][A
+📄 0000.jsonl.gz:   3%|▎         | 33/1000 [1454.31doc/s][A
+📄 0000.jsonl.gz:   3%|▎         | 34/1000 [1404.68doc/s][A
+📄 0000.jsonl.gz:   4%|▎         | 35/1000 [1429.15doc/s][A
+📄 0000.jsonl.gz:   4%|▎         | 36/1000 [1447.05doc/s][A
+📄 0000.jsonl.gz:   4%|▎         | 37/1000 [1481.20doc/s][A
+📄 0000.jsonl.gz:   4%|▍         | 38/1000 [1500.35doc/s][A
+📄 0000.jsonl.gz:   4%|▍         | 39/1000 [1435.25doc/s][A
+📄 0000.jsonl.gz:   4%|▍         | 40/1000 [1462.68doc/s][A
+📄 0000.jsonl.gz:   4%|▍         | 41/1000 [1479.51doc/s][A
+📄 0000.jsonl.gz:   4%|▍         | 42/1000 [1505.11doc/s][A
+📄 0000.jsonl.gz:   4%|▍         | 43/1000 [1508.38doc/s][A
+📄 0000.jsonl.gz:   4%|▍         | 44/1000 [1536.41doc/s][A
+📄 0000.jsonl.gz:   4%|▍         | 45/1000 [1564.90doc/s][A
+📄 0000.jsonl.gz:   5%|▍         | 46/1000 [1582.28doc/s][A
+📄 0000.jsonl.gz:   5%|▍         | 47/1000 [1541.64doc/s][A
+📄 0000.jsonl.gz:   5%|▍         | 48/1000 [1546.54doc/s][A
+📄 0000.jsonl.gz:   5%|▍         | 49/1000 [1565.21doc/s][A
+📄 0000.jsonl.gz:   5%|▌         | 50/1000 [1569.61doc/s][A
+📄 0000.jsonl.gz:   5%|▌         | 51/1000 [1578.50doc/s][A
+📄 0000.jsonl.gz:   5%|▌         | 52/1000 [1542.84doc/s][A
+📄 0000.jsonl.gz:   5%|▌         | 53/1000 [1551.46doc/s][A
+📄 0000.jsonl.gz:   5%|▌         | 54/1000 [1572.60doc/s][A
+📄 0000.jsonl.gz:   6%|▌         | 55/1000 [1591.21doc/s][A
+📄 0000.jsonl.gz:   6%|▌         | 56/1000 [1611.90doc/s][A
+📄 0000.jsonl.gz:   6%|▌         | 57/1000 [1532.68doc/s][A
+📄 0000.jsonl.gz:   6%|▌         | 58/1000 [1537.97doc/s][A
+📄 0000.jsonl.gz:   6%|▌         | 59/1000 [1537.57doc/s][A
+📄 0000.jsonl.gz:   6%|▌         | 60/1000 [1492.18doc/s][A
+📄 0000.jsonl.gz:   6%|▌         | 61/1000 [1504.31doc/s][A
+📄 0000.jsonl.gz:   6%|▌         | 62/1000 [1521.48doc/s][A
+📄 0000.jsonl.gz:   6%|▋         | 63/1000 [1540.97doc/s][A
+📄 0000.jsonl.gz:   6%|▋         | 64/1000 [1552.48doc/s][A
+📄 0000.jsonl.gz:   6%|▋         | 65/1000 [1558.80doc/s][A
+📄 0000.jsonl.gz:   7%|▋         | 66/1000 [1506.14doc/s][A
+📄 0000.jsonl.gz:   7%|▋         | 67/1000 [1519.38doc/s][A
+📄 0000.jsonl.gz:   7%|▋         | 68/1000 [1519.83doc/s][A
+📄 0000.jsonl.gz:   7%|▋         | 69/1000 [1537.76doc/s][A
+📄 0000.jsonl.gz:   7%|▋         | 70/1000 [1555.29doc/s][A
+📄 0000.jsonl.gz:   7%|▋         | 71/1000 [1472.61doc/s][A
+📄 0000.jsonl.gz:   7%|▋         | 72/1000 [1479.78doc/s][A
+📄 0000.jsonl.gz:   7%|▋         | 73/1000 [1460.91doc/s][A
+📄 0000.jsonl.gz:   7%|▋         | 74/1000 [1472.59doc/s][A
+📄 0000.jsonl.gz:   8%|▊         | 75/1000 [1484.90doc/s][A
+📄 0000.jsonl.gz:   8%|▊         | 76/1000 [1429.09doc/s][A
+📄 0000.jsonl.gz:   8%|▊         | 77/1000 [1434.06doc/s][A
+📄 0000.jsonl.gz:   8%|▊         | 78/1000 [1393.58doc/s][A
+📄 0000.jsonl.gz:   8%|▊         | 79/1000 [1407.07doc/s][A
+📄 0000.jsonl.gz:   8%|▊         | 80/1000 [1418.40doc/s][A
+📄 0000.jsonl.gz:   8%|▊         | 81/1000 [1419.47doc/s][A
+📄 0000.jsonl.gz:   8%|▊         | 82/1000 [1427.18doc/s][A
+📄 0000.jsonl.gz:   8%|▊         | 83/1000 [1400.17doc/s][A
+📄 0000.jsonl.gz:   8%|▊         | 84/1000 [1413.82doc/s][A
+📄 0000.jsonl.gz:   8%|▊         | 85/1000 [1363.07doc/s][A
+📄 0000.jsonl.gz:   9%|▊         | 86/1000 [1375.45doc/s][A
+📄 0000.jsonl.gz:   9%|▊         | 87/1000 [1387.30doc/s][A
+📄 0000.jsonl.gz:   9%|▉         | 88/1000 [1382.94doc/s][A
+📄 0000.jsonl.gz:   9%|▉         | 89/1000 [1391.87doc/s][A
+📄 0000.jsonl.gz:   9%|▉         | 90/1000 [1362.21doc/s][A
+📄 0000.jsonl.gz:   9%|▉         | 91/1000 [1368.18doc/s][A
+📄 0000.jsonl.gz:   9%|▉         | 92/1000 [1338.09doc/s][A
+📄 0000.jsonl.gz:   9%|▉         | 93/1000 [1349.42doc/s][A
+📄 0000.jsonl.gz:   9%|▉         | 94/1000 [1354.89doc/s][A
+📄 0000.jsonl.gz:  10%|▉         | 95/1000 [1365.72doc/s][A
+📄 0000.jsonl.gz:  10%|▉         | 96/1000 [1375.42doc/s][A
+📄 0000.jsonl.gz:  10%|▉         | 97/1000 [1384.64doc/s][A
+📄 0000.jsonl.gz:  10%|▉         | 98/1000 [1376.63doc/s][A
+📄 0000.jsonl.gz:  10%|▉         | 99/1000 [1385.41doc/s][A
+📄 0000.jsonl.gz:  10%|█         | 100/1000 [1396.24doc/s][A
+📄 0000.jsonl.gz:  10%|█         | 101/1000 [1402.70doc/s][A
+📄 0000.jsonl.gz:  10%|█         | 102/1000 [1406.42doc/s][A
+📄 0000.jsonl.gz:  10%|█         | 103/1000 [1417.24doc/s][A
+📄 0000.jsonl.gz:  10%|█         | 104/1000 [1429.20doc/s][A
+📄 0000.jsonl.gz:  10%|█         | 105/1000 [1397.56doc/s][A
+📄 0000.jsonl.gz:  11%|█         | 106/1000 [1402.71doc/s][A
+📄 0000.jsonl.gz:  11%|█         | 107/1000 [1413.79doc/s][A
+📄 0000.jsonl.gz:  11%|█         | 108/1000 [1424.36doc/s][A
+📄 0000.jsonl.gz:  11%|█         | 109/1000 [1408.36doc/s][A
+📄 0000.jsonl.gz:  11%|█         | 110/1000 [1418.83doc/s][A
+📄 0000.jsonl.gz:  11%|█         | 111/1000 [1428.98doc/s][A
+📄 0000.jsonl.gz:  11%|█         | 112/1000 [1434.69doc/s][A
+📄 0000.jsonl.gz:  11%|█▏        | 113/1000 [1401.68doc/s][A
+📄 0000.jsonl.gz:  11%|█▏        | 114/1000 [1404.09doc/s][A
+📄 0000.jsonl.gz:  12%|█▏        | 115/1000 [1413.55doc/s][A
+📄 0000.jsonl.gz:  12%|█▏        | 116/1000 [1424.40doc/s][A
+📄 0000.jsonl.gz:  12%|█▏        | 117/1000 [1435.51doc/s][A
+📄 0000.jsonl.gz:  12%|█▏        | 118/1000 [1443.85doc/s][A
+📄 0000.jsonl.gz:  12%|█▏        | 119/1000 [1449.71doc/s][A
+📄 0000.jsonl.gz:  12%|█▏        | 120/1000 [1435.34doc/s][A
+📄 0000.jsonl.gz:  12%|█▏        | 121/1000 [1442.46doc/s][A
+📄 0000.jsonl.gz:  12%|█▏        | 122/1000 [1446.23doc/s][A
+📄 0000.jsonl.gz:  12%|█▏        | 123/1000 [1418.98doc/s][A
+📄 0000.jsonl.gz:  12%|█▏        | 124/1000 [1416.79doc/s][A
+📄 0000.jsonl.gz:  12%|█▎        | 125/1000 [1426.32doc/s][A
+📄 0000.jsonl.gz:  13%|█▎        | 126/1000 [1436.46doc/s][A
+📄 0000.jsonl.gz:  13%|█▎        | 127/1000 [1420.79doc/s][A
+📄 0000.jsonl.gz:  13%|█▎        | 128/1000 [1426.92doc/s][A
+📄 0000.jsonl.gz:  13%|█▎        | 129/1000 [1436.48doc/s][A
+📄 0000.jsonl.gz:  13%|█▎        | 130/1000 [1443.87doc/s][A
+📄 0000.jsonl.gz:  13%|█▎        | 131/1000 [1451.46doc/s][A
+📄 0000.jsonl.gz:  13%|█▎        | 132/1000 [1461.02doc/s][A
+📄 0000.jsonl.gz:  13%|█▎        | 133/1000 [1469.05doc/s][A
+📄 0000.jsonl.gz:  13%|█▎        | 134/1000 [1450.74doc/s][A
+📄 0000.jsonl.gz:  14%|█▎        | 135/1000 [1446.03doc/s][A
+📄 0000.jsonl.gz:  14%|█▎        | 136/1000 [1431.29doc/s][A
+📄 0000.jsonl.gz:  14%|█▎        | 137/1000 [1435.45doc/s][A
+📄 0000.jsonl.gz:  14%|█▍        | 138/1000 [1438.75doc/s][A
+📄 0000.jsonl.gz:  14%|█▍        | 139/1000 [1414.90doc/s][A
+📄 0000.jsonl.gz:  14%|█▍        | 140/1000 [1417.69doc/s][A
+📄 0000.jsonl.gz:  14%|█▍        | 141/1000 [1414.27doc/s][A
+📄 0000.jsonl.gz:  14%|█▍        | 142/1000 [1422.16doc/s][A
+📄 0000.jsonl.gz:  14%|█▍        | 143/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  14%|█▍        | 143/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  14%|█▍        | 144/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  14%|█▍        | 145/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  15%|█▍        | 146/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  15%|█▍        | 147/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  15%|█▍        | 148/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  15%|█▍        | 149/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  15%|█▌        | 150/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  15%|█▌        | 151/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  15%|█▌        | 152/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  15%|█▌        | 153/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  15%|█▌        | 154/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  16%|█▌        | 155/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  16%|█▌        | 156/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  16%|█▌        | 157/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  16%|█▌        | 158/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  16%|█▌        | 159/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  16%|█▌        | 160/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  16%|█▌        | 161/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  16%|█▌        | 162/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  16%|█▋        | 163/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  16%|█▋        | 164/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  16%|█▋        | 165/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  17%|█▋        | 166/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  17%|█▋        | 167/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  17%|█▋        | 168/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  17%|█▋        | 169/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  17%|█▋        | 170/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  17%|█▋        | 171/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  17%|█▋        | 172/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  17%|█▋        | 173/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  17%|█▋        | 174/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  18%|█▊        | 175/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  18%|█▊        | 176/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  18%|█▊        | 177/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  18%|█▊        | 178/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  18%|█▊        | 179/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  18%|█▊        | 180/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  18%|█▊        | 181/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  18%|█▊        | 182/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  18%|█▊        | 183/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  18%|█▊        | 184/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  18%|█▊        | 185/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  19%|█▊        | 186/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  19%|█▊        | 187/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  19%|█▉        | 188/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  19%|█▉        | 189/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  19%|█▉        | 190/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  19%|█▉        | 191/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  19%|█▉        | 192/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  19%|█▉        | 193/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  19%|█▉        | 194/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  20%|█▉        | 195/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  20%|█▉        | 196/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  20%|█▉        | 197/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  20%|█▉        | 198/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  20%|█▉        | 199/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  20%|██        | 200/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  20%|██        | 201/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  20%|██        | 202/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  20%|██        | 203/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  20%|██        | 204/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  20%|██        | 205/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  21%|██        | 206/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  21%|██        | 207/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  21%|██        | 208/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  21%|██        | 209/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  21%|██        | 210/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  21%|██        | 211/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  21%|██        | 212/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  21%|██▏       | 213/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  21%|██▏       | 214/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  22%|██▏       | 215/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  22%|██▏       | 216/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  22%|██▏       | 217/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  22%|██▏       | 218/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  22%|██▏       | 219/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  22%|██▏       | 220/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  22%|██▏       | 221/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  22%|██▏       | 222/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  22%|██▏       | 223/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  22%|██▏       | 224/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  22%|██▎       | 225/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  23%|██▎       | 226/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  23%|██▎       | 227/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  23%|██▎       | 228/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  23%|██▎       | 229/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  23%|██▎       | 230/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  23%|██▎       | 231/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  23%|██▎       | 232/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  23%|██▎       | 233/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  23%|██▎       | 234/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  24%|██▎       | 235/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  24%|██▎       | 236/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  24%|██▎       | 237/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  24%|██▍       | 238/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  24%|██▍       | 239/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  24%|██▍       | 240/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  24%|██▍       | 241/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  24%|██▍       | 242/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  24%|██▍       | 243/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  24%|██▍       | 244/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  24%|██▍       | 245/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  25%|██▍       | 246/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  25%|██▍       | 247/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  25%|██▍       | 248/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  25%|██▍       | 249/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  25%|██▌       | 250/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  25%|██▌       | 251/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  25%|██▌       | 252/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  25%|██▌       | 253/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  25%|██▌       | 254/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  26%|██▌       | 255/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  26%|██▌       | 256/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  26%|██▌       | 257/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  26%|██▌       | 258/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  26%|██▌       | 259/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  26%|██▌       | 260/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  26%|██▌       | 261/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  26%|██▌       | 262/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  26%|██▋       | 263/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  26%|██▋       | 264/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  26%|██▋       | 265/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  27%|██▋       | 266/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  27%|██▋       | 267/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  27%|██▋       | 268/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  27%|██▋       | 269/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  27%|██▋       | 270/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  27%|██▋       | 271/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  27%|██▋       | 272/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  27%|██▋       | 273/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  27%|██▋       | 274/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  28%|██▊       | 275/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  28%|██▊       | 276/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  28%|██▊       | 277/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  28%|██▊       | 278/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  28%|██▊       | 279/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  28%|██▊       | 280/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  28%|██▊       | 281/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  28%|██▊       | 282/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  28%|██▊       | 283/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  28%|██▊       | 284/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  28%|██▊       | 285/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  29%|██▊       | 286/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  29%|██▊       | 287/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  29%|██▉       | 288/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  29%|██▉       | 289/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  29%|██▉       | 290/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  29%|██▉       | 291/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  29%|██▉       | 292/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  29%|██▉       | 293/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  29%|██▉       | 294/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  30%|██▉       | 295/1000 [1407.86doc/s][A
+📄 0000.jsonl.gz:  30%|██▉       | 296/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  30%|██▉       | 296/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  30%|██▉       | 297/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  30%|██▉       | 298/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  30%|██▉       | 299/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  30%|███       | 300/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  30%|███       | 301/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  30%|███       | 302/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  30%|███       | 303/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  30%|███       | 304/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  30%|███       | 305/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  31%|███       | 306/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  31%|███       | 307/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  31%|███       | 308/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  31%|███       | 309/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  31%|███       | 310/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  31%|███       | 311/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  31%|███       | 312/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  31%|███▏      | 313/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  31%|███▏      | 314/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  32%|███▏      | 315/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  32%|███▏      | 316/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  32%|███▏      | 317/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  32%|███▏      | 318/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  32%|███▏      | 319/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  32%|███▏      | 320/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  32%|███▏      | 321/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  32%|███▏      | 322/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  32%|███▏      | 323/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  32%|███▏      | 324/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  32%|███▎      | 325/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  33%|███▎      | 326/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  33%|███▎      | 327/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  33%|███▎      | 328/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  33%|███▎      | 329/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  33%|███▎      | 330/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  33%|███▎      | 331/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  33%|███▎      | 332/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  33%|███▎      | 333/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  33%|███▎      | 334/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  34%|███▎      | 335/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  34%|███▎      | 336/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  34%|███▎      | 337/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  34%|███▍      | 338/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  34%|███▍      | 339/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  34%|███▍      | 340/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  34%|███▍      | 341/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  34%|███▍      | 342/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  34%|███▍      | 343/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  34%|███▍      | 344/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  34%|███▍      | 345/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  35%|███▍      | 346/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  35%|███▍      | 347/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  35%|███▍      | 348/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  35%|███▍      | 349/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  35%|███▌      | 350/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  35%|███▌      | 351/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  35%|███▌      | 352/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  35%|███▌      | 353/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  35%|███▌      | 354/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  36%|███▌      | 355/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  36%|███▌      | 356/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  36%|███▌      | 357/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  36%|███▌      | 358/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  36%|███▌      | 359/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  36%|███▌      | 360/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  36%|███▌      | 361/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  36%|███▌      | 362/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  36%|███▋      | 363/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  36%|███▋      | 364/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  36%|███▋      | 365/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  37%|███▋      | 366/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  37%|███▋      | 367/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  37%|███▋      | 368/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  37%|███▋      | 369/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  37%|███▋      | 370/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  37%|███▋      | 371/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  37%|███▋      | 372/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  37%|███▋      | 373/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  37%|███▋      | 374/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  38%|███▊      | 375/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  38%|███▊      | 376/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  38%|███▊      | 377/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  38%|███▊      | 378/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  38%|███▊      | 379/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  38%|███▊      | 380/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  38%|███▊      | 381/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  38%|███▊      | 382/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  38%|███▊      | 383/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  38%|███▊      | 384/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  38%|███▊      | 385/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  39%|███▊      | 386/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  39%|███▊      | 387/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  39%|███▉      | 388/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  39%|███▉      | 389/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  39%|███▉      | 390/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  39%|███▉      | 391/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  39%|███▉      | 392/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  39%|███▉      | 393/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  39%|███▉      | 394/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  40%|███▉      | 395/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  40%|███▉      | 396/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  40%|███▉      | 397/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  40%|███▉      | 398/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  40%|███▉      | 399/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  40%|████      | 400/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  40%|████      | 401/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  40%|████      | 402/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  40%|████      | 403/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  40%|████      | 404/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  40%|████      | 405/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  41%|████      | 406/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  41%|████      | 407/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  41%|████      | 408/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  41%|████      | 409/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  41%|████      | 410/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  41%|████      | 411/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  41%|████      | 412/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  41%|████▏     | 413/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  41%|████▏     | 414/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  42%|████▏     | 415/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  42%|████▏     | 416/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  42%|████▏     | 417/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  42%|████▏     | 418/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  42%|████▏     | 419/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  42%|████▏     | 420/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  42%|████▏     | 421/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  42%|████▏     | 422/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  42%|████▏     | 423/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  42%|████▏     | 424/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  42%|████▎     | 425/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  43%|████▎     | 426/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  43%|████▎     | 427/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  43%|████▎     | 428/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  43%|████▎     | 429/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  43%|████▎     | 430/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  43%|████▎     | 431/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  43%|████▎     | 432/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  43%|████▎     | 433/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  43%|████▎     | 434/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  44%|████▎     | 435/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  44%|████▎     | 436/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  44%|████▎     | 437/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  44%|████▍     | 438/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  44%|████▍     | 439/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  44%|████▍     | 440/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  44%|████▍     | 441/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  44%|████▍     | 442/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  44%|████▍     | 443/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  44%|████▍     | 444/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  44%|████▍     | 445/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  45%|████▍     | 446/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  45%|████▍     | 447/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  45%|████▍     | 448/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  45%|████▍     | 449/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  45%|████▌     | 450/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  45%|████▌     | 451/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  45%|████▌     | 452/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  45%|████▌     | 453/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  45%|████▌     | 454/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  46%|████▌     | 455/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  46%|████▌     | 456/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  46%|████▌     | 457/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  46%|████▌     | 458/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  46%|████▌     | 459/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  46%|████▌     | 460/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  46%|████▌     | 461/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  46%|████▌     | 462/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  46%|████▋     | 463/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  46%|████▋     | 464/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  46%|████▋     | 465/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  47%|████▋     | 466/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  47%|████▋     | 467/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  47%|████▋     | 468/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  47%|████▋     | 469/1000 [1470.70doc/s][A
+📄 0000.jsonl.gz:  47%|████▋     | 470/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  47%|████▋     | 470/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  47%|████▋     | 471/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  47%|████▋     | 472/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  47%|████▋     | 473/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  47%|████▋     | 474/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  48%|████▊     | 475/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  48%|████▊     | 476/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  48%|████▊     | 477/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  48%|████▊     | 478/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  48%|████▊     | 479/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  48%|████▊     | 480/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  48%|████▊     | 481/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  48%|████▊     | 482/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  48%|████▊     | 483/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  48%|████▊     | 484/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  48%|████▊     | 485/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  49%|████▊     | 486/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  49%|████▊     | 487/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  49%|████▉     | 488/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  49%|████▉     | 489/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  49%|████▉     | 490/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  49%|████▉     | 491/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  49%|████▉     | 492/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  49%|████▉     | 493/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  49%|████▉     | 494/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  50%|████▉     | 495/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  50%|████▉     | 496/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  50%|████▉     | 497/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  50%|████▉     | 498/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  50%|████▉     | 499/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  50%|█████     | 500/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  50%|█████     | 501/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  50%|█████     | 502/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  50%|█████     | 503/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  50%|█████     | 504/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  50%|█████     | 505/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  51%|█████     | 506/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  51%|█████     | 507/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  51%|█████     | 508/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  51%|█████     | 509/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  51%|█████     | 510/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  51%|█████     | 511/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  51%|█████     | 512/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  51%|█████▏    | 513/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  51%|█████▏    | 514/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  52%|█████▏    | 515/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  52%|█████▏    | 516/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  52%|█████▏    | 517/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  52%|█████▏    | 518/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  52%|█████▏    | 519/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  52%|█████▏    | 520/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  52%|█████▏    | 521/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  52%|█████▏    | 522/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  52%|█████▏    | 523/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  52%|█████▏    | 524/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  52%|█████▎    | 525/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  53%|█████▎    | 526/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  53%|█████▎    | 527/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  53%|█████▎    | 528/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  53%|█████▎    | 529/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  53%|█████▎    | 530/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  53%|█████▎    | 531/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  53%|█████▎    | 532/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  53%|█████▎    | 533/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  53%|█████▎    | 534/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  54%|█████▎    | 535/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  54%|█████▎    | 536/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  54%|█████▎    | 537/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  54%|█████▍    | 538/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  54%|█████▍    | 539/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  54%|█████▍    | 540/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  54%|█████▍    | 541/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  54%|█████▍    | 542/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  54%|█████▍    | 543/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  54%|█████▍    | 544/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  55%|█████▍    | 545/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  55%|█████▍    | 546/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  55%|█████▍    | 547/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  55%|█████▍    | 548/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  55%|█████▍    | 549/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  55%|█████▌    | 550/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  55%|█████▌    | 551/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  55%|█████▌    | 552/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  55%|█████▌    | 553/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  55%|█████▌    | 554/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  56%|█████▌    | 555/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  56%|█████▌    | 556/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  56%|█████▌    | 557/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  56%|█████▌    | 558/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  56%|█████▌    | 559/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  56%|█████▌    | 560/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  56%|█████▌    | 561/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  56%|█████▌    | 562/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  56%|█████▋    | 563/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  56%|█████▋    | 564/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  56%|█████▋    | 565/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  57%|█████▋    | 566/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  57%|█████▋    | 567/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  57%|█████▋    | 568/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  57%|█████▋    | 569/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  57%|█████▋    | 570/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  57%|█████▋    | 571/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  57%|█████▋    | 572/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  57%|█████▋    | 573/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  57%|█████▋    | 574/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  57%|█████▊    | 575/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  58%|█████▊    | 576/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  58%|█████▊    | 577/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  58%|█████▊    | 578/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  58%|█████▊    | 579/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  58%|█████▊    | 580/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  58%|█████▊    | 581/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  58%|█████▊    | 582/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  58%|█████▊    | 583/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  58%|█████▊    | 584/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  58%|█████▊    | 585/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  59%|█████▊    | 586/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  59%|█████▊    | 587/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  59%|█████▉    | 588/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  59%|█████▉    | 589/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  59%|█████▉    | 590/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  59%|█████▉    | 591/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  59%|█████▉    | 592/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  59%|█████▉    | 593/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  59%|█████▉    | 594/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  60%|█████▉    | 595/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  60%|█████▉    | 596/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  60%|█████▉    | 597/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  60%|█████▉    | 598/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  60%|█████▉    | 599/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  60%|██████    | 600/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  60%|██████    | 601/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  60%|██████    | 602/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  60%|██████    | 603/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  60%|██████    | 604/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  60%|██████    | 605/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  61%|██████    | 606/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  61%|██████    | 607/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  61%|██████    | 608/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  61%|██████    | 609/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  61%|██████    | 610/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  61%|██████    | 611/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  61%|██████    | 612/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  61%|██████▏   | 613/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  61%|██████▏   | 614/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  62%|██████▏   | 615/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  62%|██████▏   | 616/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  62%|██████▏   | 617/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  62%|██████▏   | 618/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  62%|██████▏   | 619/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  62%|██████▏   | 620/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  62%|██████▏   | 621/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  62%|██████▏   | 622/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  62%|██████▏   | 623/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  62%|██████▏   | 624/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  62%|██████▎   | 625/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  63%|██████▎   | 626/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  63%|██████▎   | 627/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  63%|██████▎   | 628/1000 [1585.73doc/s][A
+📄 0000.jsonl.gz:  63%|██████▎   | 629/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  63%|██████▎   | 629/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  63%|██████▎   | 630/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  63%|██████▎   | 631/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  63%|██████▎   | 632/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  63%|██████▎   | 633/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  63%|██████▎   | 634/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  64%|██████▎   | 635/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  64%|██████▎   | 636/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  64%|██████▎   | 637/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  64%|██████▍   | 638/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  64%|██████▍   | 639/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  64%|██████▍   | 640/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  64%|██████▍   | 641/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  64%|██████▍   | 642/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  64%|██████▍   | 643/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  64%|██████▍   | 644/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  64%|██████▍   | 645/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  65%|██████▍   | 646/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  65%|██████▍   | 647/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  65%|██████▍   | 648/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  65%|██████▍   | 649/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  65%|██████▌   | 650/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  65%|██████▌   | 651/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  65%|██████▌   | 652/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  65%|██████▌   | 653/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  65%|██████▌   | 654/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  66%|██████▌   | 655/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  66%|██████▌   | 656/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  66%|██████▌   | 657/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  66%|██████▌   | 658/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  66%|██████▌   | 659/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  66%|██████▌   | 660/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  66%|██████▌   | 661/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  66%|██████▌   | 662/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  66%|██████▋   | 663/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  66%|██████▋   | 664/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  66%|██████▋   | 665/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  67%|██████▋   | 666/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  67%|██████▋   | 667/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  67%|██████▋   | 668/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  67%|██████▋   | 669/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  67%|██████▋   | 670/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  67%|██████▋   | 671/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  67%|██████▋   | 672/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  67%|██████▋   | 673/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  67%|██████▋   | 674/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  68%|██████▊   | 675/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  68%|██████▊   | 676/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  68%|██████▊   | 677/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  68%|██████▊   | 678/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  68%|██████▊   | 679/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  68%|██████▊   | 680/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  68%|██████▊   | 681/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  68%|██████▊   | 682/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  68%|██████▊   | 683/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  68%|██████▊   | 684/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  68%|██████▊   | 685/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  69%|██████▊   | 686/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  69%|██████▊   | 687/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  69%|██████▉   | 688/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  69%|██████▉   | 689/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  69%|██████▉   | 690/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  69%|██████▉   | 691/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  69%|██████▉   | 692/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  69%|██████▉   | 693/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  69%|██████▉   | 694/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  70%|██████▉   | 695/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  70%|██████▉   | 696/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  70%|██████▉   | 697/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  70%|██████▉   | 698/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  70%|██████▉   | 699/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  70%|███████   | 700/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  70%|███████   | 701/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  70%|███████   | 702/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  70%|███████   | 703/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  70%|███████   | 704/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  70%|███████   | 705/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  71%|███████   | 706/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  71%|███████   | 707/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  71%|███████   | 708/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  71%|███████   | 709/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  71%|███████   | 710/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  71%|███████   | 711/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  71%|███████   | 712/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  71%|███████▏  | 713/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  71%|███████▏  | 714/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  72%|███████▏  | 715/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  72%|███████▏  | 716/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  72%|███████▏  | 717/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  72%|███████▏  | 718/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  72%|███████▏  | 719/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  72%|███████▏  | 720/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  72%|███████▏  | 721/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  72%|███████▏  | 722/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  72%|███████▏  | 723/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  72%|███████▏  | 724/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  72%|███████▎  | 725/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  73%|███████▎  | 726/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  73%|███████▎  | 727/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  73%|███████▎  | 728/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  73%|███████▎  | 729/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  73%|███████▎  | 730/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  73%|███████▎  | 731/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  73%|███████▎  | 732/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  73%|███████▎  | 733/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  73%|███████▎  | 734/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  74%|███████▎  | 735/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  74%|███████▎  | 736/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  74%|███████▎  | 737/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  74%|███████▍  | 738/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  74%|███████▍  | 739/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  74%|███████▍  | 740/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  74%|███████▍  | 741/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  74%|███████▍  | 742/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  74%|███████▍  | 743/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  74%|███████▍  | 744/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  74%|███████▍  | 745/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  75%|███████▍  | 746/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  75%|███████▍  | 747/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  75%|███████▍  | 748/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  75%|███████▍  | 749/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  75%|███████▌  | 750/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  75%|███████▌  | 751/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  75%|███████▌  | 752/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  75%|███████▌  | 753/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  75%|███████▌  | 754/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  76%|███████▌  | 755/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  76%|███████▌  | 756/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  76%|███████▌  | 757/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  76%|███████▌  | 758/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  76%|███████▌  | 759/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  76%|███████▌  | 760/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  76%|███████▌  | 761/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  76%|███████▌  | 762/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  76%|███████▋  | 763/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  76%|███████▋  | 764/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  76%|███████▋  | 765/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  77%|███████▋  | 766/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  77%|███████▋  | 767/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  77%|███████▋  | 768/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  77%|███████▋  | 769/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  77%|███████▋  | 770/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  77%|███████▋  | 771/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  77%|███████▋  | 772/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  77%|███████▋  | 773/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  77%|███████▋  | 774/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  78%|███████▊  | 775/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  78%|███████▊  | 776/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  78%|███████▊  | 777/1000 [1478.64doc/s][A
+📄 0000.jsonl.gz:  78%|███████▊  | 778/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  78%|███████▊  | 778/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  78%|███████▊  | 779/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  78%|███████▊  | 780/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  78%|███████▊  | 781/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  78%|███████▊  | 782/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  78%|███████▊  | 783/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  78%|███████▊  | 784/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  78%|███████▊  | 785/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  79%|███████▊  | 786/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  79%|███████▊  | 787/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  79%|███████▉  | 788/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  79%|███████▉  | 789/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  79%|███████▉  | 790/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  79%|███████▉  | 791/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  79%|███████▉  | 792/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  79%|███████▉  | 793/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  79%|███████▉  | 794/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  80%|███████▉  | 795/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  80%|███████▉  | 796/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  80%|███████▉  | 797/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  80%|███████▉  | 798/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  80%|███████▉  | 799/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  80%|████████  | 800/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  80%|████████  | 801/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  80%|████████  | 802/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  80%|████████  | 803/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  80%|████████  | 804/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  80%|████████  | 805/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  81%|████████  | 806/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  81%|████████  | 807/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  81%|████████  | 808/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  81%|████████  | 809/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  81%|████████  | 810/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  81%|████████  | 811/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  81%|████████  | 812/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  81%|████████▏ | 813/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  81%|████████▏ | 814/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  82%|████████▏ | 815/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  82%|████████▏ | 816/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  82%|████████▏ | 817/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  82%|████████▏ | 818/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  82%|████████▏ | 819/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  82%|████████▏ | 820/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  82%|████████▏ | 821/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  82%|████████▏ | 822/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  82%|████████▏ | 823/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  82%|████████▏ | 824/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  82%|████████▎ | 825/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  83%|████████▎ | 826/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  83%|████████▎ | 827/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  83%|████████▎ | 828/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  83%|████████▎ | 829/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  83%|████████▎ | 830/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  83%|████████▎ | 831/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  83%|████████▎ | 832/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  83%|████████▎ | 833/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  83%|████████▎ | 834/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  84%|████████▎ | 835/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  84%|████████▎ | 836/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  84%|████████▎ | 837/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  84%|████████▍ | 838/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  84%|████████▍ | 839/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  84%|████████▍ | 840/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  84%|████████▍ | 841/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  84%|████████▍ | 842/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  84%|████████▍ | 843/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  84%|████████▍ | 844/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  84%|████████▍ | 845/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  85%|████████▍ | 846/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  85%|████████▍ | 847/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  85%|████████▍ | 848/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  85%|████████▍ | 849/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  85%|████████▌ | 850/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  85%|████████▌ | 851/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  85%|████████▌ | 852/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  85%|████████▌ | 853/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  85%|████████▌ | 854/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  86%|████████▌ | 855/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  86%|████████▌ | 856/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  86%|████████▌ | 857/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  86%|████████▌ | 858/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  86%|████████▌ | 859/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  86%|████████▌ | 860/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  86%|████████▌ | 861/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  86%|████████▌ | 862/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  86%|████████▋ | 863/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  86%|████████▋ | 864/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  86%|████████▋ | 865/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  87%|████████▋ | 866/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  87%|████████▋ | 867/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  87%|████████▋ | 868/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  87%|████████▋ | 869/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  87%|████████▋ | 870/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  87%|████████▋ | 871/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  87%|████████▋ | 872/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  87%|████████▋ | 873/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  87%|████████▋ | 874/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  88%|████████▊ | 875/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  88%|████████▊ | 876/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  88%|████████▊ | 877/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  88%|████████▊ | 878/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  88%|████████▊ | 879/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  88%|████████▊ | 880/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  88%|████████▊ | 881/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  88%|████████▊ | 882/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  88%|████████▊ | 883/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  88%|████████▊ | 884/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  88%|████████▊ | 885/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  89%|████████▊ | 886/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  89%|████████▊ | 887/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  89%|████████▉ | 888/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  89%|████████▉ | 889/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  89%|████████▉ | 890/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  89%|████████▉ | 891/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  89%|████████▉ | 892/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  89%|████████▉ | 893/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  89%|████████▉ | 894/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  90%|████████▉ | 895/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  90%|████████▉ | 896/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  90%|████████▉ | 897/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  90%|████████▉ | 898/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  90%|████████▉ | 899/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  90%|█████████ | 900/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  90%|█████████ | 901/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  90%|█████████ | 902/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  90%|█████████ | 903/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  90%|█████████ | 904/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  90%|█████████ | 905/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  91%|█████████ | 906/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  91%|█████████ | 907/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  91%|█████████ | 908/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  91%|█████████ | 909/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  91%|█████████ | 910/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  91%|█████████ | 911/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  91%|█████████ | 912/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  91%|█████████▏| 913/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  91%|█████████▏| 914/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  92%|█████████▏| 915/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  92%|█████████▏| 916/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  92%|█████████▏| 917/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  92%|█████████▏| 918/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  92%|█████████▏| 919/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  92%|█████████▏| 920/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  92%|█████████▏| 921/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  92%|█████████▏| 922/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  92%|█████████▏| 923/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  92%|█████████▏| 924/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  92%|█████████▎| 925/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  93%|█████████▎| 926/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  93%|█████████▎| 927/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  93%|█████████▎| 928/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  93%|█████████▎| 929/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  93%|█████████▎| 930/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  93%|█████████▎| 931/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  93%|█████████▎| 932/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  93%|█████████▎| 933/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  93%|█████████▎| 934/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  94%|█████████▎| 935/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  94%|█████████▎| 936/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  94%|█████████▎| 937/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  94%|█████████▍| 938/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  94%|█████████▍| 939/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  94%|█████████▍| 940/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  94%|█████████▍| 941/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  94%|█████████▍| 942/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  94%|█████████▍| 943/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  94%|█████████▍| 944/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  94%|█████████▍| 945/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  95%|█████████▍| 946/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  95%|█████████▍| 947/1000 [1440.58doc/s][A
+📄 0000.jsonl.gz:  95%|█████████▍| 948/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  95%|█████████▍| 948/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  95%|█████████▍| 949/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  95%|█████████▌| 950/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  95%|█████████▌| 951/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  95%|█████████▌| 952/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  95%|█████████▌| 953/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  95%|█████████▌| 954/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  96%|█████████▌| 955/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  96%|█████████▌| 956/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  96%|█████████▌| 957/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  96%|█████████▌| 958/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  96%|█████████▌| 959/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  96%|█████████▌| 960/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  96%|█████████▌| 961/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  96%|█████████▌| 962/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  96%|█████████▋| 963/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  96%|█████████▋| 964/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  96%|█████████▋| 965/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  97%|█████████▋| 966/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  97%|█████████▋| 967/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  97%|█████████▋| 968/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  97%|█████████▋| 969/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  97%|█████████▋| 970/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  97%|█████████▋| 971/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  97%|█████████▋| 972/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  97%|█████████▋| 973/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  97%|█████████▋| 974/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  98%|█████████▊| 975/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  98%|█████████▊| 976/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  98%|█████████▊| 977/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  98%|█████████▊| 978/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  98%|█████████▊| 979/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  98%|█████████▊| 980/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  98%|█████████▊| 981/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  98%|█████████▊| 982/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  98%|█████████▊| 983/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  98%|█████████▊| 984/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  98%|█████████▊| 985/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  99%|█████████▊| 986/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  99%|█████████▊| 987/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  99%|█████████▉| 988/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  99%|█████████▉| 989/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  99%|█████████▉| 990/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  99%|█████████▉| 991/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  99%|█████████▉| 992/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  99%|█████████▉| 993/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz:  99%|█████████▉| 994/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz: 100%|█████████▉| 995/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz: 100%|█████████▉| 996/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz: 100%|█████████▉| 997/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz: 100%|█████████▉| 998/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz: 100%|█████████▉| 999/1000 [1512.17doc/s][A
+📄 0000.jsonl.gz: 100%|██████████| 1000/1000 [1512.17doc/s][A
+                                                           [A📊 Processing shards:   0%|          | 0/11 [00:00<?]
+⚠️  Validation encountered issues: 'num_tokens'
+2025-12-12 07:59:22 - root - ERROR - Validation exception details: 'num_tokens'
+Traceback (most recent call last):
+  File "/mnt/c/Users/matth/GITREPOS/Lumi-Lab/scripts/20_train_tokenizer.py", line 854, in main
+    dataset_validation = token_counter.validate_dataset_quality(
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/matth/GITREPOS/Lumi-Lab/utils/debug/precise_token_counter.py", line 211, in validate_dataset_quality
+    counting_results = self.count_tokens_in_shards(manifest, corpus_dir, sample_rate)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/matth/GITREPOS/Lumi-Lab/utils/debug/precise_token_counter.py", line 71, in count_tokens_in_shards
+    shard_result = self._count_shard_tokens(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/matth/GITREPOS/Lumi-Lab/utils/debug/precise_token_counter.py", line 193, in _count_shard_tokens
+    'manifest_tokens': shard_info['num_tokens'],
+                       ~~~~~~~~~~^^^^^^^^^^^^^^
+KeyError: 'num_tokens'
+✅ Completed: Quality Validation (1s)
+2025-12-12 07:59:22 - root - INFO - 📋 Enhanced config saved successfully
+2025-12-12 07:59:22 - root - INFO - 📊 Generating final report...
+
+🎉 Training Complete!
+============================================================
+
+📊 Training Summary:
+   📄 Documents processed: 102,430
+   📝 Sentences used: 3,476,555
+   🎯 Estimated tokens (pipeline): 94,355,089
+   🎯 Estimated tokens (corrected): 91,382,802
+   ⛔ Sentences skipped: 0
+
+⏱️  Performance:
+   🕐 Duration: 3.0m
+   📈 Processing rate: 1578 docs/s
+
+📋 Phase Breakdown:
+   ✅ Integrity Verification: 1s
+   ✅ Corpus Analysis: 55s
+   ✅ Sentence Streaming: 58s
+   ✅ Tokenizer Testing: 0s
+   ✅ Quality Validation: 1s
+
+============================================================

@@ -181,14 +181,20 @@ def analyze_corpus_statistics(
         # Debug logging to confirm shard completion
         logging.debug(f"✅ Completed shard {i+1}/{len(shards)}: {shard_sentences:,} sentences, {shard_estimated_tokens:,} tokens")
 
+        # Handle manifests with or without per-shard token/size info
+        file_size_bytes = shard_info.get('file_size_bytes', 0)
+        if file_size_bytes == 0:
+            # Get actual file size if not in manifest
+            file_size_bytes = shard_path.stat().st_size if shard_path.exists() else 0
+
         shard_stat = {
             'path': shard_info['path'],
             'documents': shard_info['num_documents'],
-            'manifest_tokens': shard_info['num_tokens'],
+            'manifest_tokens': shard_info.get('num_tokens', shard_estimated_tokens),  # Use estimated if not in manifest
             'estimated_tokens': shard_estimated_tokens,
             'sentences': shard_sentences,
             'characters': shard_characters,
-            'file_size_mb': shard_info['file_size_bytes'] / (1024 * 1024),
+            'file_size_mb': file_size_bytes / (1024 * 1024),
             'sentences_per_doc': round(shard_sentences / shard_info['num_documents'], 1)
         }
 
@@ -213,11 +219,18 @@ def analyze_corpus_statistics(
     if len(shard_stats) != len(shards):
         logging.warning(f"⚠️  Only {len(shard_stats)} out of {len(shards)} shards were processed!")
 
+    # Get manifest tokens from statistics if available, otherwise use estimated
+    manifest_tokens = manifest.get('statistics', {}).get('exact_tokens', 0)
+    if manifest_tokens == 0:
+        manifest_tokens = sum(s.get('num_tokens', 0) for s in shards)
+    if manifest_tokens == 0:
+        manifest_tokens = total_estimated_tokens  # Fall back to estimated
+
     stats = {
         'total_documents': total_docs,
         'total_sentences': total_sentences,
         'total_characters': total_characters,
-        'manifest_total_tokens': sum(s['num_tokens'] for s in shards),
+        'manifest_total_tokens': manifest_tokens,
         'estimated_total_tokens': total_estimated_tokens,
         'avg_sentences_per_doc': round(total_sentences / total_docs, 1),
         'avg_chars_per_sentence': round(total_characters / total_sentences, 1) if total_sentences > 0 else 0,

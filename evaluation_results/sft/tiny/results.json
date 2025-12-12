@@ -1,0 +1,211 @@
+{
+  "model_path": "checkpoints/sft/tiny/final",
+  "tokenizer_path": "data/models/tokenizers/spm_32k",
+  "prompt_template": "instruct",
+  "evaluation_mode": "standard",
+  "model_parameters": 24202496,
+  "timestamp": "2025-12-12 16:00:36",
+  "evaluation_time_seconds": 75.47637343406677,
+  "perplexity_metrics": {
+    "perplexity": 137.32247225801217,
+    "avg_loss": 4.922331972054082,
+    "total_tokens": 7281,
+    "processed_samples": 50,
+    "dataset": "wikitext_raw_text",
+    "template": "raw_text"
+  },
+  "boolq_metrics": {
+    "accuracy": 0.37,
+    "correct": 37,
+    "total": 100,
+    "samples": 100
+  },
+  "boolq_accuracy": 0.37,
+  "smoke_tests": {
+    "summary_stats": {
+      "avg_quality_score": 0.5125000000000001,
+      "total_prompts": 24,
+      "categories_tested": 8
+    },
+    "category_results": {
+      "basic_knowledge": {
+        "avg_score": 0.7333333333333334,
+        "samples": 3
+      },
+      "language_understanding": {
+        "avg_score": 0.43333333333333335,
+        "samples": 3
+      },
+      "reasoning": {
+        "avg_score": 0.3666666666666667,
+        "samples": 3
+      },
+      "creativity": {
+        "avg_score": 0.4333333333333333,
+        "samples": 3
+      },
+      "instruction_following": {
+        "avg_score": 0.5333333333333333,
+        "samples": 3
+      },
+      "wikipedia_style": {
+        "avg_score": 0.5333333333333333,
+        "samples": 3
+      },
+      "conversation": {
+        "avg_score": 0.5333333333333333,
+        "samples": 3
+      },
+      "multilingual": {
+        "avg_score": 0.5333333333333333,
+        "samples": 3
+      }
+    },
+    "individual_results": [
+      {
+        "category": "basic_knowledge",
+        "prompt": "What is the capital of France?",
+        "response": "snh, 2017 was a province of France. --|### Response:The capital of France is France, which is located in the parts of France.",
+        "quality_score": 0.9999999999999999
+      },
+      {
+        "category": "basic_knowledge",
+        "prompt": "How many days are in a year?",
+        "response": "20 to the age of 16. The age of 16 is 18. The age of 16 is 18. The age of 16 is 9. The age of 16 is 4. The age of 17 is 3. beings### Response:The age of 16 is 9. The age of 16 is 7. The age of 16 is 9. The age of 16 is 7. Davros, his son, is 8.Candidatu 9 is 9. FidoNet beings#",
+        "quality_score": 0.39999999999999997
+      },
+      {
+        "category": "basic_knowledge",
+        "prompt": "What is 2+2?",
+        "response": "2 + 1+2 = 4+3.Is### Response:Oal, 2+2 is the highest-word of the given book in the book, but it does not make the list of a best book in the book. beings### Response:I'm sorry, I can help you with that! We have several books in the book, including The World of the Dream. Meilhan y",
+        "quality_score": 0.8
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "Complete this sentence: The quick brown fox",
+        "response": "# The short gray wolf is a gray bull.Is### Response:The quick blue fox is a big dog with a small tail and a long tail and a black deer. zyloprim 10\" The quick red deer is a beautiful and elegant breed that was named for the American Americans.### Response:The quiet gray wolf is a yellow wolf. sees ### Instruction:Pors are the first-person first person who has been born in the United States in 1927 and is a British British, who is also known for his work on the American American rights and",
+        "quality_score": 0.5
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "What is the opposite of 'hot'?",
+        "response": "#The opposite of 'hot' is \"the most important thing of our lives.\" To answer the question, we need to do a quick and quick action for each person to make it easier and engaging. This technique involves using a machine-based computer or machine to use the computer to use a small variety of material, such as paper, plastic, and rubber to use other materials such as plastic, plastics, and plastics. However, we can use the machine to create a powerful and simple way to track the progress of the individual. Additionally, the first step of this process is to make sure that the individual is able to perform a simple",
+        "quality_score": 0.5
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "Rephrase: 'The cat sat on the mat'",
+        "response": "#Cteresly, this house has been home for a long time. The cat was surrounded by large of many, including the cat and other animals, including the cat, the cat, and the cats. The cat was part of the animals, but they were not used in the house. The cat was also located in the area of the house. The cat was a small small house with two trees and a large house. The cat was also home to several animals, including the cat and the cats. The cat was also located in the area of the house. The cat was a large house that had a large room and a",
+        "quality_score": 0.3
+      },
+      {
+        "category": "reasoning",
+        "prompt": "If it's raining, should you take an umbrella?",
+        "response": "sll watering is a good thing because the water is getting off the water. It is also the best way to make the air better, and the water is making it more perfect. However, it's important to note that this can be done by using your water to reduce the amount of water you need. You can use water in the way that it helps. It can also help to remove water from the water and protect the water from the water. It can also help to reduce the amount of water you need. This can help to prevent damage and improve the environment. For example, if it's wet or dry,",
+        "quality_score": 0.5
+      },
+      {
+        "category": "reasoning",
+        "prompt": "Why do we need to sleep?",
+        "response": "#What do we need to sleep? capoeira is a car that is in contact with a body of brain. It can be done by a body of brain, which is the body that is located in a central body. The body is located in the spinal area and is surrounded by an 500-mile-minute center. The body is located in the central body and is a body that is located in a central body. The body is located in the central body, which is located in the central body and is a large small body that is located in the central body. The body is located in the central body and is located",
+        "quality_score": 0.3
+      },
+      {
+        "category": "reasoning",
+        "prompt": "What happens when water freezes?",
+        "response": "\"The temperature starts down as it begins to move back and becomes a cool liquid. The water returns a warm liquid to cool it and gets a more liquid. This will change the water in a liquid and will change the liquid in the container. In this case, water starts back and becomes a cool liquid, which is not a cool liquid. The water then moves back and becomes a cool liquid. This will change the water in the container and will change the water in the container. The water then becomes a cool liquid and then returns a warm liquid. By taking action, water starts into a cool liquid and starts the process of moving into",
+        "quality_score": 0.3
+      },
+      {
+        "category": "creativity",
+        "prompt": "Write a short poem about winter.",
+        "response": "sather the ingredients and find how it affects winter. The recipe is a different flavor, but it's a different color, and it's an perfect treat for a bit of heat. The recipe is simple to use, and it's easy to cook and cook. This is because it's a different flavor, so it's a different texture, and it's a different texture. It's a different texture, and it's a different texture, and it's a different flavor, and it's a different texture. This is because it's a different texture, and it's a",
+        "quality_score": 0.3
+      },
+      {
+        "category": "creativity",
+        "prompt": "Describe a perfect day in 3 sentences.",
+        "response": "-Ayyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyysyyyyyyyyyy yyyyyyyyyyyy",
+        "quality_score": 0.6
+      },
+      {
+        "category": "creativity",
+        "prompt": "Create a name for a new planet.",
+        "response": "syo. The name of the planet is \"Punal\", which means \"Hyyyy\". The name of the planet is \"Elr\". The name of the planet is \"punal\", which means \"Hyyyy.\" The name of the planet is \"gn\" in the name of the planet, and the name of the planet is \"cunal\". beings### Response:The name of the planet is \"Punal\", which means \"Hyyyyy\". sees### Response:The name of the planet is \"",
+        "quality_score": 0.4
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "List exactly 3 animals that live in the ocean.",
+        "response": "#Cist exactly 4 animals that live in the ocean is called \"Antal.\" The first step is to explore a area of water where water can be stored as an water source or water to store the water in a single manner. The water is located from the bottom of the ocean and contains a amount of water. In this case, it is called \"The sea\" and it is the largest land in the ocean, and is a most important site for life. FidoNet### Response:The second step is to learn about the sea's habitat and how it can be stored as a small area of water.",
+        "quality_score": 0.6
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "Write 'Hello World' in uppercase.",
+        "response": "/Sorting the word \"new\" in the letter \"The New\". The letter is \"The New\", which is a small word that can be written to a whos. This means that it is an word that can be written to the reader in the letter, as well as a specific sentence that can be written to the reader. It is also called the English language and is also used for reading the letter. The letter is not a big word, but it is the main word that can be written to the reader in the letter. The letter is not a small word that can be written to the writer. The letter is",
+        "quality_score": 0.3
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "Count from 1 to 5.",
+        "response": "/Cors 2: 4: 5.2311 2: 9.6400 3: 8.7400 5: 2.7400 7.040 7.1400 7.040 9.2400 9.2400 9.2400 9.2400 9.2400 9.2400 9.2400 9.2400 9.240",
+        "quality_score": 0.7
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "Paris is the capital of",
+        "response": ". The city is situated around 250 m, which is a large area of the city of Paris. It is a small area of 300 m, with one area of 150 m. According to the Census Report, 164 people are looking for a rich area. However, there is also a lot of information about the city, such as its location and location. For example, a village is located from 250 m. This is the city of Paris, which is a large area of 300 m. Therefore, it is not possible to tell a more accurate explanation",
+        "quality_score": 0.5
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "The Earth orbits around",
+        "response": "25 degrees. The Earth orbits at 20 degrees. The Earth moves across 20 degrees. The Earth moves through the earth into a sphere called 1.35. The Earth turns on the side of the Earth, which is a giant planet. The Moon takes on its Earth to travel from the Earth and becomes an new star. The Earth travels through the Earth through the Earth's sky, creating a universe that has been destroyed by the sun. The Earth moves through the earth, making it the most powerful in of life. The Sun starts to move around and return its Earth to the Earth. The Earth starts",
+        "quality_score": 0.5
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "Photosynthesis is the process by which",
+        "response": "# 1. The metabolism of food from the plant has been consumed by animals and is not eaten without a amount of energy. However, it may be difficult to determine whether the amount of energy is lost or not, as the result of the process is less than a amount of energy.22007,132000, is the main source of energy, which is the second source of energy that does not contain the energy.42007, is the first source of energy.32007 is the first source of energy in the world, which is the first source of energy.",
+        "quality_score": 0.6
+      },
+      {
+        "category": "conversation",
+        "prompt": "Hello, how are you today?",
+        "response": "#Sentence is a small group of people who have a difficult life that are usually older and often older. They need to be able to work with individuals, as well as individuals, to help them learn more. The person who has a difficult life that are not older and often older is less older and also age than others. In addition, they can have an difficult life that are sometimes older and can be difficult for people to find new jobs and learn more. The person who has a difficult life that are usually older and cannot be able to work with others. This can include friends or friends with other people who want to work with",
+        "quality_score": 0.3
+      },
+      {
+        "category": "conversation",
+        "prompt": "What's your favorite hobby?",
+        "response": "sssssssssssssssssssssssssssssssssss.ssssssssssssssssssssssssss.sss: 1. A: 1. The kids are looking for their own toys, and they have a new problem with children. 2. A: 2. The kids are taking their home in the garden, but it's not enough to give them much more energy. 3. The",
+        "quality_score": 0.8
+      },
+      {
+        "category": "conversation",
+        "prompt": "Can you help me with a problem?",
+        "response": "sow, here are some suggestions: 1. The equation is: -12 ( 5) 12 = (2) 23 = (2) 34 + (1) 34 + (1) 44 + (1) 44 + (1) 44 + (1) 44 + (1) 44 + (1) 44 + (1) 44 + (1) 44 + (1) 44 + (1) 44 + (1) 44 + (1)",
+        "quality_score": 0.49999999999999994
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Bonjour, comment allez-vous?",
+        "response": "/aonjour, reply allez-vous? Nepets sn n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n",
+        "quality_score": 0.39999999999999997
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Hola, ¿cómo estás?",
+        "response": ":Hola, cmo estás? palavra### Response::Hola, cmo estás? zyloprim HyperCard /cmo s   . --|a es des    .### Response::Hola, cmo estás? Doraemon Castaing ### Instruction:E         .### Response:E",
+        "quality_score": 0.8999999999999999
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Guten Tag, wie geht es Ihnen?",
+        "response": "sll es Ihnen is a English language language called E-L-Gg. It is a English language that is used in many languages and can be used in other languages like the world. This was introduced by the French French language and was used for its use in other languages. sees### Response:Guten Link is a English language that is used in many languages and can be used in other languages such as Latin, Latin, and other languages. It is a English language that is used in many languages and can be used in many languages. This was adopted by the French English language, which is used in",
+        "quality_score": 0.3
+      }
+    ]
+  }
+}

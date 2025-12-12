@@ -18,7 +18,7 @@
     "sequence_length": 1024,
     "shard_size": 2000,
     "train_ratio": 0.95,
-    "enable_packing": false,
+    "enable_packing": true,
     "batch_size": 1000
   },
 

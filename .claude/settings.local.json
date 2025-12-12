@@ -35,7 +35,8 @@
       "Bash(PYTHONUNBUFFERED=1 PYTHONPATH=/mnt/c/Users/matth/GITREPOS/Lumi-Lab python3:*)",
       "Bash(conda info:*)",
       "Bash(wc:*)",
-      "Bash(git -C /mnt/c/Users/matth/GITREPOS/Lumi-Lab status --short)"
+      "Bash(git -C /mnt/c/Users/matth/GITREPOS/Lumi-Lab status --short)",
+      "Bash(echo:*)"
     ],
     "deny": []
   }

@@ -40,5 +40,5 @@
     "tokenizer_validation_samples": 500
   },
 
-  "corpus_manifest": "data/datasets/tokenizer_corpus/manifest.json"
+  "corpus_manifest": "data/datasets/tokenizer_corpus_23m/manifest.json"
 }

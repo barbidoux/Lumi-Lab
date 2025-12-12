@@ -49,6 +49,36 @@ A complete, **config-driven** codebase for training mini-LLMs (decoder-only tran
 
 > **Note**: Micro model (9.4M params) is designed for pipeline validation, not production. Larger models (23M+) achieve significantly better metrics following the same training protocol.
 
+### Tiny Model (23M Parameters) - Full Training Report
+
+Complete end-to-end training executed December 12, 2025. See **[Full Training Report](docs/TRAINING_REPORT_TINY_23M.md)** for detailed analysis.
+
+| Stage | Duration | Key Output |
+|-------|----------|------------|
+| Tokenizer Training | 3 min | 32K vocab (SentencePiece) |
+| Pretraining (30K steps) | 2h 33m | Loss: 10.5 → 2.92 |
+| SFT Training (LoRA) | 36 min | Loss: 6.38 → 2.93 |
+| **Total Pipeline** | **~8 hours** | **RTX 4090** |
+
+### Quality Improvements (23M Model)
+
+| Metric | After Pretrain | After SFT | Improvement |
+|--------|----------------|-----------|-------------|
+| **Perplexity** | 587.78 | 137.32 | **-76.6%** |
+| **BoolQ Accuracy** | 31% | 37% | **+6 points** |
+| Smoke Test Quality | N/A | 0.51/1.0 | 8 categories tested |
+
+#### Smoke Test Category Breakdown
+
+| Category | Score | Category | Score |
+|----------|-------|----------|-------|
+| Basic Knowledge | **0.73** | Instruction Following | 0.53 |
+| Wikipedia Style | 0.53 | Conversation | 0.53 |
+| Multilingual | 0.53 | Language Understanding | 0.43 |
+| Creativity | 0.43 | Reasoning | 0.37 |
+
+> **Key Insight**: The 23M model shows **4.3x perplexity improvement** after SFT, demonstrating effective fine-tuning. However, small model capacity limits complex reasoning (0.37 score). For production use, scale to 124M+ parameters.
+
 ---
 
 ## 📋 Table of Contents
@@ -1219,6 +1249,7 @@ config/
 
 ## 📚 Additional Documentation
 
+- **[TRAINING_REPORT_TINY_23M.md](docs/TRAINING_REPORT_TINY_23M.md)**: Complete 23M model training report with benchmarks, metrics, and reproducibility commands
 - **[CLAUDE.md](CLAUDE.md)**: Complete command reference, architecture details, and configuration guide
 - **[MANIFESTO.md](MANIFESTO.md)**: Project philosophy and design principles
 - **[SECURITY.md](SECURITY.md)**: Security guidelines and reporting
