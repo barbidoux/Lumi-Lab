@@ -1,7 +1,5 @@
 # 🤖 Lumi-Lab - Production-Grade Mini-LLM Training Pipeline
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/barbidou)
-
 A complete, **config-driven** codebase for training mini-LLMs (decoder-only transformers) optimized for personal machines with RTX 4090 GPUs. Implements a modular pipeline: **corpus preparation**, **tokenizer training**, **pre-training**, and **SFT (Supervised Fine-Tuning)**. DPO (Direct Preference Optimization) is available as an experimental feature.
 
 > **⚠️ EXPERIMENTAL PROJECT**: Lumi-Lab is in active development and experimental phase. While pre-training and SFT have been tested on tiny models (23M params), **this is a research/educational project**, not production software. DPO implementation is untested. Use at your own risk and expect bugs. Contributions, testing, and feedback are welcome!
