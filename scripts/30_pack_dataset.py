@@ -206,28 +206,43 @@ def tokenize_and_pack_sequences(
         logging.info(f"Using {total_tokens_used:,} tokens ({total_tokens - total_tokens_used:,} discarded)")
 
         # Step 4: Shuffle sequences if requested (for better training distribution)
+        # Note: We generate shuffled indices but apply them during write to avoid RAM copy
         if shuffle:
-            logging.info(f"Shuffling {num_sequences:,} sequences with seed={seed}")
+            logging.info(f"Generating shuffle indices for {num_sequences:,} sequences with seed={seed}")
             np.random.seed(seed)
             indices = np.arange(num_sequences)
             np.random.shuffle(indices)
-            sequences = sequences[indices]
         else:
             logging.info("Skipping shuffle (deterministic ordering)")
+            indices = np.arange(num_sequences)
 
         # Step 5: Split into train/validation
         train_size = int(num_sequences * train_val_split)
         val_size = num_sequences - train_size
         logging.info(f"Split: {train_size:,} train sequences, {val_size:,} validation sequences")
 
-        train_sequences = sequences[:train_size]
-        val_sequences = sequences[train_size:]
+        train_indices = indices[:train_size]
+        val_indices = indices[train_size:]
 
-        # Step 6: Write to final binary files
+        # Step 6: Write to final binary files using chunked streaming (memory efficient)
         train_path = output_dir / "train.bin"
         val_path = output_dir / "val.bin"
-        train_sequences.tofile(train_path)
-        val_sequences.tofile(val_path)
+
+        chunk_size = 10000  # Write 10k sequences at a time to limit RAM usage
+
+        logging.info(f"Writing train.bin ({train_size:,} sequences) in chunks of {chunk_size:,}...")
+        with open(train_path, 'wb') as f:
+            for i in range(0, len(train_indices), chunk_size):
+                chunk_indices = train_indices[i:i+chunk_size]
+                chunk_data = sequences[chunk_indices]
+                f.write(chunk_data.tobytes())
+
+        logging.info(f"Writing val.bin ({val_size:,} sequences) in chunks of {chunk_size:,}...")
+        with open(val_path, 'wb') as f:
+            for i in range(0, len(val_indices), chunk_size):
+                chunk_indices = val_indices[i:i+chunk_size]
+                chunk_data = sequences[chunk_indices]
+                f.write(chunk_data.tobytes())
 
         # Step 7: Create index files
         _create_index_files(output_dir, train_size, val_size, sequence_length)
@@ -376,6 +391,8 @@ def main():
     parser.add_argument("--tokenizer-dir", required=True, help="Directory containing trained tokenizer")
     parser.add_argument("--output-dir", required=True, help="Output directory for packed sequences")
     parser.add_argument("--force", action="store_true", help="Force re-packing even if data exists")
+    parser.add_argument("--skip-tokenizer-check", action="store_true",
+                        help="Skip tokenizer/corpus compatibility check (use when tokenizer is trained on separate corpus)")
     parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
 
     args = parser.parse_args()
@@ -419,12 +436,19 @@ def main():
     # Load tokenizer
     tokenizer, tokenizer_config = load_tokenizer(tokenizer_dir)
 
-    # Validate compatibility (blocking)
+    # Validate compatibility (blocking unless skipped)
     if not validate_compatibility(corpus_manifest, tokenizer_config):
-        raise ValueError(
-            "Corpus and tokenizer are incompatible. This could lead to poor tokenization quality. "
-            "Please retrain the tokenizer on the current corpus or use the correct corpus."
-        )
+        if args.skip_tokenizer_check:
+            logging.warning(
+                "Tokenizer/corpus compatibility check SKIPPED via --skip-tokenizer-check. "
+                "Proceeding with universal tokenizer."
+            )
+        else:
+            raise ValueError(
+                "Corpus and tokenizer are incompatible. This could lead to poor tokenization quality. "
+                "Please retrain the tokenizer on the current corpus or use the correct corpus. "
+                "If using a universal tokenizer trained on a separate corpus, add --skip-tokenizer-check"
+            )
 
     # Create hashes for traceability
     corpus_manifest_str = json.dumps(corpus_manifest, sort_keys=True, ensure_ascii=False)

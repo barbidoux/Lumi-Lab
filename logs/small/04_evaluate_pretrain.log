@@ -1,0 +1,51 @@
+2025-12-17 14:36:15 - INFO - Loading model...
+Loading model from checkpoints/pretrain/small/small/final on cuda...
+`torch_dtype` is deprecated! Use `dtype` instead!
+2025-12-17 14:36:16 - INFO - We will use 90% of the memory on device 0 for storing the model, and 10% for the buffer to avoid OOM. You can set `max_memory` in to a higher value to use more memory (at your own risk).
+Model loaded: 41,686,656 parameters on cuda
+2025-12-17 14:36:21 - INFO - Loading SentencePiece tokenizer from data/models/tokenizers/spm_32k/spm.model
+2025-12-17 14:36:21 - INFO - Model: 41,686,656 parameters
+2025-12-17 14:36:21 - INFO - Device: cuda:0
+2025-12-17 14:36:21 - INFO - Calculating perplexity on Wikitext-2 (max 100 samples)...
+Wikitext Perplexity:   0%|          | 0/100 [00:00<?, ?it/s]Wikitext Perplexity:   4%|▍         | 4/100 [00:02<01:09,  1.39it/s]Wikitext Perplexity:  10%|█         | 10/100 [00:03<00:21,  4.11it/s]Wikitext Perplexity:  15%|█▌        | 15/100 [00:03<00:13,  6.21it/s]Wikitext Perplexity:  18%|█▊        | 18/100 [00:03<00:10,  7.86it/s]Wikitext Perplexity:  47%|████▋     | 47/100 [00:03<00:01, 34.16it/s]Wikitext Perplexity:  59%|█████▉    | 59/100 [00:03<00:00, 43.70it/s]Wikitext Perplexity:  84%|████████▍ | 84/100 [00:03<00:00, 72.07it/s]Wikitext Perplexity: 100%|██████████| 100/100 [00:03<00:00, 26.14it/s]
+2025-12-17 14:36:31 - INFO -    └─ Wikitext Perplexity: 567.07 (5,823 tokens)
+2025-12-17 14:36:31 - INFO - Perplexity (Wikitext-2): 567.07
+2025-12-17 14:36:31 - INFO - BoolQ evaluation (max 100 samples)...
+2025-12-17 14:36:31 - INFO - ✅ Token validation passed: Yes=2816, No=448
+BoolQ Evaluation:   0%|          | 0/100 [00:00<?, ?it/s]BoolQ Evaluation:   9%|▉         | 9/100 [00:00<00:01, 83.88it/s]BoolQ Evaluation:  19%|█▉        | 19/100 [00:00<00:00, 91.44it/s]BoolQ Evaluation:  39%|███▉      | 39/100 [00:00<00:00, 137.10it/s]BoolQ Evaluation:  56%|█████▌    | 56/100 [00:00<00:00, 146.84it/s]BoolQ Evaluation:  72%|███████▏  | 72/100 [00:00<00:00, 149.77it/s]BoolQ Evaluation:  91%|█████████ | 91/100 [00:00<00:00, 161.61it/s]BoolQ Evaluation: 100%|██████████| 100/100 [00:00<00:00, 148.15it/s]
+2025-12-17 14:36:36 - INFO - BoolQ Accuracy: 0.300 (30/100)
+2025-12-17 14:36:36 - INFO - Running smoke-tests...
+2025-12-17 14:36:36 - INFO - 
+Test 1/5
+2025-12-17 14:36:36 - INFO - Prompt: What is artificial intelligence?
+2025-12-17 14:36:39 - INFO - Response: is to knowledge to and be to? to to? what we do, what do need learn how live can,, how can improve i...
+2025-12-17 14:36:39 - INFO - 
+Test 2/5
+2025-12-17 14:36:39 - INFO - Prompt: Explain machine learning in simple terms.
+2025-12-17 14:36:39 - INFO - Response: you to the and yours, you all a to of, on hands., your,,,'s the. is of. and. to;' you andc ass;, kno...
+2025-12-17 14:36:39 - INFO - 
+Test 3/5
+2025-12-17 14:36:39 - INFO - Prompt: How does a neural network work?
+2025-12-17 14:36:40 - INFO - Response: the has be by and is. of a of:.:, it a network in.: its a network., network.;. a: network. a network...
+2025-12-17 14:36:40 - INFO - 
+Test 4/5
+2025-12-17 14:36:40 - INFO - Prompt: What are the benefits of renewable energy?
+2025-12-17 14:36:40 - INFO - Response: are and they be to a extent but should.s not the as as of that. is to extent that to and are? is def...
+2025-12-17 14:36:40 - INFO - 
+Test 5/5
+2025-12-17 14:36:40 - INFO - Prompt: Describe the water cycle.
+2025-12-17 14:36:41 - INFO - Response: are in and the of with. is and the with. thes the of. a be. the..1 ... the () a.) b;;)1.12 the. The ...
+2025-12-17 14:36:41 - INFO - 
+Smoke-tests completed: 5 prompts tested
+2025-12-17 14:36:41 - INFO - 
+==================================================
+2025-12-17 14:36:41 - INFO - EVALUATION REPORT
+2025-12-17 14:36:41 - INFO - ==================================================
+2025-12-17 14:36:41 - INFO - Model: checkpoints/pretrain/small/small/final
+2025-12-17 14:36:41 - INFO - Parameters: 41,686,656
+2025-12-17 14:36:41 - INFO - Perplexity (Wikitext-2): 567.07
+2025-12-17 14:36:41 - INFO - BoolQ Accuracy: 0.300
+2025-12-17 14:36:41 - INFO - Smoke-tests: 5 prompts tested
+2025-12-17 14:36:41 - INFO - 
+Results saved to: evaluation_results/pretrain/small/evaluation_results.json
+2025-12-17 14:36:41 - INFO - ==================================================

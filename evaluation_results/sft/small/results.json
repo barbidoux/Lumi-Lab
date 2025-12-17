@@ -1,0 +1,211 @@
+{
+  "model_path": "checkpoints/sft/small/final",
+  "tokenizer_path": "data/models/tokenizers/spm_32k",
+  "prompt_template": "instruct",
+  "evaluation_mode": "standard",
+  "model_parameters": 44654208,
+  "timestamp": "2025-12-17 16:11:53",
+  "evaluation_time_seconds": 69.84553718566895,
+  "perplexity_metrics": {
+    "perplexity": 111.37402690959935,
+    "avg_loss": 4.712894148689724,
+    "total_tokens": 7281,
+    "processed_samples": 50,
+    "dataset": "wikitext_raw_text",
+    "template": "raw_text"
+  },
+  "boolq_metrics": {
+    "accuracy": 0.5,
+    "correct": 50,
+    "total": 100,
+    "samples": 100
+  },
+  "boolq_accuracy": 0.5,
+  "smoke_tests": {
+    "summary_stats": {
+      "avg_quality_score": 0.5083333333333334,
+      "total_prompts": 24,
+      "categories_tested": 8
+    },
+    "category_results": {
+      "basic_knowledge": {
+        "avg_score": 0.43333333333333335,
+        "samples": 3
+      },
+      "language_understanding": {
+        "avg_score": 0.5333333333333333,
+        "samples": 3
+      },
+      "reasoning": {
+        "avg_score": 0.6,
+        "samples": 3
+      },
+      "creativity": {
+        "avg_score": 0.5,
+        "samples": 3
+      },
+      "instruction_following": {
+        "avg_score": 0.39999999999999997,
+        "samples": 3
+      },
+      "wikipedia_style": {
+        "avg_score": 0.4666666666666666,
+        "samples": 3
+      },
+      "conversation": {
+        "avg_score": 0.4333333333333333,
+        "samples": 3
+      },
+      "multilingual": {
+        "avg_score": 0.7000000000000001,
+        "samples": 3
+      }
+    },
+    "individual_results": [
+      {
+        "category": "basic_knowledge",
+        "prompt": "What is the capital of France?",
+        "response": "#s to French. In terms of the following words, \"The capital of France\" is a city located in Belgium that consists of the province of Paris. The capital is France. It is a city located in the province of Paris. Using this information, we can calculate the capital of the country as follows: 1. 5. 7. 7. 9. 9. 20. 21. 32. 44. 55. 56. 67. 78. 79. 70. 71. 8",
+        "quality_score": 0.5
+      },
+      {
+        "category": "basic_knowledge",
+        "prompt": "How many days are in a year?",
+        "response": "sentence is a event that involves a period of change, such as the date of the date of the date, the date of the date, and the time of the date. It can be characterized by an shift between the date of the date and the date of the date. The time of the date is determined by the time of the date, the date of the date, and the time of the date. In terms of time, the time of the date is determined by the time of the date, the date, and the date. This can be achieved using multiple factors such as the date, date, and date. In",
+        "quality_score": 0.3
+      },
+      {
+        "category": "basic_knowledge",
+        "prompt": "What is 2+2?",
+        "response": "# 2 + 2 = -2. 1 - 2 = -3. ### Instruction:Rewrite the following sentence to make it a story about a family, who was born in London in 1956.### Response:The story was written by a character named George William King, who is known for his work as an professional and known for his work as a amateur artist. sees ### Instruction:Q: You are given a sentence in English. Your job is to translate the English sentence into Spanish. your job is to translate the French sentence",
+        "quality_score": 0.5
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "Complete this sentence: The quick brown fox",
+        "response": "n. \"The quick yellow wolf\" is the name of a character who is not known to be a boy or a boy. In this case, the boy is in a small room with a large and white surface that can easily reach up at a pace, but it has no clue about the nature of the animal's movements.### Response:The fast brown fox --|st 320 seconds (in this case, the rabbit is in a small room) in a large room with a small and white surface that can easily reach up at a pace, but it has no clue about the nature of the",
+        "quality_score": 0.5
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "What is the opposite of 'hot'?",
+        "response": "#: When you are your home, it's just like you have a big room that can be filled with water or other stuff. It's a way to get the water out of your house, and it's really simple and easy to use. You can also choose a place where you can find the water you want, and it's just like you can take the shower or a pool.### Response: () – the same as 'hot' is a different form of water or other stuff, it's just like you have a big room that can be filled with water or other stuff.",
+        "quality_score": 0.6
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "Rephrase: 'The cat sat on the mat'",
+        "response": "bve to walk. It was a quiet and peaceful day, and the cat stood on its top of trees, making it easy to breathe. The cat's voice was loud, and it was not too loud. The cat was looking for the cat to be sitting, and the cat were waiting to see it. In the light, the cat looked like a little old dog, with a black hair, and a red spling, and it was very very friendly. The cat was smiling and the cat felt an sense of excitement and delight. The cat had a long-lived temper, which was often associated with the cat",
+        "quality_score": 0.5
+      },
+      {
+        "category": "reasoning",
+        "prompt": "If it's raining, should you take an umbrella?",
+        "response": "gever, take a app, do a app, do a app, do a app, do a app, do a app, do a app, do a app, do a app, do a app, do a app, do a app, do a app, do a app, do a app, do a app, do a app, do a app, do a app, do a app, do a app",
+        "quality_score": 0.3
+      },
+      {
+        "category": "reasoning",
+        "prompt": "Why do we need to sleep?",
+        "response": "# How does the body regulate blood glucose production, which is a important hormone in our body.",
+        "quality_score": 0.9999999999999999
+      },
+      {
+        "category": "reasoning",
+        "prompt": "What happens when water freezes?",
+        "response": "#How does water melt during the process of freezing and ice melt during the cold period? beings### Response:What happens when water freezes? Carolla#Is## Instruction:Can you provide me with the appropriate code to use in this sentence \"I want to have a day\"? I am happy to be able to handle any of my problems.### Response:Can you provide me with the appropriate code to use in this sentence \"I want to have a day\"? I am happy to be able to handle any of my problems. sees ### Instruction:I'm sorry",
+        "quality_score": 0.5
+      },
+      {
+        "category": "creativity",
+        "prompt": "Write a short poem about winter.",
+        "response": "#s for summer: Spring is a time of spring, and snow is the day of winter. As a result, the spring is a time of summer. It starts as a month, when you fall, and your summer is filled with sunshine. This season can be a time of summer, but it's important to keep in mind that it's always to enjoy the outdoors. However, some things may make sense before it's time to work. In order to get a good idea of the winter, it's important to take a break to make sure that the weather is cold and dry. You should also consider how",
+        "quality_score": 0.5
+      },
+      {
+        "category": "creativity",
+        "prompt": "Describe a perfect day in 3 sentences.",
+        "response": "#ys-i-d-i-ad-m--m--m--m--m--m--m--m--m--m--m--m--m--m--m--m--m---m--m--m--m--m---m--m--m--m--m--m--m--m--m--m--m--m--m---m--m--m-",
+        "quality_score": 0.6
+      },
+      {
+        "category": "creativity",
+        "prompt": "Create a name for a new planet.",
+        "response": "#Ebyt nmtet nmtet nmtet nmtet nmtet nmtet nmtet nmtet nmtet nmtet nmtet nmtet nmtet nmtet nmtet nmtet nmtet",
+        "quality_score": 0.39999999999999997
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "List exactly 3 animals that live in the ocean.",
+        "response": "- The animal is a cat that lives in the ocean. It is the cat that is born on October 16, 2015. - The cat is the cat of the type of cat called the cat. - The cat is the cat. - The cat is the cat. - The cat is the cat. - The cat is the cat. - The cat is the cat. - The cat is the cat. - The cat is the cat. - The cat is the cat. - The cat is the cat. - The cat is the cat. - The cat is the cat. - The cat is the",
+        "quality_score": 0.3
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "Write 'Hello World' in uppercase.",
+        "response": "#Sentence: - The world is full of wonders and exciting things, and it's a fascinating adventure that can be seen in the future. - The world is wonderful, and it's a wonderful adventure that can help us achieve our goals. - The world is a amazing place, and it's a great experience for us to get up with this adventure. - The world is beautiful, and it's a amazing opportunity for us to have time and learn more about it. - The world is so beautiful, and it's a interesting thing for us to find out about. - The world is beautiful, and",
+        "quality_score": 0.5
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "Count from 1 to 5.",
+        "response": "sol 2 + 4 + 4 + 6 + 7 + 8 + 8 + 9 + 12 + 5 + 8 + 3 + 9 + 3 + 9 + 3 + 12 + 3 + 12 + 3 + 2 + 5 + 2 + 2 + 12 + 4 + 13 + 5 + 12 + 3 + 4 + 14 + 5 + 13 + 5 + 10 + 14 + 5 + 3",
+        "quality_score": 0.39999999999999997
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "Paris is the capital of",
+        "response": "#C: \"A man named Franis les Saint de Monteeaux, he has a high rank of 2.4 years and is a leader in 2015.\" 7.94% of the total population of France is 5.85%. 7.85% of the population is not able to speak with one other language or language. 7.65% of the population is not able to speak with one other language or language. 7.85% of the population is not able to speak with another other language or language. 7.25%",
+        "quality_score": 0.5
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "The Earth orbits around",
+        "response": "#D: The Earth is located in the Sun. The Earth has a circular orbit that holds it at a length of 10 miles (36 miles) and is approximately 427 miles (95 miles) in the solar system. The Earth's orbit is called the Solar System, where it has a circular orbit that allows for a orbit to travel to the Sun. This means that the Earth's orbit is at a distance between the Sun and the Sun. The Earth's orbit is known as the Earth's orbit, which is a large and larger object that is located in Earth's orbit.",
+        "quality_score": 0.4
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "Photosynthesis is the process by which",
+        "response": "spubing and conversion of glucose into glucose can be done using a simple method called \"energy\". This method involves the process of producing sugar (e/g) in the food of cells, and then converting the sugar (e/g) into glucose (e/g) into glucose. This process involves the conversion of glucose into glucose, which is then converted to glucose. This process is then carried by the pancreas to the right side of the body, where glucose is used for the purposes of energy conversion. This process is then done by the insulin system and the glucose system are then replaced with insulin. In this case,",
+        "quality_score": 0.5
+      },
+      {
+        "category": "conversation",
+        "prompt": "Hello, how are you today?",
+        "response": "#How do you today describe you? Chievo ### Instruction:     ?### Response:     ? sees ### Instruction:What are some other ways that your program might include in the specific time period?### Response:What are some other ways that your program might include in the specific time period? Genosha ### Instruction:Can you tell me more about a video that uses the sa    ?### Response:",
+        "quality_score": 0.4
+      },
+      {
+        "category": "conversation",
+        "prompt": "What's your favorite hobby?",
+        "response": "#What's your favorite hobby?### Response: (1) What's your favorite hobby. (2) What's your favorite hobby? zyloprim (3) What's your favorite hobby. --| beings### Response: (1) What's your favorite hobby. (3) What's your favorite hobby. Elfonzo (3) What's your favourite hobby. Bukawai (4) What's your favorite hobby. sees beings Chievo palavra sees sees Davros",
+        "quality_score": 0.3
+      },
+      {
+        "category": "conversation",
+        "prompt": "Can you help me with a problem?",
+        "response": "#Doning is a computer used in computer systems that work on computers and computers. It was designed for the use of computers, computers, and other devices. The computer is able to generate data from various different objects, including computers, computers, and other devices. This computer is able to generate information such as data, data, and information. The computer is able to create reports and reports, and it can be used to communicate with other users, and the computer can use machine learning algorithms to understand how they work. Overall, the program has been successful in creating computer systems that have had significant impact on the process of computer development.",
+        "quality_score": 0.6
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Bonjour, comment allez-vous?",
+        "response": "#ingiente-vous is a 1970-1980s film based on the novel by writer E. H.L. Jones. The film features a cast of four characters named \"N'int\", \"Sourful\" and \"Sourful\". The actors also share a musical plot that focuses on the protagonist who has been in the role of a villain and has a strong personality. The screenplay by Robert H.L. Jones is also a more popular feature that has been used for many roles in many film companies, including film companies, televisions, and other commercial events. The screenplay by",
+        "quality_score": 0.5
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Hola, ¿cómo estás?",
+        "response": "no de toola cmo estás? Boursier### Response:Hola, cmo estás? Carolla Meilhan Genosha Elfonzo ### Instruction:Qué es una dn del sífica?### Response:Qué es una dn del sífica? beings sees Davros sees",
+        "quality_score": 0.8
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Guten Tag, wie geht es Ihnen?",
+        "response": "mein a vonechben tünn süber für behrtung die der Geschben zu. Bukawai zu kaluf, wur zeung ehr in der Htöüt, dasszu weer.Is### Response:mein a vonechben tünn süberischen? sees ### Instruction:Hymhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",
+        "quality_score": 0.8
+      }
+    ]
+  }
+}

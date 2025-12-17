@@ -1,0 +1,36 @@
+{
+  "model_path": "checkpoints/pretrain/small/small/final",
+  "model_parameters": 41686656,
+  "device": "cuda:0",
+  "perplexity_wikitext": 567.0711994123207,
+  "boolq_accuracy": 0.3,
+  "boolq_correct": 30,
+  "boolq_total": 100,
+  "smoke_tests": [
+    {
+      "prompt": "What is artificial intelligence?",
+      "response": "is to knowledge to and be to? to to? what we do, what do need learn how live can,, how can improve improve skills can achieved?s and to for the of nature the which bet,, and of and of life  we have do things, do and that be we not, are to a extent for. the and is is: can the of not do things the, what it? a to a and be a the. a the no",
+      "full_text": "What is artificial intelligence? is to knowledge to and be to? to to? what we do, what do need learn how live can,, how can improve improve skills can achieved?s and to for the of nature the which bet,, and of and of life  we have do things, do and that be we not, are to a extent for. the and is is: can the of not do things the, what it? a to a and be a the. a the no"
+    },
+    {
+      "prompt": "Explain machine learning in simple terms.",
+      "response": "you to the and yours, you all a to of, on hands., your,,,'s the. is of. and. to;' you andc ass;, know that; to...,, 032697018;0:3404057;4480426;191-.,022622;648",
+      "full_text": "Explain machine learning in simple terms. you to the and yours, you all a to of, on hands., your,,,'s the. is of. and. to;' you andc ass;, know that; to...,, 032697018;0:3404057;4480426;191-.,022622;648"
+    },
+    {
+      "prompt": "How does a neural network work?",
+      "response": "the has be by and is. of a of:.:, it a network in.: its a network., network.;. a: network. a network a in  A: is the of. network ( called network or) a of. ( domain A is of. It network is by an.: B is the. A of A A a with ( C A A A is. A A B a is.) B the a C a",
+      "full_text": "How does a neural network work? the has be by and is. of a of:.:, it a network in.: its a network., network.;. a: network. a network a in  A: is the of. network ( called network or) a of. ( domain A is of. It network is by an.: B is the. A of A A a with ( C A A A is. A A B a is.) B the a C a"
+    },
+    {
+      "prompt": "What are the benefits of renewable energy?",
+      "response": "are and they be to a extent but should.s not the as as of that. is to extent that to and are? is definition. is limit? is any of terms on or an to to is and be a, is, to? do use, is. is a or to an is a to and is be an is to a be does? a or an a to is a be which is be is.,? not or. the is be or a",
+      "full_text": "What are the benefits of renewable energy? are and they be to a extent but should.s not the as as of that. is to extent that to and are? is definition. is limit? is any of terms on or an to to is and be a, is, to? do use, is. is a or to an is a to and is be an is to a be does? a or an a to is a be which is be is.,? not or. the is be or a"
+    },
+    {
+      "prompt": "Describe the water cycle.",
+      "response": "are in and the of with. is and the with. thes the of. a be. the..1 ... the () a.) b;;)1.12 the. The . the, the the. the;, is,. a.;212.3 the the, an the the of c. of. the c of b.. b;24.. 51.3 a;",
+      "full_text": "Describe the water cycle. are in and the of with. is and the with. thes the of. a be. the..1 ... the () a.) b;;)1.12 the. The . the, the the. the;, is,. a.;212.3 the the, an the the of c. of. the c of b.. b;24.. 51.3 a;"
+    }
+  ]
+}

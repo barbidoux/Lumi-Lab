@@ -36,7 +36,8 @@
       "Bash(conda info:*)",
       "Bash(wc:*)",
       "Bash(git -C /mnt/c/Users/matth/GITREPOS/Lumi-Lab status --short)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(xargs ls:*)"
     ],
     "deny": []
   }

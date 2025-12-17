@@ -19,7 +19,7 @@
   "_architecture_details": {
     "head_dim": 64,
     "ffn_ratio": 4.0,
-    "estimated_parameters": "~6M",
+    "estimated_parameters": "~23M",
     "normalization": "RMSNorm",
     "activation": "SwiGLU", 
     "position_encoding": "RoPE",

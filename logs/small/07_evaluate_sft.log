@@ -1,0 +1,110 @@
+SFT Model Evaluation Report
+============================================================
+Model Path: checkpoints/sft/small/final
+Tokenizer Path: data/models/tokenizers/spm_32k
+Prompt Template: instruct
+Evaluation Mode: standard
+LoRA Enabled: True
+============================================================
+Loading tokenizer from: data/models/tokenizers/spm_32k
+Found SentencePiece model: data/models/tokenizers/spm_32k/spm.model
+Loaded SentencePiece model with vocab size: 32768
+✓ Created HF tokenizer from SentencePiece model
+Special tokens mapping: {'pad': 0, 'unk': 1, 'bos': 2, 'eos': 3}
+✓ Tokenizer validation passed - SP32k compatible
+Loading model from: checkpoints/sft/small/final
+`torch_dtype` is deprecated! Use `dtype` instead!
+✓ Loaded base model
+Model parameters: 44,654,208 total, 0 trainable
+
+Calculating perplexity using real text data...
+  Processing 1940 text samples in RAW format (like 05_evaluate)...
+    Processed 10/50 samples...
+    Processed 20/50 samples...
+    Processed 30/50 samples...
+    Processed 40/50 samples...
+    Processed 50/50 samples...
+
+Perplexity Results:
+  Format: Raw text (no conversational formatting)
+  Samples: 50
+  Tokens: 7,281
+  Average Loss: 4.7129
+  Perplexity: 111.37
+
+Evaluating BoolQ accuracy (max 100 samples)...
+  Processing 100 BoolQ samples...
+    Processed 25/100 BoolQ samples...
+    Processed 50/100 BoolQ samples...
+    Processed 75/100 BoolQ samples...
+    Processed 100/100 BoolQ samples...
+
+BoolQ Results:
+  Samples: 100
+  Correct: 50
+  Accuracy: 0.500 (50.0%)
+
+Running smoke tests (standard mode)...
+  Testing category: basic_knowledge
+    basic_knowledge: 0.43 avg quality
+  Testing category: language_understanding
+    language_understanding: 0.53 avg quality
+  Testing category: reasoning
+    reasoning: 0.60 avg quality
+  Testing category: creativity
+    creativity: 0.50 avg quality
+  Testing category: instruction_following
+    instruction_following: 0.40 avg quality
+  Testing category: wikipedia_style
+    wikipedia_style: 0.47 avg quality
+  Testing category: conversation
+    conversation: 0.43 avg quality
+  Testing category: multilingual
+    multilingual: 0.70 avg quality
+
+Smoke Test Results:
+  Categories: 8
+  Total prompts: 24
+  Average quality: 0.508
+
+============================================================
+
+Generation Test (5 samples):
+============================================================
+
+--- Sample 1 ---
+Prompt: Explain what machine learning is in simple terms.
+Response: #ingitation is a process that involves creating a new machine learning system, which is the process of finding a new or new machine learning system. This system involves the use of a machine learning system to store and store the existing machine learning systems. It involves learning the process of identifying a new machine learning system, which is the process of creating a new machine learning system, which is the process of finding a new machine learning system. In this case, the machine learning system has developed a new machine learning system called the machine learning system (SSS), which is the process of searching the data by applying the knowledge used to the machine
+------------------------------------------------------------
+
+--- Sample 2 ---
+Prompt: Write a short poem about the ocean.
+Response: #ingation. What is the water in the ocean? The waters are like a ocean. The sea is a ocean, with a water that can flow through the ocean and it is a great thing to see. The ocean is a great place, but it is not one of all the things that have be seen. It is a wonderful place to see and see. It is a beautiful place to go and have some fun activities, such as watching a movie or riding a car. But this time, it is a great place to see and see. It is a great place for people to think and think. It is a great place
+------------------------------------------------------------
+
+--- Sample 3 ---
+Prompt: What are the benefits of renewable energy?
+Response: #Sibu: Renewable energy is a source of renewable energy and the use of renewable energy. It is also a source of renewable energy and the ability to convert energy into electricity. However, it can be used in other applications such as energy, power, and wind generation. palavra##Sibu: Renewable energy is a source of renewable energy but it is also a source of renewable energy. It is also a source of renewable energy because it is a source of renewable energy. Carollas: beings##Sibu: Renewable energy is a source of renewable energy but it is also a source of renewable energy.
+------------------------------------------------------------
+
+--- Sample 4 ---
+Prompt: How do you make a good first impression?
+Response: # What are the steps to make a good first impression? palavra ### Instruction:      .### Response:      . Boursier ### Instruction:         ?### Response:         ? zyloprim Bitola ### Instruction:
+------------------------------------------------------------
+
+--- Sample 5 ---
+Prompt: Describe the process of photosynthesis.
+Response: #ion of photosynthesis is an process that involves a process called photosynthesis. The process consists of 26 hours, a process called photosynthesis, which involves photosynthesis. The first step is to start the process by converting the plants into their own cells, which then produce a new plant. The process takes in energy and its ability to convert the plants into their own cells, which are then stored in the cell. This process takes into account the unique characteristics of the plant, including its size, shape, and appearance. Therefore, the process of photosynthesis depends on the specific plant, and the process of photosynthesis is determined by the process of photosynthesis.
+------------------------------------------------------------
+
+Results saved to: evaluation_results/sft/small/results.json
+
+============================================================
+EVALUATION RESULTS
+============================================================
+Perplexity: 111.37
+BoolQ Accuracy: 0.500 (50.0%)
+Smoke Test Quality: 0.508
+Evaluation Time: 69.8s
+Model Parameters: 44,654,208
+============================================================
