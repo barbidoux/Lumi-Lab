@@ -68,6 +68,45 @@ def setup_logging(output_dir: Path, verbose: bool = False):
 logger = logging.getLogger(__name__)
 
 
+def find_latest_checkpoint(output_dir: str) -> Optional[str]:
+    """
+    Find the latest checkpoint in the output directory.
+
+    HuggingFace Trainer saves checkpoints as 'checkpoint-{step}' directories.
+
+    Args:
+        output_dir: The output directory where checkpoints are saved
+
+    Returns:
+        Path to the latest checkpoint directory, or None if no checkpoints found
+    """
+    output_path = Path(output_dir)
+
+    if not output_path.exists():
+        return None
+
+    checkpoint_dirs = []
+
+    # Look for HuggingFace format: checkpoint-{step}
+    for item in output_path.iterdir():
+        if item.is_dir() and item.name.startswith("checkpoint-"):
+            try:
+                step_num = int(item.name.split("-")[1])
+                checkpoint_dirs.append((step_num, item))
+            except (ValueError, IndexError):
+                continue
+
+    if not checkpoint_dirs:
+        return None
+
+    # Sort by step number (latest first)
+    checkpoint_dirs.sort(key=lambda x: x[0], reverse=True)
+
+    # Return the latest checkpoint path
+    latest_step, latest_dir = checkpoint_dirs[0]
+    return str(latest_dir)
+
+
 def load_config(config_path: str) -> Dict[str, Any]:
     """Load training configuration from JSON file."""
     with open(config_path, 'r', encoding='utf-8') as f:
@@ -555,7 +594,9 @@ def train_model_with_trl(model: nn.Module,
 
     # Start training
     logger.info(f"Training on {len(train_hf_dataset):,} examples for {training_args.max_steps} steps")
-    trainer.train()
+    if resume_from_checkpoint:
+        logger.info(f"🔄 Resuming training from: {resume_from_checkpoint}")
+    trainer.train(resume_from_checkpoint=resume_from_checkpoint)
 
     # Save final model
     final_dir = output_dir / "final"
@@ -607,7 +648,7 @@ def main():
     parser.add_argument('--data_weights', type=float, nargs='*',
                        help='Sampling weights for multi-dataset training')
     parser.add_argument('--resume_from_checkpoint', type=str, default=None,
-                       help='Path to checkpoint to resume from, or "True" to resume from the latest in output_dir')
+                       help="Path to checkpoint to resume from, or 'auto' for latest")
     parser.add_argument('--do_gen_tests', action='store_true',
                        help='Enable generation tests during evaluation (useful for monitoring model quality)')
     parser.add_argument('--verbose', action='store_true',
@@ -661,14 +702,27 @@ def main():
         logger.info("Preparing tokenizer for Hugging Face compatibility...")
         hf_tokenizer_path = prepare_hf_tokenizer(args.tokenizer_path)
 
-        # Handle checkpoint resuming for TRL
+        # Handle 'auto' checkpoint detection (same pattern as 40_pretrain.py)
         resume_from_checkpoint = args.resume_from_checkpoint
-        if resume_from_checkpoint == "True":
-            # TRL's trainer can auto-resume from the output_dir
-            resume_from_checkpoint = True
-            logger.info(f"Resuming from latest checkpoint in {args.output_dir}")
-        else:
-            resume_from_checkpoint = resume_from_checkpoint
+        if resume_from_checkpoint == "auto":
+            logger.info("🔍 Auto-detecting latest checkpoint...")
+            resume_from_checkpoint = find_latest_checkpoint(str(output_dir))
+            if resume_from_checkpoint:
+                logger.info(f"✅ Found latest checkpoint: {resume_from_checkpoint}")
+            else:
+                logger.info("ℹ️  No existing checkpoints found, starting fresh training")
+                resume_from_checkpoint = None
+        elif resume_from_checkpoint == "True":
+            # Legacy support: "True" means auto-detect
+            resume_from_checkpoint = find_latest_checkpoint(str(output_dir))
+            if resume_from_checkpoint:
+                logger.info(f"✅ Found latest checkpoint: {resume_from_checkpoint}")
+            else:
+                logger.info("ℹ️  No existing checkpoints found, starting fresh training")
+                resume_from_checkpoint = None
+
+        if resume_from_checkpoint:
+            logger.info(f"🔄 Resuming training from checkpoint: {resume_from_checkpoint}")
 
         # Start training using the TRL trainer
         train_model_with_trl(

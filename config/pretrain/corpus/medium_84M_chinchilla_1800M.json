@@ -1,0 +1,105 @@
+{
+  "name": "medium_84M_chinchilla_1800M_dataset",
+  "description": "Dataset for 84M parameter model - 1.8B tokens Chinchilla-optimal",
+  "version": "1.0.0",
+  "model_target": "84M parameters",
+  "target_total_tokens": 1800000000,
+  "datasets_count": 4,
+  "chinchilla_ratio": "21:1 tokens per parameter",
+  "sequence_length": 1024,
+  "vocab_size": 32768,
+  "strategy": "Balanced single-phase training with diverse, high-quality sources",
+
+  "processing_params": {
+    "shard_size": 10000,
+    "vocab_size": 32768
+  },
+
+  "deduplication": {
+    "threshold": 0.85,
+    "num_perm": 128,
+    "shingle_size": 3
+  },
+
+  "training_params": {
+    "train_ratio": 0.98,
+    "shard_tokens": 2000000,
+    "sequence_length": 1024,
+    "vocab_size": 32768,
+    "tokenizer_path": "data/models/tokenizers/spm_32k"
+  },
+
+  "sources": {
+    "c4_full": {
+      "type": "huggingface",
+      "dataset_name": "allenai/c4",
+      "subset": "en",
+      "split": "train",
+      "text_keys": "text",
+      "token_budget": 450000000,
+      "weight": 0.25,
+      "description": "C4 English - diverse web content for generalization",
+      "analysis_sample_size": 2000,
+      "chars_per_token": 4.0,
+      "margin_ratio": 0.02,
+      "trust_remote_code": false,
+      "min_length": 50,
+      "max_length": 10000,
+      "require_english": true
+    },
+
+    "gutenberg_full": {
+      "type": "huggingface",
+      "dataset_name": "sedthh/gutenberg_english",
+      "subset": null,
+      "split": "train",
+      "text_keys": "TEXT",
+      "token_budget": 450000000,
+      "weight": 0.25,
+      "description": "Project Gutenberg - classic literature and narrative structures",
+      "analysis_sample_size": 1000,
+      "chars_per_token": 4.0,
+      "margin_ratio": 0.02,
+      "trust_remote_code": false,
+      "min_length": 200,
+      "max_length": 900000,
+      "require_english": true
+    },
+
+    "fineweb_full": {
+      "type": "huggingface",
+      "dataset_name": "HuggingFaceFW/fineweb-edu",
+      "subset": "sample-10BT",
+      "split": "train",
+      "text_keys": "text",
+      "token_budget": 450000000,
+      "weight": 0.25,
+      "description": "FineWeb-Edu - educational content for structured learning",
+      "analysis_sample_size": 1500,
+      "chars_per_token": 4.0,
+      "margin_ratio": 0.02,
+      "trust_remote_code": false,
+      "min_length": 100,
+      "max_length": 9000,
+      "require_english": true
+    },
+
+    "vietgpt_wikipedia_full": {
+      "type": "huggingface",
+      "dataset_name": "vietgpt/wikipedia_en",
+      "subset": null,
+      "split": "train",
+      "text_keys": "text",
+      "token_budget": 450000000,
+      "weight": 0.25,
+      "description": "VietGPT Wikipedia - encyclopedic foundation with enhanced preprocessing",
+      "analysis_sample_size": 1500,
+      "chars_per_token": 4.0,
+      "margin_ratio": 0.02,
+      "trust_remote_code": false,
+      "min_length": 100,
+      "max_length": 50000,
+      "require_english": true
+    }
+  }
+}

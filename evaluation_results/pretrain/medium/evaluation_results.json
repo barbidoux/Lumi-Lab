@@ -1,0 +1,36 @@
+{
+  "model_path": "checkpoints/pretrain/medium/medium/final",
+  "model_parameters": 83898880,
+  "device": "cuda:0",
+  "perplexity_wikitext": 530.8344980754657,
+  "boolq_accuracy": 0.31,
+  "boolq_correct": 31,
+  "boolq_total": 100,
+  "smoke_tests": [
+    {
+      "prompt": "What is artificial intelligence?",
+      "response": "intelligence the to of AI, is new the. we learning to AI is the in of.. a. learnings the a  learning the. is the 0 . is intelligence   learning is  is   in1. the has ,1 is  and is 3 the are  is Intelligence. a Human   Intelligence machine to in Machine is in intelligence The and. is Intelligence an the of  Intelligence  A Intelligence to  is in Intelligence",
+      "full_text": "What is artificial intelligence? intelligence the to of AI, is new the. we learning to AI is the in of.. a. learnings the a  learning the. is the 0 . is intelligence   learning is  is   in1. the has ,1 is  and is 3 the are  is Intelligence. a Human   Intelligence machine to in Machine is in intelligence The and. is Intelligence an the of  Intelligence  A Intelligence to  is in Intelligence"
+    },
+    {
+      "prompt": "Explain machine learning in simple terms.",
+      "response": ", can to in a way in very cases the of 045,01 6 44,27 8229,4391 80339443524259886733448489714157729799238358338400487427204",
+      "full_text": "Explain machine learning in simple terms., can to in a way in very cases the of 045,01 6 44,27 8229,4391 80339443524259886733448489714157729799238358338400487427204"
+    },
+    {
+      "prompt": "How does a neural network work?",
+      "response": "can t the network over 00/001214137?: is possible understand network? how do know? is??s: network network be.. the network in it a network network. - network and network.  network network how network be networks - network network network networks network network data network network Network network network  network Network networking network network wire network network router network network computer network network link network network point network network the network",
+      "full_text": "How does a neural network work? can t the network over 00/001214137?: is possible understand network? how do know? is??s: network network be.. the network in it a network network. - network and network.  network network how network be networks - network network network networks network network data network network Network network network  network Network networking network network wire network network router network network computer network network link network network point network network the network"
+    },
+    {
+      "prompt": "What are the benefits of renewable energy?",
+      "response": "-2 energy and energy. you find on website energy energy renewable is to 01 the in2 to7 of power your. energy, is the of, energy is the,, are2 energy, it the, and is, is is of it 2 is energy is 11 energy energy is energy energy energy3 energy is2 energy energy. is the energy, of is energy1, is energy,2 is of 1 energy is3 is energy2",
+      "full_text": "What are the benefits of renewable energy?-2 energy and energy. you find on website energy energy renewable is to 01 the in2 to7 of power your. energy, is the of, energy is the,, are2 energy, it the, and is, is is of it 2 is energy is 11 energy energy is energy energy energy3 energy is2 energy energy. is the energy, of is energy1, is energy,2 is of 1 energy is3 is energy2"
+    },
+    {
+      "prompt": "Describe the water cycle.",
+      "response": "how grow plants How plants when the is are? is, can can be at 0:142 and is16 is can be :52 is be:23 is be2 be3: and3  the of is: is: the are is the is is:4 are the is: are a Thesson are is are:: is is The () is are of is is is : be is",
+      "full_text": "Describe the water cycle. how grow plants How plants when the is are? is, can can be at 0:142 and is16 is can be :52 is be:23 is be2 be3: and3  the of is: is: the are is the is is:4 are the is: are a Thesson are is are:: is is The () is are of is is is : be is "
+    }
+  ]
+}

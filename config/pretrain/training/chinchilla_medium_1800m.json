@@ -1,0 +1,66 @@
+{
+  "name": "chinchilla_medium_1800m_training",
+  "description": "Complete training config for 84M model - 1.8B tokens Chinchilla-optimal",
+  "version": "1.0",
+
+  "architecture_config": "config/architectures/medium.json",
+
+  "training_params": {
+    "learning_rate": 4e-4,
+    "per_device_train_batch_size": 8,
+    "gradient_accumulation_steps": 4,
+    "max_steps": 54932,
+    "warmup_steps": 5493,
+    "warmup_ratio": 0.1,
+    "weight_decay": 0.1,
+    "max_grad_norm": 1.0,
+    "save_steps": 5000,
+    "logging_steps": 200,
+    "eval_steps": 2500,
+    "log_dataset_mix_steps": 500,
+    "save_total_limit": 3
+  },
+
+  "optimizer": {
+    "type": "adamw",
+    "betas": [0.9, 0.95],
+    "eps": 1e-8
+  },
+
+  "scheduler": {
+    "type": "cosine",
+    "num_cycles": 0.5
+  },
+
+  "hardware_params": {
+    "use_flash_attn": true,
+    "bf16": true,
+    "gradient_checkpointing": false,
+    "dataloader_num_workers": 4
+  },
+
+  "reproducibility": {
+    "seed": 42,
+    "deterministic": true
+  },
+
+  "data_params": {
+    "sequence_length": 1024,
+    "data_seed": 42,
+    "train_val_split": 0.95
+  },
+
+  "_calculations": {
+    "effective_batch_size": "8 * 4 = 32 sequences",
+    "tokens_per_step": "32 * 1024 = 32,768 tokens",
+    "max_steps_calculation": "1.8B / 32,768 = 54,931.64, rounded to 54,932",
+    "warmup_steps_calculation": "54,932 * 0.1 = 5,493 steps",
+    "total_tokens": "54,932 * 32,768 = 1,800,212,480 tokens"
+  },
+
+  "_training_estimates": {
+    "training_time": "40-50 hours on RTX 4090",
+    "memory_usage": "~14-16GB VRAM",
+    "tokens_per_second": "~10,000-12,000"
+  }
+}

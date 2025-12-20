@@ -1,0 +1,211 @@
+{
+  "model_path": "checkpoints/sft/medium/final",
+  "tokenizer_path": "data/models/tokenizers/spm_32k",
+  "prompt_template": "instruct",
+  "evaluation_mode": "standard",
+  "model_parameters": 91812352,
+  "timestamp": "2025-12-20 11:15:22",
+  "evaluation_time_seconds": 87.23672103881836,
+  "perplexity_metrics": {
+    "perplexity": 65.76269820594432,
+    "avg_loss": 4.186052781018463,
+    "total_tokens": 7281,
+    "processed_samples": 50,
+    "dataset": "wikitext_raw_text",
+    "template": "raw_text"
+  },
+  "boolq_metrics": {
+    "accuracy": 0.44,
+    "correct": 44,
+    "total": 100,
+    "samples": 100
+  },
+  "boolq_accuracy": 0.44,
+  "smoke_tests": {
+    "summary_stats": {
+      "avg_quality_score": 0.5291666666666667,
+      "total_prompts": 24,
+      "categories_tested": 8
+    },
+    "category_results": {
+      "basic_knowledge": {
+        "avg_score": 0.4666666666666666,
+        "samples": 3
+      },
+      "language_understanding": {
+        "avg_score": 0.3666666666666667,
+        "samples": 3
+      },
+      "reasoning": {
+        "avg_score": 0.5333333333333333,
+        "samples": 3
+      },
+      "creativity": {
+        "avg_score": 0.6333333333333333,
+        "samples": 3
+      },
+      "instruction_following": {
+        "avg_score": 0.6333333333333333,
+        "samples": 3
+      },
+      "wikipedia_style": {
+        "avg_score": 0.5333333333333333,
+        "samples": 3
+      },
+      "conversation": {
+        "avg_score": 0.5666666666666667,
+        "samples": 3
+      },
+      "multilingual": {
+        "avg_score": 0.5,
+        "samples": 3
+      }
+    },
+    "individual_results": [
+      {
+        "category": "basic_knowledge",
+        "prompt": "What is the capital of France?",
+        "response": "#:,, ,, ,, ,,,### Response:,, ,, ,,, ,,,,,)  ,,  ,,  ,,, ,,  ,,  ,,  , ,,",
+        "quality_score": 0.39999999999999997
+      },
+      {
+        "category": "basic_knowledge",
+        "prompt": "How many days are in a year?",
+        "response": "#14 hours = 36,950.78 days. In this case, the months are 20,500 and 12,700 days. In this case, the months are 22,500 and 36,950 days. Now, let's break down the question and answer the question: What is the number of days in a year? The answer is:### Response:The number of days in a year is 36. Therefore, the number of days in a year is 36. This is",
+        "quality_score": 0.5
+      },
+      {
+        "category": "basic_knowledge",
+        "prompt": "What is 2+2?",
+        "response": "#       .    ,    ,           .    ,           .        ,",
+        "quality_score": 0.49999999999999994
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "Complete this sentence: The quick brown fox",
+        "response": "#1. The dog: \"Ceply\" is a word that means \"to get.\" It is a small, small,, little dog that takes care of the dog. 2. the dog: \"A little\" is a word that means \"to get.\" It is a common term in many languages, including English, English, and Polish. 3. the dog: \"The dog\" is a large dog that helps dogs get their own attention and is often used as a pet for pets. 4. the dog: \"I love\" is a word that means \"to get.\" It is a simple,",
+        "quality_score": 0.5
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "What is the opposite of 'hot'?",
+        "response": "#1. 'hot': The negative expression that is used to describe a person being cold or ill, and also indicates an feeling of hunger or excitement in their lives. 2. 'hot': The negative expression that is used to describe a person being hot, as it indicates an feeling of thirst or anxiety. 3. 'hot': The negative expression that is used to describe a person being warm, as it indicates an feeling of happiness or sadness in their lives. 4. 'hot': The positive expression that is used to describe a person being cold, as it suggests an feeling of excitement or excitement in",
+        "quality_score": 0.3
+      },
+      {
+        "category": "language_understanding",
+        "prompt": "Rephrase: 'The cat sat on the mat'",
+        "response": "#1. What is the reason that the cat was seated on the mat? 2. What is the reason why the cat stood on the mat? 3. Why did the cat sit on the mat? 4. How did the cat move around and make a impression? 5. What did the cat do to make it look like the other animals? 6. What did the cat look like when they sat on the mat? 7. What is the reason why the cat was sitting on the mat? 8. What was the reason why the cat did not sit on the mat? 9. What is",
+        "quality_score": 0.3
+      },
+      {
+        "category": "reasoning",
+        "prompt": "If it's raining, should you take an umbrella?",
+        "response": "#1. Make sure the umbrella is not covered in a raining blanket or covering. 2. Wear a hat and a waterproof hat when getting the hat. 3. Never put your hat on the umbrella because it can cause injury or damage to the umbrella. 4. Be careful of the hat or umbrella for the least possible risk. 5. Use protective clothing and gloves when applying to your umbrella. 6. Avoid using a umbrella while taking the umbrella. 7. Keep the umbrella out of the sun and from the window as needed. 8. Be careful of the umbrella when using a umbrella when using a",
+        "quality_score": 0.5
+      },
+      {
+        "category": "reasoning",
+        "prompt": "Why do we need to sleep?",
+        "response": "#1. The stomach is the organ that keeps food in the intestines, which is responsible for the bowel system. 2. When you have a night time day, it takes about two days to get done. 3. When you're sleeping, it gets harder and more difficult to eat. 4. When you're awake, it becomes harder to sleep. 5. It's a huge deal for us to have the same day every day. 6. If we don't have a night time day, it is not possible to make it for us. 7. We're not able",
+        "quality_score": 0.5
+      },
+      {
+        "category": "reasoning",
+        "prompt": "What happens when water freezes?",
+        "response": "#The liquid of the body is heated to the boiling point. If there are too much heat, the body can begin to shrink and lose its energy. This is called freezing. When water freezes, it causes a amount of heat to get into the body. In this case, it is known as the hypomoporation problem. When the body loses its energy, it gets into a state of exhaustion that will last for a few weeks or even years. This can make it difficult to hold up and release fluids. If there is enough water in the body to melt, it can cause blood loss, which can result in dehydration.",
+        "quality_score": 0.6
+      },
+      {
+        "category": "creativity",
+        "prompt": "Write a short poem about winter.",
+        "response": "#\"The snow is beginning to melt, and the air is cold and cold.\" Using a simple sentence that includes two sentences, I can create a short poem that captures the meaning of the words in the poem. The poem follows the original sentence and begins with the following sentence: \"The snow is beginning to melt, and the air is hot and cold.\" The poem uses the word \"the snow\" as the final part of the poem, and then uses it to capture the meaning of the words. The poem is also used in a context where the reader feels that they are preparing for the next day in the weather. Overall",
+        "quality_score": 0.5
+      },
+      {
+        "category": "creativity",
+        "prompt": "Describe a perfect day in 3 sentences.",
+        "response": "#1. In this sentence, the subject is \"The sun rises over the hill\". The subject is \"the sun rises over the hill\", and the subject is \"the sky\". 2. In this sentence, the subject is \"the sun rises over the hill\". 3. In this sentence, the subject is \"the sun rises over the hill\". 4. In this sentence, the subject is \"the sun rises over the hill\". 5. In this sentence, the subject is \"the sun rises over the hill\". 6. In this sentence, the subject is \"the sun rises over the hill\".",
+        "quality_score": 0.4
+      },
+      {
+        "category": "creativity",
+        "prompt": "Create a name for a new planet.",
+        "response": "#1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20. 21. 22. 23. 24. 25. 26. 27. 28. 39. 44. 45. 56. 57. 69.",
+        "quality_score": 0.9999999999999999
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "List exactly 3 animals that live in the ocean.",
+        "response": "#1. The sea, like an ocean, is home to a variety of animals. 2. The ocean has been home for thousands of years. 3. The ocean's water is used by marine life and other plants. 4. The oceans have been part of many places around Earth, including the ocean. 5. The ocean's waters have been used by marine life for millions of years. 6. The ocean's water has been used for millions of years. 7. The oceans have been used for hundreds of billions of years. 8. The ocean's food supply has been",
+        "quality_score": 0.5
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "Write 'Hello World' in uppercase.",
+        "response": "## Response:Here is the code to create a interactive and creative text for a book on climate change: python import text = \"Catess 10% \", text.println; text.println; println;  To use this code, I will use the following commands: python import text = \"Catess 10% \"  This command will automatically select from the left-hand side of the message. You can use the text command to access the text with the text 'Sates",
+        "quality_score": 0.5
+      },
+      {
+        "category": "instruction_following",
+        "prompt": "Count from 1 to 5.",
+        "response": "## Response:To find the correct answer, I will use a search database like the above. Here's an example of a query that takes in a given list of items:   \"name\": ['Bd', 'C', 'T', 'N'], 'S', 'L', 'C', 'D', 'P', 'Y', 'D', 'G', 'E', 'S', 'K', 'B', 'H', 'X', 'C', 'J'",
+        "quality_score": 0.9
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "Paris is the capital of",
+        "response": "## Response:Es una ce de aquática de acriblncia para los mejos las más para paceras de que puede espaol en cada. CREON est es una ce de la celcin para el mejo y sus noles de aquirías y ce de la que el mejo en blarados de las 50% de las 30% de las. Goldilind, que es una ce aquática de",
+        "quality_score": 0.6
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "The Earth orbits around",
+        "response": "# 1. The Earth is a large planet that is in the orbit of Earth. 2. The Earth has a mass of 49,6820 times the Earth's surface mass. 3. The Earth is surrounded by clouds and thick dust. 4. The atmosphere is dense and it is very hot. 5. The atmosphere is cold and hard. 6. The earth's atmosphere is thick and hard. 7. The planet is also an small planet with a atmosphere. 8. The atmosphere is thick and rich, making it ideal for space missions. 9. The atmosphere",
+        "quality_score": 0.5
+      },
+      {
+        "category": "wikipedia_style",
+        "prompt": "Photosynthesis is the process by which",
+        "response": "#  , , ,    . ### Response:  , , ,    .  Davros    ,        .     ,          . zyloprim,",
+        "quality_score": 0.49999999999999994
+      },
+      {
+        "category": "conversation",
+        "prompt": "Hello, how are you today?",
+        "response": "#1. I am wondering about a situation that is happening in the world of digital media. 2. What does the data mean to me? A:### Response:The data is saying that there is a major issue with digital media and that it is not enough to be a important issue for anyone. The data is also saying that there are some potential issues that people might have about digital media. sees### Response:This situation is not related to the data being discussed in this situation. beings #1. We have a large number of people living in the country with a large population of people.",
+        "quality_score": 0.6
+      },
+      {
+        "category": "conversation",
+        "prompt": "What's your favorite hobby?",
+        "response": "#1. A activity: If you have a large group of people, choose their activity. To use this opportunity, do the following: 1. Use a list of the activities to find the most popular hobby. 2. Go in a new category and see what you like and what you want to do. 3. If you don't have any questions, make sure to read the \"Indortive\" section below for more information. 4. Make sure to read and use your favorite hobbies or interests to avoid being bored. 5. Use a small or small activity to get the best result.",
+        "quality_score": 0.6
+      },
+      {
+        "category": "conversation",
+        "prompt": "Can you help me with a problem?",
+        "response": "#1. Define the task: What is a situation where a computer in a computer is supposed to run on a system that generates data in the form of a \"data\" and a \"data\" of the system? The program should be able to handle this data and analyze it to determine if it is accurate or non-aceptal. 2. Define the target type of the program: This will be the target type of the program. 3. Determine if the program is able to handle this data: 4. Create a \"data\" to make the program more efficient and manage the data: 5. Evaluate",
+        "quality_score": 0.5
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Bonjour, comment allez-vous?",
+        "response": "#1. The 34th Infantry Battalion, which was the first of the 125 Canadian Infantry Regiments to operate from Quebec, was founded in 1968 by General George C. Clark. In 1976 the Canadian Infantry Regiment was disbanded, and the original regiment was transferred to the Canadian Military Brigade (CF), who served in the Canadian Army until 1980. On the other hand, the Canadian Infantry Regiment was disbanded in 1980 when the Canadian Infantry Regiment became the Canadian Infantry Regiment. This was a important and influential division that had been created to provide for the",
+        "quality_score": 0.5
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Hola, ¿cómo estás?",
+        "response": "#To make you know the exact date of the birth date of Mariaina, I will start by looking for information about her life and age. I will take a look at the birth date of her parents, their surname, and their name. Once I have identified the dates of her birth, I will then use my personal knowledge to identify any clues or information that could be used to reveal her identity. Finally, I will write down the date of her birth in the order it took me to find out her name and birth date. In this case, she was born on April 12th, 1857. She",
+        "quality_score": 0.5
+      },
+      {
+        "category": "multilingual",
+        "prompt": "Guten Tag, wie geht es Ihnen?",
+        "response": "#1. English Language: English is a language that is spoken by the 20th-century Englishspeaking people. It is often used as a language for communication, communication, and communication in various languages. 2. Linguisticly, English is considered to be one of the most diverse languages in history. It has been an important part of the world's cultural history. 3. Literature: The literary movement was written by Henry Thoreau and his brother, Henry Thoreau. By 1769, it had become a important source of inspiration for poets and artists. 4. Literature: French is a popular language in",
+        "quality_score": 0.5
+      }
+    ]
+  }
+}

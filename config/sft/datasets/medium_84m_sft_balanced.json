@@ -1,0 +1,104 @@
+{
+  "name": "medium_84m_sft_balanced",
+  "description": "PREMIUM SFT corpus for Medium 84M model - 3 high-quality datasets (55M tokens): OASST1 + WizardLM + Orca",
+  "version": "1.0",
+  "template": "instruct",
+
+  "sampling_strategy": {
+    "mode": "target_conversations",
+    "target_tokens": null,
+    "target_conversations": 260000,
+    "max_samples_per_dataset": null,
+    "seed": 42,
+    "chars_per_token": 4.0,
+    "analysis_sample_size": 100
+  },
+
+  "output_params": {
+    "sequence_length": 1024,
+    "shard_size": 2000,
+    "train_ratio": 0.95,
+    "enable_packing": true,
+    "batch_size": 1000
+  },
+
+  "quality_filters": {
+    "min_prompt_length": 10,
+    "max_prompt_length": 1024,
+    "min_response_length": 20,
+    "max_response_length": 2048,
+    "filter_urls": false,
+    "filter_code_blocks": false,
+    "require_ascii": false,
+    "remove_duplicates": true,
+    "deduplication": {
+      "threshold": 0.85,
+      "num_perm": 128
+    }
+  },
+
+  "datasets": [
+    {
+      "name": "openassistant_v1",
+      "type": "huggingface",
+      "dataset_name": "OpenAssistant/oasst1",
+      "subset": null,
+      "split": "train",
+      "text_fields": {
+        "prompt": "text",
+        "response": "text"
+      },
+      "weight": 1.0,
+      "description": "OpenAssistant OASST1 - PREMIUM QUALITY conversational data with human preferences",
+      "custom_processing": {
+        "conversation_tree": true,
+        "filter_language": "en",
+        "min_score": 2,
+        "role_filter": ["prompter", "assistant"]
+      }
+    },
+    {
+      "name": "wizardlm_70k",
+      "type": "huggingface",
+      "dataset_name": "WizardLMTeam/WizardLM_evol_instruct_70k",
+      "subset": null,
+      "split": "train",
+      "text_fields": {
+        "prompt": "instruction",
+        "response": "output"
+      },
+      "weight": 1.0,
+      "description": "WizardLM Evol-Instruct 70k - PREMIUM QUALITY complex instructions (ICLR 2024, superior to Alpaca)"
+    },
+    {
+      "name": "open_orca",
+      "type": "huggingface",
+      "dataset_name": "Open-Orca/OpenOrca",
+      "subset": null,
+      "split": "train",
+      "text_fields": {
+        "prompt": "question",
+        "response": "response"
+      },
+      "weight": 3.0,
+      "description": "Open-Orca - HIGH QUALITY GPT-4 augmented dataset (1M samples, diverse reasoning tasks) - UPWEIGHTED to fill 55M token budget"
+    }
+  ],
+
+  "processing_metadata": {
+    "processing_time_estimate": "120-180 minutes",
+    "quality_focus": "ALL_PREMIUM_QUALITY_no_baseline_datasets",
+    "template_rationale": "Instruct format chosen for better tokenization efficiency",
+    "sft_rationale": "SFT optimal range: 0.65 tokens/param for quality/diversity balance",
+    "dataset_ratio": "1.0:1.0:3.0 (OASST1:WizardLM:OpenOrca) - OpenOrca upweighted to fill budget",
+    "dataset_distribution": {
+      "oasst1": "~20% of tokens (11M) - PREMIUM conversational with preferences (use all available)",
+      "wizardlm_70k": "~20% of tokens (11M) - PREMIUM complex Evol-Instruct, ICLR 2024 (use all available)",
+      "open_orca": "~60% of tokens (33M) - HIGH QUALITY GPT-4 augmented (fill remaining budget)"
+    },
+    "model_target": "Medium 84M parameters (12 layers, 512 d_model, 8 heads)",
+    "training_efficiency": "~13,500 steps for 2 epochs, 6-8 hours on RTX 4090",
+    "expected_conversations": "~200-250k after sampling",
+    "tokens_per_param": "0.65 (balanced for SFT - quality + diversity)"
+  }
+}
